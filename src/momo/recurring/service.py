@@ -92,7 +92,7 @@ class RecurringScheduleRegistry:
         curr = parse_currency(currency)
         
         now = datetime.now(timezone.utc)
-        next_run = start_at if (start_at and start_at > now) else now
+        next_run = start_at if start_at is not None else now
 
         sched_id = str(uuid.uuid4())
         sched = RecurringSchedule(
