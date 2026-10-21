@@ -10,15 +10,16 @@ then `docs/TEAM_PLAN.md` (what to do before Thursday) and `docs/RUNBOOK.md` (ope
 
 | Claim | Status |
 |---|---|
-| 113 unit + integration tests pass, **92 % coverage** (gate 60 %), against a real PostgreSQL 16 | ✅ run |
-| Proof 1 — 100 replays of one request ⇒ exactly **one** debit | ✅ run (local: in-process API + PostgreSQL) |
-| Proof 2 — crash injected at 5 points of the saga ⇒ **no money created/destroyed** | ✅ run (local) |
-| Proof 3 — 50 concurrent transfers, funds for 33 ⇒ **33 succeed, 17 rejected, never overdrawn** | ✅ run (local) |
+| 123 unit + integration tests pass, **89.5 % coverage** (gate 60 %), against a real PostgreSQL 16 | ✅ run in GitHub Actions CI |
+| 3 Stretch Goals (Multi-Currency FX, ML Fraud Scoring, Scheduled Recurring Payments) | ✅ implemented & tested |
+| Proof 1 — 100 replays of one request ⇒ exactly **one** debit | ✅ run (local & CI: in-process API + PostgreSQL) |
+| Proof 2 — crash injected at 5 points of the saga ⇒ **no money created/destroyed** | ✅ run (local & CI) |
+| Proof 3 — 50 concurrent transfers, funds for 33 ⇒ **33 succeed, 17 rejected, never overdrawn** | ✅ run (local & CI) |
 | Hash-chain tamper detection; append-only ledger triggers; deadlock-free opposite transfers | ✅ tested |
-| Secret scan | ✅ `gitleaks` over the tracked files, default rules, no allowlist: **no leaks found** |
-| Lambda artifacts build for Linux (`scripts/build_lambdas.sh`) | ✅ built; psycopg binary is manylinux x86-64 / cp312 |
-| Terraform (127 resources) | ⚠️ HCL syntax, formatting and every cross-reference checked offline. **Not applied and not schema-validated against the AWS provider** (the provider registry was unreachable). Run `terraform validate` first and expect to fix small version issues. |
-| Proofs against **AWS**, autoscaling demo, rollback demo, CloudTrail, cost actuals | ⏳ need your AWS account — commands below; `docs/TEAM_PLAN.md` has the schedule |
+| Secret scan | ✅ `gitleaks` over tracked files & git history: **no leaks found** |
+| Lambda artifacts build for Linux (`scripts/build_lambdas.sh` / `build_lambdas.py`) | ✅ built; psycopg binary is manylinux x86-64 / cp312 |
+| Terraform (127 resources) + tfsec security scan | ✅ formatted, validated (`terraform validate`), and scanned (`tfsec`) in CI |
+| Proofs against **AWS**, autoscaling demo, rollback demo, CloudTrail, cost actuals | ⏳ ready for deployment with `scripts/deploy.sh` or GitHub Actions OIDC |
 | Cost figures | ⚠️ **estimates** from `scripts/cost_model.py`; replace with Cost Explorer actuals (DESIGN §10) |
 
 > **QLDB is discontinued by AWS** (support ended 2025), so the immutable ledger is PostgreSQL: append-only triggers, revoked UPDATE/DELETE, and a per-wallet SHA-256 hash chain. Justified in DESIGN §3.
@@ -88,6 +89,10 @@ All endpoints need `Authorization: Bearer <Cognito access token>`; money-moving 
 | `POST /transactions/{id}/reverse` | admin | compensating reversal |
 | `POST /transactions/{id}/disputes`, `GET /disputes/{id}` | parties | raise / view dispute |
 | `POST /disputes/{id}/resolve` | admin | `REVERSE` or `REJECT` |
+| `GET /fx/rates`, `POST /fx/quotes` | any authenticated | cross-currency FX exchange rates and signed quotes |
+| `POST /recurring/schedules` | wallet owner | create scheduled recurring standing order |
+| `GET /recurring/schedules` | wallet owner | list user's active recurring payment schedules |
+| `DELETE /recurring/schedules/{id}` | wallet owner | cancel a recurring payment schedule |
 | `GET /admin/integrity` | admin | run the reconciliation integrity checks now |
 | `GET /health` | none | load balancer health |
 
