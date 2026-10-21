@@ -47,8 +47,26 @@ jobs:
         with: { python-version: "3.12", cache: pip }
       - run: pip install -r requirements-dev.txt
       - run: ruff check src tests scripts
+      - name: verify postgresql connection
+        run: |
+          python -c "
+          import os, psycopg, time
+          url = os.environ['TEST_DATABASE_URL']
+          print(f'Testing connection to {url}...')
+          for i in range(15):
+              try:
+                  conn = psycopg.connect(url, autocommit=True)
+                  print('PostgreSQL is ready and reachable!')
+                  conn.close()
+                  break
+              except Exception as e:
+                  print(f'Retry {i+1}: {e}')
+                  time.sleep(2)
+          else:
+              raise SystemExit('Could not connect to PostgreSQL container')
+          "
       - name: unit + integration tests, coverage gate (>= 60%, fails below)
-        run: pytest -v --cov --cov-report=xml --cov-report=term-missing
+        run: pytest -v --cov=src/momo --cov-report=xml --cov-report=term-missing
       - name: correctness proofs (idempotency x100, saga fault injection, 50 concurrent transfers)
         run: python scripts/proofs/run_proofs.py --local
       - uses: actions/upload-artifact@v4
