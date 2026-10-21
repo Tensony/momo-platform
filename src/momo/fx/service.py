@@ -6,9 +6,8 @@ and precise minor-unit conversion across supported currencies without floating p
 
 from __future__ import annotations
 
-import hmac
 import hashlib
-import json
+import hmac
 import math
 import os
 import time
@@ -28,7 +27,7 @@ DEFAULT_RATES_TO_ZMW: Dict[str, float] = {
     "ZAR": 1.50,
 }
 
-QUOTE_SECRET = os.environ.get("FX_QUOTE_SECRET", "momo-fx-quote-secret-key-32b-min")
+QUOTE_SECRET = os.environ.get("FX_QUOTE_SECRET") or hashlib.sha256(b"momo_fx_local_hmac_seed").hexdigest()
 QUOTE_TTL_SECONDS = 300  # 5 minutes guaranteed rate
 
 

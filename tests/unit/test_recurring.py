@@ -1,12 +1,13 @@
 """Unit tests for scheduled recurring payments service."""
 
 from datetime import datetime, timedelta, timezone
+
 import pytest
+
 from momo.common.errors import InvalidRequest, NotFound
 from momo.recurring.service import (
     RecurringScheduleRegistry,
     compute_next_run,
-    process_due_recurring_transfers,
 )
 
 

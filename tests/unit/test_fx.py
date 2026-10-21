@@ -1,11 +1,12 @@
 """Unit tests for Foreign Exchange (FX) rates, quotes, and multi-currency conversion."""
 
 import pytest
-from momo.common.errors import BusinessRejection, InvalidRequest
+
+from momo.common.errors import InvalidRequest
 from momo.fx.service import (
     DEFAULT_RATES_TO_ZMW,
-    create_quote,
     convert_currency,
+    create_quote,
     get_exchange_rate,
     verify_quote,
 )

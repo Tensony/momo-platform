@@ -18,11 +18,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 } # scan the whole history, not just the tip
-      - name: gitleaks (fails the pipeline if any credential is found in any commit)
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITLEAKS_CONFIG: .gitleaks.toml
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: install gitleaks & scan
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz | sudo tar -xz -C /usr/local/bin gitleaks
+          gitleaks detect --source . --config .gitleaks.toml --verbose --redact
 
   test:
     runs-on: ubuntu-latest
@@ -60,7 +59,10 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: terraform -chdir=infra/terraform fmt -check -recursive
-      - run: scripts/build_lambdas.sh
+      - name: Build Lambda packages
+        run: |
+          chmod +x scripts/build_lambdas.sh
+          bash scripts/build_lambdas.sh
       - run: terraform -chdir=infra/terraform init -backend=false -input=false
       - run: terraform -chdir=infra/terraform validate
       - name: IaC security scan (tfsec)
@@ -70,7 +72,7 @@ jobs:
   deploy:
     # Runs ONLY when every gate above is green: tests, secret scan, coverage, proofs, terraform validate.
     needs: [secret-scan, test, terraform-check]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.AWS_DEPLOY_ROLE_ARN != ''
     runs-on: ubuntu-latest
     environment: production
     concurrency: { group: deploy, cancel-in-progress: false }

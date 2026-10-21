@@ -9,11 +9,11 @@ from __future__ import annotations
 
 import logging
 import uuid
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
-from momo.common.errors import BusinessRejection, InvalidRequest, NotFound
+from momo.common.errors import InvalidRequest, NotFound
 from momo.common.money import parse_amount, parse_currency
 
 log = logging.getLogger(__name__)

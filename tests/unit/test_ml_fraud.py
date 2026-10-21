@@ -1,8 +1,9 @@
 """Unit tests for ML and anomaly-based fraud scoring."""
 
 from datetime import datetime, timedelta, timezone
+
 from momo.fraud.config import FraudConfig
-from momo.fraud.ml_scoring import compute_fraud_score, extract_features, ml_scoring_rule
+from momo.fraud.ml_scoring import compute_fraud_score, ml_scoring_rule
 from momo.fraud.rules import Decision, FraudContext
 
 NOW = datetime(2026, 10, 21, 14, 0, tzinfo=timezone.utc)
