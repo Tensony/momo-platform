@@ -28,15 +28,19 @@ def db():
     os.environ["DATABASE_URL"] = url
     os.environ.pop("SAGA_MODE", None)
     os.environ["ENABLE_FAULT_INJECTION"] = "true"
+    os.environ.setdefault("DB_POOL_MAX", "40")
+    os.environ.setdefault("DB_POOL_TIMEOUT", "60")
     from momo.common import db as dbm
     from momo.fraud import config as fraud_config
 
     dbm.reset_pool()
     fraud_config.clear_cache()
     with psycopg.connect(url, autocommit=True) as conn:
-        conn.execute("DROP SCHEMA public CASCADE")
+        conn.execute("DROP SCHEMA IF EXISTS public CASCADE")
         conn.execute("CREATE SCHEMA public")
-        conn.execute(SCHEMA.read_text())
+        conn.execute("GRANT ALL ON SCHEMA public TO postgres")
+        conn.execute("GRANT ALL ON SCHEMA public TO public")
+        conn.execute(SCHEMA.read_text(encoding="utf-8"))
     yield url
     dbm.reset_pool()
 

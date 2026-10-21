@@ -41,6 +41,9 @@ jobs:
           --health-retries 10
     env:
       TEST_DATABASE_URL: postgresql://postgres:password@127.0.0.1:5432/momo_test
+      PYTHONPATH: src
+      DB_POOL_MAX: "40"
+      DB_POOL_TIMEOUT: "60"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -66,21 +69,36 @@ jobs:
               raise SystemExit('Could not connect to PostgreSQL container')
           "
       - name: unit + integration tests, coverage gate (>= 60%, fails below)
-        run: pytest -v --cov=src/momo --cov-report=xml --cov-report=term-missing
+        run: |
+          set -o pipefail
+          pytest -v --cov=src/momo --cov-report=xml --cov-report=term-missing 2>&1 | tee pytest.log
+      - name: show test log in step summary
+        if: always()
+        run: |
+          if [ -f pytest.log ]; then
+            echo "## Pytest Output" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -n 250 pytest.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
       - name: correctness proofs (idempotency x100, saga fault injection, 50 concurrent transfers)
         run: python scripts/proofs/run_proofs.py --local
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: evidence
           path: |
             evidence-out/
             coverage.xml
+            pytest.log
 
   terraform-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: terraform -chdir=infra/terraform fmt -check -recursive

@@ -1,11 +1,13 @@
 # Python
 __pycache__/
 *.pyc
+*.egg-info/
 .venv/
 .pytest_cache/
 .coverage
 coverage.xml
 htmlcov/
+*.log
 
 # Build output
 build/
