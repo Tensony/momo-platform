@@ -1,0 +1,721 @@
+{
+  "Comment": "Mobile money saga: reserve -> fraud -> credit -> finalize, with compensation. Express workflow (synchronous). Every step Lambda is idempotent on (txn_id, step), so at-least-once execution cannot double-post. Business rejections are returned as data; technical failures are caught and routed to ReverseCredit -> Release.",
+  "StartAt": "Reserve",
+  "TimeoutSeconds": 120,
+  "States": {
+    "Reserve": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${steps_function_arn}",
+        "Payload": {
+          "action": "reserve",
+          "ctx.$": "$.ctx"
+        }
+      },
+      "ResultSelector": {
+        "payload.$": "$.Payload"
+      },
+      "ResultPath": "$.reserve",
+      "TimeoutSeconds": 25,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "States.Timeout"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        },
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "ReverseCredit"
+        }
+      ],
+      "Next": "ReserveOk"
+    },
+    "ReserveOk": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.reserve.payload.ok",
+          "BooleanEquals": true,
+          "Next": "FraudCheck"
+        }
+      ],
+      "Default": "MarkRejectedReserve"
+    },
+    "MarkRejectedReserve": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${steps_function_arn}",
+        "Payload": {
+          "action": "mark_rejected",
+          "ctx.$": "$.ctx",
+          "code.$": "$.reserve.payload.code"
+        }
+      },
+      "ResultSelector": {
+        "payload.$": "$.Payload"
+      },
+      "ResultPath": "$.mark",
+      "TimeoutSeconds": 25,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "States.Timeout"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        },
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "ReverseCredit"
+        }
+      ],
+      "Next": "RejectedReserve"
+    },
+    "RejectedReserve": {
+      "Type": "Pass",
+      "Parameters": {
+        "outcome": "REJECTED",
+        "code.$": "$.reserve.payload.code",
+        "detail.$": "$.reserve.payload.detail"
+      },
+      "End": true
+    },
+    "FraudCheck": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fraud_function_arn}",
+        "Payload.$": "$.ctx"
+      },
+      "ResultSelector": {
+        "payload.$": "$.Payload"
+      },
+      "ResultPath": "$.fraud",
+      "TimeoutSeconds": 25,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "States.Timeout"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        },
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "ReverseCredit"
+        }
+      ],
+      "Next": "FraudDecision"
+    },
+    "FraudDecision": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.fraud.payload.decision",
+          "StringEquals": "DECLINE",
+          "Next": "ReleaseForFraud"
+        }
+      ],
+      "Default": "Credit"
+    },
+    "ReleaseForFraud": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${steps_function_arn}",
+        "Payload": {
+          "action": "release",
+          "ctx.$": "$.ctx"
+        }
+      },
+      "ResultSelector": {
+        "payload.$": "$.Payload"
+      },
+      "ResultPath": "$.release",
+      "TimeoutSeconds": 25,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "States.Timeout"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        },
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "ReverseCredit"
+        }
+      ],
+      "Next": "MarkRejectedFraud"
+    },
+    "MarkRejectedFraud": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${steps_function_arn}",
+        "Payload": {
+          "action": "mark_rejected",
+          "ctx.$": "$.ctx",
+          "code": "FRAUD_DECLINED"
+        }
+      },
+      "ResultSelector": {
+        "payload.$": "$.Payload"
+      },
+      "ResultPath": "$.mark",
+      "TimeoutSeconds": 25,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "States.Timeout"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        },
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "ReverseCredit"
+        }
+      ],
+      "Next": "RejectedFraud"
+    },
+    "RejectedFraud": {
+      "Type": "Pass",
+      "Parameters": {
+        "outcome": "REJECTED",
+        "code": "FRAUD_DECLINED",
+        "detail": {
+          "rules.$": "$.fraud.payload.rules"
+        }
+      },
+      "End": true
+    },
+    "Credit": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${steps_function_arn}",
+        "Payload": {
+          "action": "credit",
+          "ctx.$": "$.ctx"
+        }
+      },
+      "ResultSelector": {
+        "payload.$": "$.Payload"
+      },
+      "ResultPath": "$.credit",
+      "TimeoutSeconds": 25,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "States.Timeout"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        },
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "ReverseCredit"
+        }
+      ],
+      "Next": "CreditOk"
+    },
+    "CreditOk": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.credit.payload.ok",
+          "BooleanEquals": true,
+          "Next": "Finalize"
+        }
+      ],
+      "Default": "ReleaseForCreditRejection"
+    },
+    "ReleaseForCreditRejection": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${steps_function_arn}",
+        "Payload": {
+          "action": "release",
+          "ctx.$": "$.ctx"
+        }
+      },
+      "ResultSelector": {
+        "payload.$": "$.Payload"
+      },
+      "ResultPath": "$.release",
+      "TimeoutSeconds": 25,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "States.Timeout"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        },
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "ReverseCredit"
+        }
+      ],
+      "Next": "MarkRejectedCredit"
+    },
+    "MarkRejectedCredit": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${steps_function_arn}",
+        "Payload": {
+          "action": "mark_rejected",
+          "ctx.$": "$.ctx",
+          "code.$": "$.credit.payload.code"
+        }
+      },
+      "ResultSelector": {
+        "payload.$": "$.Payload"
+      },
+      "ResultPath": "$.mark",
+      "TimeoutSeconds": 25,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "States.Timeout"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        },
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "ReverseCredit"
+        }
+      ],
+      "Next": "RejectedCredit"
+    },
+    "RejectedCredit": {
+      "Type": "Pass",
+      "Parameters": {
+        "outcome": "REJECTED",
+        "code.$": "$.credit.payload.code",
+        "detail.$": "$.credit.payload.detail"
+      },
+      "End": true
+    },
+    "Finalize": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${steps_function_arn}",
+        "Payload": {
+          "action": "finalize",
+          "ctx.$": "$.ctx"
+        }
+      },
+      "ResultSelector": {
+        "payload.$": "$.Payload"
+      },
+      "ResultPath": "$.finalize",
+      "TimeoutSeconds": 25,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "States.Timeout"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        },
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "ReverseCredit"
+        }
+      ],
+      "Next": "Completed"
+    },
+    "Completed": {
+      "Type": "Pass",
+      "Parameters": {
+        "outcome": "COMPLETED",
+        "detail": {
+          "fraud_decision.$": "$.fraud.payload.decision"
+        }
+      },
+      "End": true
+    },
+    "ReverseCredit": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${steps_function_arn}",
+        "Payload": {
+          "action": "reverse_credit",
+          "ctx.$": "$.ctx"
+        }
+      },
+      "ResultSelector": {
+        "payload.$": "$.Payload"
+      },
+      "ResultPath": "$.compensation1",
+      "TimeoutSeconds": 25,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "States.Timeout"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        },
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 5,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "MarkCompensationFailed"
+        }
+      ],
+      "Next": "ReleaseOnError"
+    },
+    "ReleaseOnError": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${steps_function_arn}",
+        "Payload": {
+          "action": "release",
+          "ctx.$": "$.ctx"
+        }
+      },
+      "ResultSelector": {
+        "payload.$": "$.Payload"
+      },
+      "ResultPath": "$.compensation2",
+      "TimeoutSeconds": 25,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "States.Timeout"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        },
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 5,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "MarkCompensationFailed"
+        }
+      ],
+      "Next": "MarkFailed"
+    },
+    "MarkFailed": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${steps_function_arn}",
+        "Payload": {
+          "action": "mark_failed",
+          "ctx.$": "$.ctx",
+          "error.$": "$.error.Error"
+        }
+      },
+      "ResultSelector": {
+        "payload.$": "$.Payload"
+      },
+      "ResultPath": "$.mark",
+      "TimeoutSeconds": 25,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "States.Timeout"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        },
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Failed"
+        }
+      ],
+      "Next": "Failed"
+    },
+    "Failed": {
+      "Type": "Pass",
+      "Parameters": {
+        "outcome": "FAILED",
+        "code": "SAGA_FAILED_COMPENSATED",
+        "detail": {
+          "error.$": "$.error.Error"
+        }
+      },
+      "End": true
+    },
+    "MarkCompensationFailed": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${steps_function_arn}",
+        "Payload": {
+          "action": "mark_compensation_failed",
+          "ctx.$": "$.ctx",
+          "error.$": "$.error.Error"
+        }
+      },
+      "ResultSelector": {
+        "payload.$": "$.Payload"
+      },
+      "ResultPath": "$.mark",
+      "TimeoutSeconds": 25,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "States.Timeout"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        },
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "CompensationFailed"
+        }
+      ],
+      "Next": "CompensationFailed"
+    },
+    "CompensationFailed": {
+      "Type": "Fail",
+      "Error": "COMPENSATION_FAILED",
+      "Cause": "A compensating step failed after retries; funds are held in ESCROW. Follow docs/RUNBOOK.md (stuck saga)."
+    }
+  }
+}

@@ -1,0 +1,7 @@
+# gitleaks configuration - run in CI on every push over the FULL git history.
+# Deliberately NO path or rule allowlists: the repository passes with default rules only, so there is
+# nothing to hide. (Verified: `gitleaks detect --source . ` over the tracked files => "no leaks found".)
+title = "momo-platform gitleaks config"
+
+[extend]
+useDefault = true   # all built-in rules: AWS keys, private keys, generic API keys, JWTs, ...

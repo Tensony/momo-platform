@@ -1,0 +1,48 @@
+........................................................................ [ 63%]
+.........................................                                [100%]
+=============================== warnings summary ===============================
+tests/unit/test_auth.py::test_algorithm_downgrade_rejected
+  /usr/local/lib/python3.13/dist-packages/jwt/api_jwt.py:149: InsecureKeyLengthWarning: The HMAC key is 6 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+    return self._jws.encode(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.13.16-final-0 _______________
+
+Name                                  Stmts   Miss Branch BrPart  Cover   Missing
+---------------------------------------------------------------------------------
+src/momo/__init__.py                      1      0      0      0   100%
+src/momo/api/__init__.py                  0      0      0      0   100%
+src/momo/api/app.py                     220     18     48     13    88%   45, 77, 90, 94-96, 141-142, 155, 184, 194, 196, 208, 210, 221, 223, 234, 249->253, 279
+src/momo/api/auth.py                     45      4      8      0    92%   47-49, 53
+src/momo/common/__init__.py               0      0      0      0   100%
+src/momo/common/db.py                    63     16     10      2    75%   49-54, 63, 78-83, 105-110
+src/momo/common/errors.py                49      0      0      0   100%
+src/momo/common/hashing.py               10      0      0      0   100%
+src/momo/common/logging_setup.py         52      0     16      2    97%   57->60, 58->57
+src/momo/common/metrics.py                9      0      0      0   100%
+src/momo/common/money.py                 22      0     10      0   100%
+src/momo/events/__init__.py               0      0      0      0   100%
+src/momo/events/outbox.py                35      7      8      0    79%   28-31, 34-37
+src/momo/fraud/__init__.py                0      0      0      0   100%
+src/momo/fraud/config.py                 55      0     14      0   100%
+src/momo/fraud/handler.py                28      0      4      0   100%
+src/momo/fraud/rules.py                  82      0     20      0   100%
+src/momo/fraud/service.py                41      0      2      0   100%
+src/momo/idempotency.py                  46      0     14      0   100%
+src/momo/ledger/__init__.py               0      0      0      0   100%
+src/momo/ledger/core.py                 100     11     44      9    86%   53, 69, 102, 105, 208-210, 221, 226, 244, 246
+src/momo/reconciliation/__init__.py       0      0      0      0   100%
+src/momo/reconciliation/handler.py       16      0      2      0   100%
+src/momo/reconciliation/report.py        71      2     20      1    97%   180-182
+src/momo/saga/__init__.py                 0      0      0      0   100%
+src/momo/saga/context.py                 32      1      0      0    97%   43
+src/momo/saga/faults.py                   9      0      2      0   100%
+src/momo/saga/handlers.py                36      2     16      0    96%   36-37
+src/momo/saga/orchestrator.py            49      0     14      1    98%   52->50
+src/momo/saga/steps.py                  101      2     18      4    95%   68, 111, 180->189, 216->218, 224->exit
+src/momo/service.py                     168     17     56      5    88%   56-59, 62-71, 78, 169-173, 263, 298, 323
+---------------------------------------------------------------------------------
+TOTAL                                  1340     80    326     37    92%
+Required test coverage of 60.0% reached. Total coverage: 92.50%
+113 passed, 1 warning in 8.49s

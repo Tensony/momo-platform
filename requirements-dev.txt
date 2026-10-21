@@ -1,0 +1,7 @@
+-r requirements.txt
+pytest>=8
+pytest-cov>=5
+requests>=2.32
+cryptography>=43
+moto[sns,sqs,secretsmanager]>=5
+ruff>=0.6

@@ -1,0 +1,38 @@
+[project]
+name = "momo-platform"
+version = "1.0.0"
+description = "Cloud-native mobile money transaction processing on AWS"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+markers = [
+  "integration: needs a PostgreSQL database (TEST_DATABASE_URL); runs in CI against a service container",
+]
+addopts = "-q"
+
+[tool.coverage.run]
+source = ["src/momo"]
+branch = true
+omit = [
+  "src/momo/db_init.py",          # one-off infra helper Lambda, exercised by terraform apply
+  "src/momo/common/tracing.py",   # thin X-Ray wrapper, only active with the daemon present
+]
+
+[tool.coverage.report]
+fail_under = 60                  # assignment gate: >= 60% on business logic (we target 80+)
+show_missing = true
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "S"]
+ignore = ["S101", "S608", "E501", "B008"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S", "E701", "E702"]
+"scripts/*" = ["S"]

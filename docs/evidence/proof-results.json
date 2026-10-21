@@ -1,0 +1,114 @@
+{
+  "target": "local (in-process API + PostgreSQL)",
+  "started_at": "2026-10-19T17:20:36.935633+00:00",
+  "finished_at": "2026-10-19T17:20:39.400000+00:00",
+  "passed": true,
+  "results": {
+    "idempotency": [
+      {
+        "check": "all 100 responses are 201 Created",
+        "passed": true,
+        "detail": "status codes seen: [201]"
+      },
+      {
+        "check": "all 100 responses refer to the SAME transaction id",
+        "passed": true,
+        "detail": "1 distinct id(s)"
+      },
+      {
+        "check": "exactly 1 response was a real execution, 99 were replays",
+        "passed": true,
+        "detail": "replays=99"
+      },
+      {
+        "check": "payer was debited exactly once",
+        "passed": true,
+        "detail": "before=100000 after=85000 amount=15000"
+      },
+      {
+        "check": "ledger holds exactly ONE debit entry for the transaction",
+        "passed": true,
+        "detail": "debit entries=1"
+      },
+      {
+        "check": "same key + different body is refused (422)",
+        "passed": true,
+        "detail": "IDEMPOTENCY_KEY_REUSED"
+      }
+    ],
+    "saga_compensation": [
+      {
+        "check": "crash at reserve.after    -> compensated, balances unchanged",
+        "passed": true,
+        "detail": "http=500 outcome=SAGA_FAILED_COMPENSATED payer 185000->185000 payee 15000->15000"
+      },
+      {
+        "check": "crash at fraud.before     -> compensated, balances unchanged",
+        "passed": true,
+        "detail": "http=500 outcome=SAGA_FAILED_COMPENSATED payer 185000->185000 payee 15000->15000"
+      },
+      {
+        "check": "crash at credit.before    -> compensated, balances unchanged",
+        "passed": true,
+        "detail": "http=500 outcome=SAGA_FAILED_COMPENSATED payer 185000->185000 payee 15000->15000"
+      },
+      {
+        "check": "crash at credit.after     -> compensated, balances unchanged",
+        "passed": true,
+        "detail": "http=500 outcome=SAGA_FAILED_COMPENSATED payer 185000->185000 payee 15000->15000"
+      },
+      {
+        "check": "crash at finalize.before  -> compensated, balances unchanged",
+        "passed": true,
+        "detail": "http=500 outcome=SAGA_FAILED_COMPENSATED payer 185000->185000 payee 15000->15000"
+      },
+      {
+        "check": "global integrity after all faults: sum of balances = 0, ledger balanced, hash chains valid, escrow empty",
+        "passed": true,
+        "detail": "{}"
+      },
+      {
+        "check": "control: the same transfer without a fault completes",
+        "passed": true,
+        "detail": "http=201"
+      }
+    ],
+    "concurrency": [
+      {
+        "check": "exactly 33 transfers succeeded (floor(1000/30))",
+        "passed": true,
+        "detail": "succeeded=33"
+      },
+      {
+        "check": "the other 17 were rejected with INSUFFICIENT_FUNDS",
+        "passed": true,
+        "detail": "rejected=17 other=[]"
+      },
+      {
+        "check": "payer balance is never negative",
+        "passed": true,
+        "detail": "final=10"
+      },
+      {
+        "check": "payer balance == 1000 - 33*30 == 10",
+        "passed": true,
+        "detail": "final=10"
+      },
+      {
+        "check": "payee received exactly what the payer lost",
+        "passed": true,
+        "detail": "payee +990"
+      },
+      {
+        "check": "every ledger balance_after is >= 0 (no overdraft at any point in history)",
+        "passed": true,
+        "detail": ""
+      },
+      {
+        "check": "global integrity check passes",
+        "passed": true,
+        "detail": "{}"
+      }
+    ]
+  }
+}

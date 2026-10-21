@@ -1,0 +1,9 @@
+.git
+build
+evidence-out
+infra
+tests
+docs
+**/__pycache__
+*.pyc
+.env*
