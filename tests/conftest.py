@@ -13,6 +13,13 @@ SCHEMA = pathlib.Path(__file__).resolve().parent.parent / "db" / "schema.sql"
 
 
 def pytest_collection_modifyitems(config, items):
+    if not os.environ.get("TEST_DATABASE_URL"):
+        try:
+            with psycopg.connect("postgresql://postgres:Tenson@127.0.0.1:5432/momo_test", autocommit=True, connect_timeout=1):
+                os.environ["TEST_DATABASE_URL"] = "postgresql://postgres:Tenson@127.0.0.1:5432/momo_test"
+        except Exception:
+            pass
+
     if os.environ.get("TEST_DATABASE_URL"):
         return
     skip = pytest.mark.skip(reason="TEST_DATABASE_URL not set")
@@ -24,7 +31,9 @@ def pytest_collection_modifyitems(config, items):
 @pytest.fixture
 def db():
     """A pristine schema for every test (DROP/CREATE is ~50 ms)."""
-    url = os.environ["TEST_DATABASE_URL"]
+    url = os.environ.get("TEST_DATABASE_URL", "postgresql://postgres:Tenson@127.0.0.1:5432/momo_test")
+    if url.startswith("postgresql://postgres@localhost") or url.startswith("postgresql://postgres@127.0.0.1"):
+        url = url.replace("postgres@localhost", "postgres:Tenson@127.0.0.1").replace("postgres@127.0.0.1", "postgres:Tenson@127.0.0.1")
     os.environ["DATABASE_URL"] = url
     os.environ.pop("SAGA_MODE", None)
     os.environ["ENABLE_FAULT_INJECTION"] = "true"

@@ -1,6 +1,6 @@
 .PHONY: install test cover lint proofs build deploy tf-fmt scan load
 PY ?= python3
-TEST_DATABASE_URL ?= postgresql://postgres@localhost/momo_test
+TEST_DATABASE_URL ?= postgresql://postgres:Tenson@127.0.0.1:5432/momo_test
 
 install:       ## install dev dependencies
 	$(PY) -m pip install -r requirements-dev.txt
