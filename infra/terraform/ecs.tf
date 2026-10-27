@@ -140,7 +140,7 @@ resource "aws_ecs_task_definition" "api" {
       image                  = "${aws_ecr_repository.api.repository_url}:${var.api_image_tag}"
       essential              = true
       portMappings           = [{ containerPort = local.api_port, protocol = "tcp" }]
-      readonlyRootFilesystem = true
+      readonlyRootFilesystem = false
       linuxParameters        = { initProcessEnabled = true }
       environment = [
         { name = "SERVICE_NAME", value = "wallet-api" },
