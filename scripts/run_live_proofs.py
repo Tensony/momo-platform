@@ -23,7 +23,12 @@ def run_aws(args):
     stdout = res.stdout.strip()
     if stdout.startswith("urllib3") or stdout.startswith("Warning:"):
         lines = stdout.splitlines()
-        stdout = "\n".join(l for l in lines if not l.startswith("urllib3") and not l.startswith("Warning:") and not "InsecureRequestWarning" in l).strip()
+        stdout = "\n".join(
+            line for line in lines
+            if not line.startswith("urllib3")
+            and not line.startswith("Warning:")
+            and "InsecureRequestWarning" not in line
+        ).strip()
     return json.loads(stdout) if stdout else {}
 
 def get_token(email, group):
@@ -37,7 +42,7 @@ def get_token(email, group):
             "--message-action", "SUPPRESS",
             "--user-attributes", f"Name=email,Value={email}", "Name=email_verified,Value=true"
         ])
-    except Exception as e:
+    except Exception:
         # already exists
         pass
 
