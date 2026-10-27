@@ -32,11 +32,19 @@ variable "api_image_tag" {
 variable "api_min_tasks" {
   type    = number
   default = 2 # one per AZ
+  validation {
+    condition     = var.api_min_tasks >= 2
+    error_message = "api_min_tasks must be at least 2 so the service can run across both Availability Zones."
+  }
 }
 
 variable "api_max_tasks" {
   type    = number
   default = 6
+  validation {
+    condition     = var.api_max_tasks >= var.api_min_tasks
+    error_message = "api_max_tasks must be greater than or equal to api_min_tasks."
+  }
 }
 
 variable "api_cpu" {

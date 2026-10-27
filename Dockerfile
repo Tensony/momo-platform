@@ -13,6 +13,6 @@ COPY src ./src
 USER 10001
 EXPOSE 8080
 # 2 workers x 4 threads; DB_POOL_MAX is per worker process (see ecs.tf).
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--threads", "4", "--timeout", "60", \
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--threads", "4", "--worker-tmp-dir", "/dev/shm", "--timeout", "60", \
      "--access-logfile", "-", "--access-logformat", "%(h)s %(r)s %(s)s %(L)s", \
      "momo.api.app:create_app()"]
