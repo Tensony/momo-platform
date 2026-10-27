@@ -16,6 +16,7 @@ Usage
   AWS    (against the deployed ALB; tokens for 3 pre-created Cognito users from scripts/get_tokens.sh):
       python scripts/proofs/run_proofs.py --base-url https://<alb-dns> \
           --admin-token $ADMIN --agent-token $AGENT --user-token $USER
+      # For a self-signed demo endpoint only, add --insecure.
 
 For the AWS run, fault injection must be enabled (terraform var enable_fault_injection=true) and the
 fraud velocity limit relaxed so that the concurrency proof measures funds, not fraud rules:
@@ -45,16 +46,19 @@ FAULT_POINTS = ["reserve.after", "fraud.before", "credit.before", "credit.after"
 
 
 class Api:
-    def __init__(self, base, token):
+    def __init__(self, base, token, verify_tls=True):
         self.base, self.token = base.rstrip("/"), token
+        self.verify_tls = verify_tls
         self.local = threading.local()
 
     def _s(self):
         if not hasattr(self.local, "s"):
-            import urllib3
-            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             s = requests.Session()
-            s.verify = False
+            s.verify = self.verify_tls
+            if not self.verify_tls:
+                import urllib3
+
+                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             self.local.s = s
         return self.local.s
 
@@ -217,10 +221,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--local", action="store_true")
     ap.add_argument("--base-url")
-    ap.add_argument("--admin-token")
-    ap.add_argument("--agent-token")
-    ap.add_argument("--user-token")
-    ap.add_argument("--user2-token")
+    ap.add_argument("--admin-token", default=os.environ.get("PROOF_ADMIN_TOKEN"))
+    ap.add_argument("--agent-token", default=os.environ.get("PROOF_AGENT_TOKEN"))
+    ap.add_argument("--user-token", default=os.environ.get("PROOF_USER_TOKEN"))
+    ap.add_argument("--user2-token", default=os.environ.get("PROOF_USER2_TOKEN"))
+    ap.add_argument(
+        "--insecure",
+        action="store_true",
+        help="Disable TLS certificate validation; only use with a trusted demo endpoint using a self-signed certificate.",
+    )
     a = ap.parse_args()
     if a.local:
         base, t_admin, t_agent, t_user, t_user2 = start_local()
@@ -231,7 +240,11 @@ def main():
         base, t_admin, t_agent, t_user = a.base_url, a.admin_token, a.agent_token, a.user_token
         t_user2 = a.user2_token or a.user_token
         target = base
-    admin, agent, user, user2 = Api(base, t_admin), Api(base, t_agent), Api(base, t_user), Api(base, t_user2)
+    verify_tls = not a.insecure
+    admin = Api(base, t_admin, verify_tls)
+    agent = Api(base, t_agent, verify_tls)
+    user = Api(base, t_user, verify_tls)
+    user2 = Api(base, t_user2, verify_tls)
     agent_w, payer, payee = setup(admin, agent, user, user2)
     started = datetime.now(timezone.utc)
     results = {

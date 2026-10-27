@@ -82,7 +82,7 @@ produces the same result because the idempotency record lives in the database, n
 
 ### 2.4 Two Availability Zones
 
-* ALB in two public subnets; ECS service spread over two private app subnets (min 2 tasks, one per AZ by the scheduler's default spread);
+* ALB in two public subnets; ECS service in two private app subnets (minimum 2 tasks, AZ rebalancing enabled);
   Lambdas attached to both app subnets.
 * **Aurora**: writer and reader in *different* AZs; storage is replicated 6 ways across 3 AZs; automatic failover (promotion tier 0 → 1).
 * **Known single point**: one NAT gateway (cost optimisation §10.2). If its AZ fails, *outbound-internet* calls from the app tier
@@ -236,10 +236,12 @@ Database-level least privilege: the app role `momo_app` has `SELECT/INSERT/UPDAT
 
 * **100 % infrastructure as code** (`infra/terraform`, 127 resources): VPC, subnets, security groups, KMS, Aurora, **schema** (applied by the db-init Lambda from Terraform), Cognito, ECS/ALB/CodeDeploy, Lambdas, Step Functions, SNS/SQS, schedules, CloudTrail, dashboard, alarms, budget.
   A marker deploys with `scripts/deploy.sh <email>` (build artifacts → create ECR → push image → apply). No console steps. The only manual action is clicking the SNS confirmation e-mail.
-* **CI/CD** (`.github/workflows/ci-cd.yml`): gitleaks (full history) → lint → unit + integration tests against a real PostgreSQL service container with a **coverage gate** → the three correctness proofs → `terraform fmt/validate` + tfsec → **deploy only if every gate is green**. AWS access via GitHub OIDC (no stored keys).
+* **CI/CD** (`.github/workflows/ci-cd.yml`): gitleaks (full history) → lint → unit + integration tests against a PostgreSQL service container with a **coverage gate** → correctness proofs → `terraform fmt/validate` + blocking tfsec scan. AWS deployment is opt-in, protected by a GitHub environment, restricted to `main`, and uses GitHub OIDC (no long-lived AWS keys).
 * **Automated rollback, demonstrated**: ECS blue/green via CodeDeploy with `auto_rollback_configuration` on `DEPLOYMENT_FAILURE` and `DEPLOYMENT_STOP_ON_ALARM` (5xx-rate and unhealthy-host alarms watch the traffic shift). `scripts/rollback_demo.sh` deploys a deliberately unhealthy release and records that CodeDeploy restores the previous task definition with no human action → `evidence-out/rollback-deployment.json`.
 * **Tests**: 113 tests, **92 % coverage** (gate: 60 %) — unit (rules, auth, hashing, orchestrator, ASL structure) and integration (real PostgreSQL: ledger, saga faults, idempotency, API, reconciliation, outbox).
 * **Git**: see `docs/TEAM_PLAN.md` — each member commits their own area.
+
+Assessment requirement-to-evidence mapping and the distinction between configuration checks and live deployment evidence are maintained in `docs/ASSIGNMENT-TRACEABILITY.md`.
 
 ## 7. Observability
 

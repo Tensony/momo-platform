@@ -87,6 +87,57 @@ def test_outbox_publishes_once_and_retries_failures(make_wallet):
     assert outbox.publish_pending() == 0   # no EVENT_TOPIC_ARN configured => no-op
 
 
+def test_outbox_partial_delivery_retries_and_consumer_deduplicates(make_wallet, monkeypatch):
+    class FailAfterFirstDelivery:
+        def __init__(self):
+            self.events = []
+            self.calls = 0
+
+        def publish(self, event_type, payload, correlation_id):
+            self.calls += 1
+            if self.calls == 2:
+                raise RuntimeError("sns unavailable after first delivery")
+            self.events.append((event_type, payload, correlation_id))
+
+    payer, payee = make_wallet(5_000), make_wallet(0)
+    contexts = [new_ctx(payer, payee, 800) for _ in range(2)]
+    for ctx in contexts:
+        run_saga(ctx)
+
+    publisher = FailAfterFirstDelivery()
+    with pytest.raises(RuntimeError, match="sns unavailable"):
+        outbox.publish_pending(publisher=publisher)
+    with transaction() as conn:
+        assert conn.execute(
+            "SELECT count(*) AS n FROM outbox_events WHERE published_at IS NULL"
+        ).fetchone()["n"] == 2
+
+    assert outbox.publish_pending(publisher=publisher) == 2
+    delivered_ids = [event[1]["txn_id"] for event in publisher.events]
+    assert delivered_ids[0] == delivered_ids[1]
+    assert delivered_ids[2] != delivered_ids[0]
+
+    from momo.fraud.config import FraudConfig
+
+    monkeypatch.setattr("momo.fraud.service.load_config", lambda: FraudConfig(daily_volume_limit=500))
+    records = [
+        {
+            "messageId": f"m{index}",
+            "body": json.dumps(payload),
+            "messageAttributes": {
+                "correlation_id": {"stringValue": correlation_id or ""},
+            },
+        }
+        for index, (_, payload, correlation_id) in enumerate(publisher.events)
+    ]
+    assert fraud_handler.handler({"Records": records}) == {"batchItemFailures": []}
+    with transaction() as conn:
+        alerts = conn.execute(
+            "SELECT txn_id FROM fraud_alerts WHERE decision = 'REVIEW' ORDER BY txn_id"
+        ).fetchall()
+    assert sorted(str(row["txn_id"]) for row in alerts) == sorted(ctx.txn_id for ctx in contexts)
+
+
 def test_async_fraud_review_is_idempotent_and_raises_alert(make_wallet, monkeypatch):
     from momo.fraud.config import FraudConfig
     monkeypatch.setattr("momo.fraud.service.load_config", lambda: FraudConfig(daily_volume_limit=500))

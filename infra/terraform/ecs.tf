@@ -140,7 +140,7 @@ resource "aws_ecs_task_definition" "api" {
       image                  = "${aws_ecr_repository.api.repository_url}:${var.api_image_tag}"
       essential              = true
       portMappings           = [{ containerPort = local.api_port, protocol = "tcp" }]
-      readonlyRootFilesystem = false
+      readonlyRootFilesystem = true
       linuxParameters        = { initProcessEnabled = true }
       environment = [
         { name = "SERVICE_NAME", value = "wallet-api" },
@@ -278,6 +278,7 @@ resource "aws_ecs_service" "api" {
   cluster                           = aws_ecs_cluster.main.id
   task_definition                   = aws_ecs_task_definition.api.arn
   desired_count                     = var.api_min_tasks
+  availability_zone_rebalancing     = "ENABLED"
   launch_type                       = "FARGATE"
   health_check_grace_period_seconds = 30
   enable_execute_command            = false

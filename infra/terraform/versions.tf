@@ -10,8 +10,7 @@ terraform {
 }
 
 provider "aws" {
-  region  = var.region
-  profile = "momo-dev"
+  region = var.region
   default_tags {
     tags = {
       Project     = var.project
