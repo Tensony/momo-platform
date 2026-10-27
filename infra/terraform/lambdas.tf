@@ -6,7 +6,7 @@
 
 locals {
   lambda_common_env = {
-    DB_HOST                = aws_rds_cluster.main.endpoint
+    DB_HOST                = aws_db_instance.main.address
     DB_NAME                = "momo"
     DB_USER                = "momo_app"
     DB_POOL_MAX            = "2"
@@ -14,7 +14,7 @@ locals {
     LOG_LEVEL              = "INFO"
     ENABLE_FAULT_INJECTION = tostring(var.enable_fault_injection)
   }
-  db_connect_arn = "arn:${data.aws_partition.current.partition}:rds-db:${var.region}:${local.account_id}:dbuser:${aws_rds_cluster.main.cluster_resource_id}/momo_app"
+  db_connect_arn = "arn:${data.aws_partition.current.partition}:rds-db:${var.region}:${local.account_id}:dbuser:${aws_db_instance.main.resource_id}/momo_app"
 }
 
 resource "aws_lambda_layer_version" "deps" {
@@ -382,7 +382,7 @@ data "aws_iam_policy_document" "db_init" {
   statement {
     sid       = "ReadMasterSecret"
     actions   = ["secretsmanager:GetSecretValue"]
-    resources = [aws_rds_cluster.main.master_user_secret[0].secret_arn]
+    resources = [aws_db_instance.main.master_user_secret[0].secret_arn]
   }
   statement {
     sid       = "DecryptMasterSecret"
@@ -421,9 +421,9 @@ resource "aws_lambda_function" "db_init" {
   }
   environment {
     variables = {
-      DB_HOST              = aws_rds_cluster.main.endpoint
+      DB_HOST              = aws_db_instance.main.address
       DB_NAME              = "momo"
-      DB_MASTER_SECRET_ARN = aws_rds_cluster.main.master_user_secret[0].secret_arn # an ARN, not a secret
+      DB_MASTER_SECRET_ARN = aws_db_instance.main.master_user_secret[0].secret_arn # an ARN, not a secret
       SCHEMA_PATH          = "/var/task/schema.sql"
     }
   }
@@ -433,5 +433,5 @@ resource "aws_lambda_function" "db_init" {
 resource "aws_lambda_invocation" "db_init" {
   function_name = aws_lambda_function.db_init.function_name
   input         = jsonencode({ schema_sha = filesha256("${path.module}/../../db/schema.sql") })
-  depends_on    = [aws_rds_cluster_instance.main, aws_vpc_endpoint.interface]
+  depends_on    = [aws_db_instance.main, aws_vpc_endpoint.interface]
 }

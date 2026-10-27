@@ -146,7 +146,7 @@ resource "aws_ecs_task_definition" "api" {
         { name = "SERVICE_NAME", value = "wallet-api" },
         { name = "SAGA_MODE", value = "stepfunctions" },
         { name = "STATE_MACHINE_ARN", value = aws_sfn_state_machine.saga.arn },
-        { name = "DB_HOST", value = aws_rds_cluster.main.endpoint },
+        { name = "DB_HOST", value = aws_db_instance.main.address },
         { name = "DB_NAME", value = "momo" },
         { name = "DB_USER", value = "momo_app" },
         { name = "DB_POOL_MAX", value = "4" },

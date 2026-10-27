@@ -14,4 +14,4 @@ output "state_machine_arn" { value = aws_sfn_state_machine.saga.arn }
 output "dashboard_name" { value = aws_cloudwatch_dashboard.main.dashboard_name }
 output "settlement_bucket" { value = aws_s3_bucket.settlement.bucket }
 output "region" { value = var.region }
-output "db_endpoint" { value = aws_rds_cluster.main.endpoint }
+output "db_endpoint" { value = aws_db_instance.main.address }

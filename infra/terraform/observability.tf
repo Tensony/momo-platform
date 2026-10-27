@@ -124,11 +124,11 @@ resource "aws_cloudwatch_metric_alarm" "reconciliation" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "aurora_cpu" {
-  alarm_name          = "${local.name}-aurora-saturation"
-  alarm_description   = "Aurora ACU utilisation above 85% for 10 minutes. ACTION: runbook 'Database saturation' - raise aurora_max_acu, check slow queries in Performance Insights."
+  alarm_name          = "${local.name}-db-saturation"
+  alarm_description   = "Database CPU utilisation above 85% for 10 minutes. ACTION: runbook 'Database saturation' - check slow queries."
   namespace           = "AWS/RDS"
-  metric_name         = "ACUUtilization"
-  dimensions          = { DBClusterIdentifier = aws_rds_cluster.main.cluster_identifier }
+  metric_name         = "CPUUtilization"
+  dimensions          = { DBInstanceIdentifier = aws_db_instance.main.identifier }
   statistic           = "Average"
   period              = 300
   evaluation_periods  = 2
@@ -221,10 +221,10 @@ resource "aws_cloudwatch_dashboard" "main" {
       {
         type = "metric", x = 8, y = 13, width = 8, height = 6
         properties = {
-          title = "SATURATION - Aurora ACU, connections", region = var.region, view = "timeSeries", period = 60
+          title = "SATURATION - RDS CPU, connections", region = var.region, view = "timeSeries", period = 60
           metrics = [
-            ["AWS/RDS", "ACUUtilization", "DBClusterIdentifier", aws_rds_cluster.main.cluster_identifier, { stat = "Average" }],
-            ["AWS/RDS", "DatabaseConnections", "DBClusterIdentifier", aws_rds_cluster.main.cluster_identifier, { stat = "Maximum", yAxis = "right" }],
+            ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", aws_db_instance.main.identifier, { stat = "Average" }],
+            ["AWS/RDS", "DatabaseConnections", "DBInstanceIdentifier", aws_db_instance.main.identifier, { stat = "Maximum", yAxis = "right" }],
           ]
         }
       },
