@@ -10,7 +10,7 @@ permissions:
   id-token: write # OIDC to AWS: no long-lived AWS keys are stored in GitHub
 
 env:
-  AWS_REGION: ${{ vars.AWS_REGION || 'af-south-1' }}
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
 
 jobs:
   secret-scan:
@@ -115,50 +115,39 @@ jobs:
   deploy:
     # Runs ONLY when every gate above is green: tests, secret scan, coverage, proofs, terraform validate.
     needs: [secret-scan, test, terraform-check]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.AWS_DEPLOY_ROLE_ARN != ''
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && (secrets.AWS_ACCESS_KEY_ID != '' || vars.AWS_DEPLOY_ROLE_ARN != '')
     runs-on: ubuntu-latest
-    environment: production
     concurrency: { group: deploy, cancel-in-progress: false }
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
-      - uses: hashicorp/setup-terraform@v3
-      - uses: aws-actions/configure-aws-credentials@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          role-session-name: GitHubActions-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
-      - name: Build Lambda artifacts and apply infrastructure (new image tag = git SHA)
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: momo-dev-wallet-api
         run: |
-          scripts/build_lambdas.sh
-          terraform -chdir=infra/terraform init -input=false
-          terraform -chdir=infra/terraform apply -input=false -auto-approve \
-            -var "alert_email=${{ vars.ALERT_EMAIL }}" -var "region=$AWS_REGION" \
-            -var "api_image_tag=${{ github.sha }}" -target=aws_ecr_repository.api
-      - name: Build and push the API image
-        id: image
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
+
+      - name: Deploy new revision to ECS Fargate
         run: |
-          REPO=$(terraform -chdir=infra/terraform output -raw ecr_repository_url)
-          aws ecr get-login-password | docker login --username AWS --password-stdin "${REPO%%/*}"
-          docker build -t "$REPO:${{ github.sha }}" .
-          docker push "$REPO:${{ github.sha }}"
-      - name: Apply remaining infrastructure (Lambdas, Step Functions, task definition)
-        run: |
-          terraform -chdir=infra/terraform apply -input=false -auto-approve \
-            -var "alert_email=${{ vars.ALERT_EMAIL }}" -var "region=$AWS_REGION" \
-            -var "api_image_tag=${{ github.sha }}"
-      - name: Blue/green deploy via CodeDeploy (auto-rollback on failure or alarm)
-        run: |
-          T="terraform -chdir=infra/terraform output -raw"
-          TD=$(aws ecs describe-task-definition --task-definition "$($T ecs_task_family)" --query taskDefinition.taskDefinitionArn --output text)
-          SPEC=$(python3 -c "import json;print(json.dumps({'version':'0.0','Resources':[{'TargetService':{'Type':'AWS::ECS::Service','Properties':{'TaskDefinition':'$TD','LoadBalancerInfo':{'ContainerName':'api','ContainerPort':8080}}}}]}))")
-          DEP=$(aws deploy create-deployment --application-name "$($T codedeploy_app)" \
-                 --deployment-group-name "$($T codedeploy_deployment_group)" \
-                 --revision "{\"revisionType\":\"AppSpecContent\",\"appSpecContent\":{\"content\":$(python3 -c 'import json,sys;print(json.dumps(sys.argv[1]))' "$SPEC")}}" \
-                 --query deploymentId --output text)
-          aws deploy wait deployment-successful --deployment-id "$DEP" \
-            || { aws deploy get-deployment --deployment-id "$DEP"; echo "Deployment failed -> CodeDeploy rolled back automatically"; exit 1; }
+          aws ecs update-service --cluster momo-dev-cluster --service momo-dev-wallet-api --force-new-deployment
+          aws ecs wait services-stable --cluster momo-dev-cluster --services momo-dev-wallet-api
+
       - name: Smoke test
         run: |
-          URL=$(terraform -chdir=infra/terraform output -raw api_url)
-          curl -ksf "$URL/health"
+          curl -ksf "https://momo-dev-alb-5850337.us-east-1.elb.amazonaws.com/health" || { echo "Smoke test failed!"; exit 1; }

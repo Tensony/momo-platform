@@ -51,7 +51,11 @@ class Api:
 
     def _s(self):
         if not hasattr(self.local, "s"):
-            self.local.s = requests.Session()
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            s = requests.Session()
+            s.verify = False
+            self.local.s = s
         return self.local.s
 
     def call(self, method, path, json_body=None, key=None, headers=None, retries=3):
