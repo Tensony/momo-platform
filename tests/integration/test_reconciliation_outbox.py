@@ -135,7 +135,7 @@ def test_outbox_partial_delivery_retries_and_consumer_deduplicates(make_wallet, 
         alerts = conn.execute(
             "SELECT txn_id FROM fraud_alerts WHERE decision = 'REVIEW' ORDER BY txn_id"
         ).fetchall()
-    assert sorted(row["txn_id"] for row in alerts) == sorted(ctx.txn_id for ctx in contexts)
+    assert sorted(str(row["txn_id"]) for row in alerts) == sorted(ctx.txn_id for ctx in contexts)
 
 
 def test_async_fraud_review_is_idempotent_and_raises_alert(make_wallet, monkeypatch):
