@@ -39,7 +39,7 @@ resource "aws_rds_cluster" "main" {
   db_subnet_group_name                = aws_db_subnet_group.main.name
   vpc_security_group_ids              = [aws_security_group.db.id]
   db_cluster_parameter_group_name     = aws_rds_cluster_parameter_group.main.name
-  backup_retention_period             = 7
+  backup_retention_period             = 1
   preferred_backup_window             = "01:00-02:00"
   copy_tags_to_snapshot               = true
   deletion_protection                 = var.deletion_protection

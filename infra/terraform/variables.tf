@@ -102,3 +102,9 @@ variable "enable_interface_endpoints" {
   default     = false
   description = "Interface VPC endpoints cost ~USD 0.01/hour per AZ each (about 131 USD/month for the 9 used here), far more than the NAT data they replace at low traffic. Enable at high volume or when policy forbids any internet egress."
 }
+
+variable "enable_codedeploy" {
+  type        = bool
+  default     = false
+  description = "Enable CodeDeploy blue/green deployments. Set to false if AWS CodeDeploy is not subscribed on the account."
+}

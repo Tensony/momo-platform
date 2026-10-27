@@ -25,11 +25,13 @@ resource "aws_iam_role_policy_attachment" "codedeploy" {
 }
 
 resource "aws_codedeploy_app" "api" {
+  count            = var.enable_codedeploy ? 1 : 0
   name             = "${local.name}-api"
   compute_platform = "ECS"
 }
 
 resource "aws_codedeploy_deployment_config" "linear" {
+  count                  = var.enable_codedeploy ? 1 : 0
   deployment_config_name = "${local.name}-linear-2step"
   compute_platform       = "ECS"
   traffic_routing_config {
@@ -42,10 +44,11 @@ resource "aws_codedeploy_deployment_config" "linear" {
 }
 
 resource "aws_codedeploy_deployment_group" "api" {
-  app_name               = aws_codedeploy_app.api.name
+  count                  = var.enable_codedeploy ? 1 : 0
+  app_name               = aws_codedeploy_app.api[0].name
   deployment_group_name  = "${local.name}-api"
   service_role_arn       = aws_iam_role.codedeploy.arn
-  deployment_config_name = aws_codedeploy_deployment_config.linear.id
+  deployment_config_name = aws_codedeploy_deployment_config.linear[0].id
 
   auto_rollback_configuration {
     enabled = true

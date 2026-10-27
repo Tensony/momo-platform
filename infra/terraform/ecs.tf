@@ -282,7 +282,7 @@ resource "aws_ecs_service" "api" {
   health_check_grace_period_seconds = 30
   enable_execute_command            = false
 
-  deployment_controller { type = "CODE_DEPLOY" }
+  deployment_controller { type = var.enable_codedeploy ? "CODE_DEPLOY" : "ECS" }
 
   network_configuration {
     subnets          = aws_subnet.app[*].id # PRIVATE subnets; spread across both AZs
