@@ -10,7 +10,7 @@ permissions:
   id-token: write # OIDC to AWS: no long-lived AWS keys are stored in GitHub
 
 env:
-  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  AWS_REGION: us-east-1
 
 jobs:
   secret-scan:
@@ -115,7 +115,7 @@ jobs:
   deploy:
     # Runs ONLY when every gate above is green: tests, secret scan, coverage, proofs, terraform validate.
     needs: [secret-scan, test, terraform-check]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && (secrets.AWS_ACCESS_KEY_ID != '' || vars.AWS_DEPLOY_ROLE_ARN != '')
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     concurrency: { group: deploy, cancel-in-progress: false }
     steps:
@@ -126,8 +126,6 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
-          role-session-name: GitHubActions-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Log in to Amazon ECR
