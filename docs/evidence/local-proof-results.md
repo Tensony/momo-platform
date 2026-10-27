@@ -1,7 +1,7 @@
 # Correctness proofs
 
 - Target: `local (in-process API + PostgreSQL)`
-- Run: 2026-10-20T03:39:40.634248+00:00
+- Run: 2026-10-26T18:10:52.611587+00:00
 - Overall: **PASS**
 
 ## 1. Idempotency (100 replays -> 1 debit)

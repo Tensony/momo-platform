@@ -1,7 +1,7 @@
 {
   "target": "local (in-process API + PostgreSQL)",
-  "started_at": "2026-10-19T17:20:36.935633+00:00",
-  "finished_at": "2026-10-19T17:20:39.400000+00:00",
+  "started_at": "2026-10-26T18:10:52.611587+00:00",
+  "finished_at": "2026-10-26T18:10:58.398406+00:00",
   "passed": true,
   "results": {
     "idempotency": [
