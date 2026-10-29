@@ -57,4 +57,23 @@ def test_demo_ui_served_at_root():
     client = create_app().test_client()
     r = client.get("/")
     assert r.status_code == 200
-    assert "Mobile Money Platform" in r.get_data(as_text=True)
+    assert "MoMo" in r.get_data(as_text=True)
+
+
+def test_api_cors_is_restricted_to_configured_origins(monkeypatch):
+    from momo.api.app import create_app
+
+    monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "http://127.0.0.1:5050")
+    client = create_app().test_client()
+    allowed = client.options(
+        "/wallets",
+        headers={
+            "Origin": "http://127.0.0.1:5050",
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "authorization",
+        },
+    )
+    assert allowed.headers["Access-Control-Allow-Origin"] == "http://127.0.0.1:5050"
+    assert "Authorization" in allowed.headers["Access-Control-Allow-Headers"]
+    denied = client.get("/health", headers={"Origin": "https://untrusted.example"})
+    assert "Access-Control-Allow-Origin" not in denied.headers

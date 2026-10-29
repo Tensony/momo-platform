@@ -90,6 +90,49 @@ def get_wallet(wallet_id: str) -> dict:
         return ledger.get_wallet(conn, wallet_id)
 
 
+def list_wallets(
+    owner_id: str, *, is_admin: bool, kind: str | None = None, status: str | None = None,
+    currency: str | None = None, search: str | None = None, limit: int = 50, offset: int = 0,
+) -> dict:
+    filters, params = [], []
+    if not is_admin:
+        filters.append("owner_id = %s")
+        params.append(owner_id)
+    if kind:
+        filters.append("kind = %s")
+        params.append(kind)
+    if status:
+        filters.append("status = %s")
+        params.append(status)
+    if currency:
+        filters.append("currency = %s")
+        params.append(currency)
+    if search:
+        filters.append("(CAST(id AS text) ILIKE %s OR owner_id ILIKE %s)")
+        params.extend((f"%{search}%", f"%{search}%"))
+    where = f" WHERE {' AND '.join(filters)}" if filters else ""
+    with transaction() as conn:
+        total = conn.execute(f"SELECT count(*) AS n FROM wallets{where}", params).fetchone()["n"]
+        rows = conn.execute(
+            """SELECT id, owner_id, kind, currency, balance, status, created_at
+                 FROM wallets""" + where + """ ORDER BY created_at DESC, id LIMIT %s OFFSET %s""",
+            [*params, limit, offset],
+        ).fetchall()
+    return {
+        "wallets": [
+            {
+                "id": str(row["id"]), "owner_id": row["owner_id"], "kind": row["kind"],
+                "currency": row["currency"].strip(), "balance": row["balance"],
+                "status": row["status"], "created_at": row["created_at"].isoformat(),
+            }
+            for row in rows
+        ],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }
+
+
 def get_ledger(wallet_id: str, limit: int = 50) -> list[dict]:
     with transaction() as conn:
         ledger.get_wallet(conn, wallet_id)  # 404 if missing
@@ -112,6 +155,199 @@ def get_transaction(txn_id: str) -> dict:
         "amount": row["amount"], "currency": row["currency"], "reason": row["reason"],
         "reverses_transaction_id": str(row["reverses_txn_id"]) if row["reverses_txn_id"] else None,
         "created_at": row["created_at"].isoformat(),
+    }
+
+
+def list_transactions(
+    actor: str, *, is_admin: bool, txn_type: str | None = None, status: str | None = None,
+    wallet_id: str | None = None, search: str | None = None, limit: int = 50, offset: int = 0,
+) -> dict:
+    filters, params = [], []
+    if not is_admin:
+        filters.append("(src.owner_id = %s OR dst.owner_id = %s)")
+        params.extend((actor, actor))
+    if txn_type:
+        filters.append("t.type = %s")
+        params.append(txn_type)
+    if status:
+        filters.append("t.status = %s")
+        params.append(status)
+    if wallet_id:
+        filters.append("(t.from_wallet = %s OR t.to_wallet = %s)")
+        params.extend((wallet_id, wallet_id))
+    if search:
+        filters.append(
+            "(CAST(t.id AS text) ILIKE %s OR CAST(t.from_wallet AS text) ILIKE %s "
+            "OR CAST(t.to_wallet AS text) ILIKE %s)"
+        )
+        params.extend((f"%{search}%", f"%{search}%", f"%{search}%"))
+    where = f" WHERE {' AND '.join(filters)}" if filters else ""
+    from_sql = (
+        " FROM transactions t JOIN wallets src ON src.id = t.from_wallet"
+        " JOIN wallets dst ON dst.id = t.to_wallet"
+    )
+    with transaction() as conn:
+        total = conn.execute(f"SELECT count(*) AS n{from_sql}{where}", params).fetchone()["n"]
+        rows = conn.execute(
+            """SELECT t.id, t.type, t.status, t.from_wallet, t.to_wallet, t.amount, t.currency,
+                      t.reason, t.reverses_txn_id, t.created_at""" + from_sql + where
+            + """ ORDER BY t.created_at DESC, t.id LIMIT %s OFFSET %s""",
+            [*params, limit, offset],
+        ).fetchall()
+    return {
+        "transactions": [
+            {
+                "transaction_id": str(row["id"]), "type": row["type"], "status": row["status"],
+                "from_wallet": str(row["from_wallet"]), "to_wallet": str(row["to_wallet"]),
+                "amount": row["amount"], "currency": row["currency"].strip(),
+                "reason": row["reason"],
+                "reverses_transaction_id": str(row["reverses_txn_id"]) if row["reverses_txn_id"] else None,
+                "created_at": row["created_at"].isoformat(),
+            }
+            for row in rows
+        ],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }
+
+
+def get_transaction_ledger(txn_id: str) -> list[dict]:
+    txn_id = as_uuid(txn_id, "transaction")
+    with transaction() as conn:
+        rows = conn.execute(
+            """SELECT e.id, e.txn_id, e.step, e.wallet_id, e.wallet_seq, e.direction,
+                      e.amount, e.entry_type, e.created_at, w.currency
+                 FROM ledger_entries e JOIN wallets w ON w.id = e.wallet_id
+                WHERE e.txn_id = %s ORDER BY e.created_at, e.id""",
+            (txn_id,),
+        ).fetchall()
+    return [
+        {
+            "entry_id": row["id"], "transaction_id": str(row["txn_id"]),
+            "step": row["step"], "wallet_id": str(row["wallet_id"]),
+            "wallet_seq": row["wallet_seq"], "direction": row["direction"],
+            "amount": row["amount"], "currency": row["currency"].strip(),
+            "entry_type": row["entry_type"], "created_at": row["created_at"].isoformat(),
+        }
+        for row in rows
+    ]
+
+
+def lookup_operation(actor: str, txn_type: str, key: str) -> dict:
+    allowed_types = {"TRANSFER", "MERCHANT_PAYMENT", "CASH_IN", "CASH_OUT", "FLOAT_TOPUP", "REVERSAL"}
+    if txn_type not in allowed_types:
+        raise InvalidRequest("unsupported transaction type")
+    key = idempotency.validate_key(key)
+    scope = f"{actor}:{txn_type}"
+    txn_id = idempotency.derive_txn_id(scope, key)
+    with transaction() as conn:
+        operation = conn.execute(
+            """SELECT status, response_code, response_body FROM idempotency_keys
+                WHERE scope = %s AND key = %s""",
+            (scope, key),
+        ).fetchone()
+        if operation is None:
+            raise NotFound("operation not found")
+        row = conn.execute(
+            """SELECT id, type, status, from_wallet, to_wallet, amount, currency, reason,
+                      reverses_txn_id, created_at FROM transactions WHERE id = %s""",
+            (txn_id,),
+        ).fetchone()
+    txn = None
+    if row:
+        txn = {
+            "transaction_id": str(row["id"]), "type": row["type"], "status": row["status"],
+            "from_wallet": str(row["from_wallet"]), "to_wallet": str(row["to_wallet"]),
+            "amount": row["amount"], "currency": row["currency"].strip(), "reason": row["reason"],
+            "reverses_transaction_id": str(row["reverses_txn_id"]) if row["reverses_txn_id"] else None,
+            "created_at": row["created_at"].isoformat(),
+        }
+    return {
+        "operation_status": operation["status"],
+        "response_code": operation["response_code"],
+        "response": operation["response_body"],
+        "transaction": txn,
+    }
+
+
+def list_disputes(actor: str, *, is_admin: bool, limit: int = 50, offset: int = 0) -> dict:
+    where = "" if is_admin else " WHERE d.raised_by = %s"
+    params = [] if is_admin else [actor]
+    with transaction() as conn:
+        total = conn.execute(
+            "SELECT count(*) AS n FROM disputes d" + where, params
+        ).fetchone()["n"]
+        rows = conn.execute(
+            """SELECT d.id, d.txn_id, d.raised_by, d.reason, d.status, d.resolution_note,
+                      d.created_at, d.resolved_at FROM disputes d""" + where
+            + """ ORDER BY d.created_at DESC, d.id LIMIT %s OFFSET %s""",
+            [*params, limit, offset],
+        ).fetchall()
+    return {
+        "disputes": [
+            {
+                "dispute_id": str(row["id"]), "transaction_id": str(row["txn_id"]),
+                "raised_by": row["raised_by"], "reason": row["reason"], "status": row["status"],
+                "resolution_note": row["resolution_note"],
+                "created_at": row["created_at"].isoformat(),
+                "resolved_at": row["resolved_at"].isoformat() if row["resolved_at"] else None,
+            }
+            for row in rows
+        ],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }
+
+
+def list_fraud_alerts(limit: int = 50, offset: int = 0) -> dict:
+    with transaction() as conn:
+        total = conn.execute("SELECT count(*) AS n FROM fraud_alerts").fetchone()["n"]
+        rows = conn.execute(
+            """SELECT a.id, a.txn_id, a.wallet_id, a.decision, a.rules, a.created_at,
+                      t.type, t.status, t.amount, t.currency
+                 FROM fraud_alerts a LEFT JOIN transactions t ON t.id = a.txn_id
+                ORDER BY a.created_at DESC, a.id DESC LIMIT %s OFFSET %s""",
+            (limit, offset),
+        ).fetchall()
+    return {
+        "alerts": [
+            {
+                "alert_id": row["id"], "transaction_id": str(row["txn_id"]),
+                "wallet_id": str(row["wallet_id"]), "decision": row["decision"],
+                "rules": row["rules"], "created_at": row["created_at"].isoformat(),
+                "transaction_type": row["type"], "transaction_status": row["status"],
+                "amount": row["amount"], "currency": row["currency"].strip() if row["currency"] else None,
+            }
+            for row in rows
+        ],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }
+
+
+def list_settlement_reports(limit: int = 50, offset: int = 0) -> dict:
+    with transaction() as conn:
+        total = conn.execute("SELECT count(*) AS n FROM settlement_reports").fetchone()["n"]
+        rows = conn.execute(
+            """SELECT id, report_date, currency, summary, created_at
+                 FROM settlement_reports ORDER BY report_date DESC, id DESC LIMIT %s OFFSET %s""",
+            (limit, offset),
+        ).fetchall()
+    return {
+        "reports": [
+            {
+                "report_id": row["id"], "report_date": row["report_date"].isoformat(),
+                "currency": row["currency"].strip(), "summary": row["summary"],
+                "created_at": row["created_at"].isoformat(),
+            }
+            for row in rows
+        ],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
     }
 
 
