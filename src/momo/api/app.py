@@ -9,10 +9,11 @@ from __future__ import annotations
 
 import logging
 import os
+import pathlib
 import re
 import time
 
-from flask import Flask, g, jsonify, request
+from flask import Flask, Response, g, jsonify, request
 
 from .. import service
 from ..common import metrics
@@ -131,6 +132,12 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
         return respond(result)
 
     # ------------------------------------------------------------------ routes
+    @app.get("/")
+    @app.get("/demo")
+    def demo_ui():
+        html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "index.html"
+        return Response(html_path.read_text(encoding="utf-8"), mimetype="text/html")
+
     @app.get("/health")
     def health():
         if os.environ.get("FORCE_UNHEALTHY", "false").lower() == "true":  # rollback demo hook

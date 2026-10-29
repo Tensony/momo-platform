@@ -10,6 +10,7 @@ RUN useradd --system --uid 10001 --no-create-home app
 WORKDIR /app
 COPY --from=build /install /usr/local
 COPY src ./src
+COPY demo ./demo
 USER 10001
 EXPOSE 8080
 # 2 workers x 4 threads; DB_POOL_MAX is per worker process (see ecs.tf).

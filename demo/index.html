@@ -920,7 +920,20 @@
       btn.classList.add('active');
     }
 
-    window.addEventListener('DOMContentLoaded', resetDemo);
+    window.addEventListener('DOMContentLoaded', () => {
+      resetDemo();
+      fetch('/health')
+        .then(r => r.json().then(d => ({ ok: r.ok, status: r.status, data: d })))
+        .then(res => {
+          const badge = document.getElementById('apiHealthBadge');
+          if (res.ok && res.data.status === 'ok') {
+            badge.textContent = 'AWS Live API (/health): 200 OK';
+          } else {
+            badge.textContent = 'API Health: ' + res.status;
+          }
+        })
+        .catch(() => {});
+    });
   </script>
 </body>
 </html>

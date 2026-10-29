@@ -49,3 +49,12 @@ def test_iam_token_is_cached(monkeypatch):
     assert dbm._iam_token("h", 5432, "momo_app", "af-south-1") == "token-1"
     assert len(calls) == 1
     dbm._token_cache.clear()
+
+
+def test_demo_ui_served_at_root():
+    from momo.api.app import create_app
+
+    client = create_app().test_client()
+    r = client.get("/")
+    assert r.status_code == 200
+    assert "Mobile Money Platform" in r.get_data(as_text=True)
