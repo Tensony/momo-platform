@@ -122,14 +122,25 @@
       grid-template-columns: 1fr 1fr;
       gap: 20px;
     }
+    .grid-2-tight {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
     .grid-4 {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 14px;
       margin-bottom: 20px;
     }
+    .grid-4-flush {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 0;
+    }
     @media (max-width: 850px) {
-      .grid-2, .grid-4 { grid-template-columns: 1fr; }
+      .grid-2, .grid-2-tight, .grid-4, .grid-4-flush { grid-template-columns: 1fr; }
     }
 
     /* Simple Boxes */
@@ -153,6 +164,14 @@
       font-size: 15px;
       font-weight: 700;
     }
+    .box-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .section-heading {
+      font-size: 14px;
+      margin: 14px 0 8px;
+    }
     .stat-card {
       border: 1px solid var(--border);
       padding: 14px;
@@ -163,6 +182,10 @@
       text-transform: uppercase;
       color: var(--muted);
       font-weight: 700;
+    }
+    .stat-name {
+      font-weight: 700;
+      margin-top: 2px;
     }
     .stat-value {
       font-size: 24px;
@@ -191,6 +214,11 @@
       font-size: 13px;
       margin-bottom: 12px;
     }
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
     .btn {
       background: var(--btn-bg);
       color: var(--btn-text);
@@ -215,12 +243,23 @@
     .btn-outline:hover {
       background: var(--bg-hover);
     }
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+    .btn-xs {
+      padding: 3px 8px;
+      font-size: 11px;
+    }
 
     /* Tables */
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 13px;
+    }
+    .table-spaced {
+      margin-bottom: 18px;
     }
     th, td {
       border: 1px solid var(--border);
@@ -237,6 +276,13 @@
       background: var(--bg-alt);
       font-weight: 700;
     }
+    .tampered-row {
+      background: var(--alert-row);
+      font-weight: 700;
+    }
+    .muted-text {
+      color: var(--muted);
+    }
     .mono {
       font-family: Consolas, monospace;
       font-size: 12px;
@@ -247,6 +293,12 @@
       padding: 10px 14px;
       font-size: 13px;
       margin-top: 12px;
+    }
+    .notice-spaced {
+      margin-bottom: 16px;
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
@@ -260,17 +312,17 @@
     <div class="status-bar">
       <span class="tag-solid" id="apiHealthBadge">API Health: 200 OK</span>
       <span class="tag" id="integrityBadge">Ledger Integrity: VALID</span>
-      <button class="btn-outline" style="padding:4px 10px; font-size:12px;" id="themeBtn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
-      <button class="btn-outline" style="padding:4px 10px; font-size:12px;" onclick="resetDemo()">Reset Demo</button>
+      <button type="button" class="btn-outline btn-sm" id="themeBtn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+      <button type="button" class="btn-outline btn-sm" onclick="resetDemo()">Reset Demo</button>
     </div>
   </header>
 
   <nav>
-    <button class="tab-btn active" onclick="showTab('tab-wallets', this)">1. Wallets & Send Money</button>
-    <button class="tab-btn" onclick="showTab('tab-tests', this)">2. Demo 1: Automated Tests (123)</button>
-    <button class="tab-btn" onclick="showTab('tab-proofs', this)">3. Demo 2: 3 Correctness Proofs</button>
-    <button class="tab-btn" onclick="showTab('tab-ledger', this)">4. Demo 3: Tamper-Evident Ledger</button>
-    <button class="tab-btn" onclick="showTab('tab-cost', this)">5. Demo 4: Monitoring & Cloud Cost (ZMW)</button>
+    <button type="button" class="tab-btn active" onclick="showTab('tab-wallets', this)">1. Wallets &amp; Send Money</button>
+    <button type="button" class="tab-btn" onclick="showTab('tab-tests', this)">2. Demo 1: Automated Tests (123)</button>
+    <button type="button" class="tab-btn" onclick="showTab('tab-proofs', this)">3. Demo 2: 3 Correctness Proofs</button>
+    <button type="button" class="tab-btn" onclick="showTab('tab-ledger', this)">4. Demo 3: Tamper-Evident Ledger</button>
+    <button type="button" class="tab-btn" onclick="showTab('tab-cost', this)">5. Demo 4: Monitoring &amp; Cloud Cost (ZMW)</button>
   </nav>
 
   <div class="container">
@@ -288,8 +340,8 @@
             <span class="box-title">Send Money / Perform Transaction (Kwacha)</span>
           </div>
 
-          <label>Transaction Type</label>
-          <select id="txnType" onchange="syncWalletSelectors()">
+          <label for="txnType">Transaction Type</label>
+          <select id="txnType" title="Transaction Type" onchange="syncWalletSelectors()">
             <option value="TRANSFER">Customer Transfer (Alice → Bob)</option>
             <option value="MERCHANT_PAYMENT">Merchant Payment (Alice → Shoprite)</option>
             <option value="CASH_IN">Agent Cash-In (Agent → Alice)</option>
@@ -297,35 +349,35 @@
             <option value="FLOAT_TOPUP">Admin Float Top-Up (Mint → Agent)</option>
           </select>
 
-          <div class="grid-2" style="gap:10px;">
+          <div class="grid-2-tight">
             <div>
-              <label>From Wallet</label>
-              <select id="fromWallet"></select>
+              <label for="fromWallet">From Wallet</label>
+              <select id="fromWallet" title="From Wallet"></select>
             </div>
             <div>
-              <label>To Wallet</label>
-              <select id="toWallet"></select>
-            </div>
-          </div>
-
-          <div class="grid-2" style="gap:10px;">
-            <div>
-              <label>Amount (Kwacha - ZMW)</label>
-              <input type="number" id="amountInput" value="150" min="1" />
-            </div>
-            <div>
-              <label>Idempotency Key</label>
-              <input type="text" id="idemInput" class="mono" value="key-001" />
+              <label for="toWallet">To Wallet</label>
+              <select id="toWallet" title="To Wallet"></select>
             </div>
           </div>
 
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="btn" onclick="sendTransaction(false)">Send Payment</button>
-            <button class="btn-outline" onclick="newKey()">New Key</button>
-            <button class="btn-outline" onclick="sendTransaction(true)">Simulate Server Crash</button>
+          <div class="grid-2-tight">
+            <div>
+              <label for="amountInput">Amount (Kwacha - ZMW)</label>
+              <input type="number" id="amountInput" title="Amount in Kwacha" value="150" min="1" />
+            </div>
+            <div>
+              <label for="idemInput">Idempotency Key</label>
+              <input type="text" id="idemInput" title="Idempotency Key" class="mono" value="key-001" />
+            </div>
           </div>
 
-          <div id="txnMessage" class="notice" style="display:none;"></div>
+          <div class="btn-row">
+            <button type="button" class="btn" onclick="sendTransaction(false)">Send Payment</button>
+            <button type="button" class="btn-outline" onclick="newKey()">New Key</button>
+            <button type="button" class="btn-outline" onclick="sendTransaction(true)">Simulate Server Crash</button>
+          </div>
+
+          <div id="txnMessage" class="notice hidden"></div>
         </div>
 
         <!-- Recent Transactions Table -->
@@ -357,10 +409,10 @@
       <div class="box">
         <div class="box-header">
           <div>
-            <div class="box-title">Demo 1: Full Automated Test Suite & CI/CD Gates</div>
-            <div style="font-size:12px; color:var(--muted);">Equivalent to running .\make.bat (Unit + Integration + Security Checks)</div>
+            <div class="box-title">Demo 1: Full Automated Test Suite &amp; CI/CD Gates</div>
+            <div class="box-sub">Equivalent to running .\make.bat (Unit + Integration + Security Checks)</div>
           </div>
-          <button class="btn" onclick="runTestSuiteDemo()">Run All 123 Tests</button>
+          <button type="button" class="btn" onclick="runTestSuiteDemo()">Run All 123 Tests</button>
         </div>
 
         <div class="grid-4">
@@ -375,7 +427,7 @@
             <div class="stat-sub">Required gate: ≥ 60%</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Secret & Lint Scan</div>
+            <div class="stat-label">Secret &amp; Lint Scan</div>
             <div class="stat-value">0 Issues</div>
             <div class="stat-sub">gitleaks + ruff + tfsec</div>
           </div>
@@ -429,7 +481,7 @@
               <td class="mono">tests/integration/test_saga.py</td>
               <td>15</td>
               <td>95%</td>
-              <td>Crash fault injection at all 5 steps, Escrow compensation, outbox & reconciliation</td>
+              <td>Crash fault injection at all 5 steps, Escrow compensation, outbox &amp; reconciliation</td>
               <td><strong>PASS</strong></td>
             </tr>
           </tbody>
@@ -445,9 +497,9 @@
         <div class="box-header">
           <div>
             <div class="box-title">Demo 2: The 3 Live Correctness Proofs (.\make.bat proofs)</div>
-            <div style="font-size:12px; color:var(--muted);">Proves Idempotency, Saga Crash Recovery, and Concurrency Overdraft Protection in Kwacha (ZMW)</div>
+            <div class="box-sub">Proves Idempotency, Saga Crash Recovery, and Concurrency Overdraft Protection in Kwacha (ZMW)</div>
           </div>
-          <button class="btn" onclick="runAllProofsUI()">Run All 3 Proofs Now</button>
+          <button type="button" class="btn" onclick="runAllProofsUI()">Run All 3 Proofs Now</button>
         </div>
 
         <div class="grid-4">
@@ -474,8 +526,8 @@
         </div>
 
         <!-- Proof 1 Table -->
-        <h3 style="font-size:14px; margin:14px 0 8px;">1. Idempotency Proof (100 Duplicate Clicks of K150.00 → Debited Once)</h3>
-        <table style="margin-bottom:18px;">
+        <h3 class="section-heading">1. Idempotency Proof (100 Duplicate Clicks of K150.00 → Debited Once)</h3>
+        <table class="table-spaced">
           <thead>
             <tr><th>Result</th><th>Check</th><th>Measured Detail</th></tr>
           </thead>
@@ -489,8 +541,8 @@
         </table>
 
         <!-- Proof 2 Table -->
-        <h3 style="font-size:14px; margin:14px 0 8px;">2. Saga Crash Recovery Proof (Crash at Every Step → Automatic K40.00 Refund)</h3>
-        <table style="margin-bottom:18px;">
+        <h3 class="section-heading">2. Saga Crash Recovery Proof (Crash at Every Step → Automatic K40.00 Refund)</h3>
+        <table class="table-spaced">
           <thead>
             <tr><th>Result</th><th>Crash Point</th><th>Outcome</th><th>Balances (Sender / Receiver / Escrow)</th></tr>
           </thead>
@@ -504,7 +556,7 @@
         </table>
 
         <!-- Proof 3 Table -->
-        <h3 style="font-size:14px; margin:14px 0 8px;">3. Concurrency Proof (50 Simultaneous Transfers of K0.30 against K10.00 Balance)</h3>
+        <h3 class="section-heading">3. Concurrency Proof (50 Simultaneous Transfers of K0.30 against K10.00 Balance)</h3>
         <table>
           <thead>
             <tr><th>Result</th><th>Check</th><th>Measured Detail</th></tr>
@@ -525,16 +577,16 @@
       <div class="box">
         <div class="box-header">
           <div>
-            <div class="box-title">Demo 3: Tamper-Evident Append-Only Ledger & SHA-256 Hash Chain</div>
-            <div style="font-size:12px; color:var(--muted);">Every ledger row is linked to the previous row's SHA-256 hash. Editing any Kwacha amount breaks the chain.</div>
+            <div class="box-title">Demo 3: Tamper-Evident Append-Only Ledger &amp; SHA-256 Hash Chain</div>
+            <div class="box-sub">Every ledger row is linked to the previous row's SHA-256 hash. Editing any Kwacha amount breaks the chain.</div>
           </div>
-          <div style="display:flex; gap:8px;">
-            <button class="btn" onclick="tamperLedger(true)">Simulate Database Tampering</button>
-            <button class="btn-outline" onclick="tamperLedger(false)">Restore Clean Ledger</button>
+          <div class="btn-row">
+            <button type="button" class="btn" onclick="tamperLedger(true)">Simulate Database Tampering</button>
+            <button type="button" class="btn-outline" onclick="tamperLedger(false)">Restore Clean Ledger</button>
           </div>
         </div>
 
-        <div id="tamperNotice" class="notice" style="margin-bottom:16px;">
+        <div id="tamperNotice" class="notice notice-spaced">
           <strong>Status: VALID.</strong> PostgreSQL trigger <code class="mono">ledger_entries_immutable</code> blocks UPDATE/DELETE, and all SHA-256 hash links match.
         </div>
 
@@ -566,7 +618,7 @@
             <div class="box-title">CloudWatch 4 Golden Signals (Live Monitoring)</div>
           </div>
         </div>
-        <div class="grid-4" style="margin-bottom:0;">
+        <div class="grid-4-flush">
           <div class="stat-card">
             <div class="stat-label">1. Latency (p95 Speed)</div>
             <div class="stat-value">142 ms</div>
@@ -608,7 +660,7 @@
               <tr><td>Application Load Balancer</td><td class="mono">K825.00 ZMW</td><td class="mono">K933.63 ZMW</td></tr>
               <tr><td>NAT Gateway</td><td class="mono">K1,006.23 ZMW</td><td class="mono">K1,022.18 ZMW</td></tr>
               <tr><td>Aurora Serverless v2 Compute</td><td class="mono">K2,409.00 ZMW</td><td class="mono">K7,227.00 ZMW</td></tr>
-              <tr><td>Aurora Storage & I/O</td><td class="mono">K39.88 ZMW</td><td class="mono">K249.98 ZMW</td></tr>
+              <tr><td>Aurora Storage &amp; I/O</td><td class="mono">K39.88 ZMW</td><td class="mono">K249.98 ZMW</td></tr>
               <tr><td>Step Functions (Express)</td><td class="mono">K3.85 ZMW</td><td class="mono">K39.05 ZMW</td></tr>
               <tr><td>AWS Lambda</td><td class="mono">K15.40 ZMW</td><td class="mono">K154.00 ZMW</td></tr>
               <tr><td>CloudWatch + X-Ray + KMS + Secrets</td><td class="mono">K503.53 ZMW</td><td class="mono">K1,206.98 ZMW</td></tr>
@@ -720,7 +772,7 @@
         { id: 'txn-101', key: 'init-1', type: 'CASH_IN', from: 'agent', to: 'alice', amount: 1350, status: 'COMPLETED' }
       );
 
-      document.getElementById('txnMessage').style.display = 'none';
+      document.getElementById('txnMessage').classList.add('hidden');
       syncWalletSelectors();
       renderAll();
     }
@@ -769,7 +821,7 @@
       const amount = parseFloat(document.getElementById('amountInput').value || '0');
       const key = document.getElementById('idemInput').value.trim() || 'key-default';
       const msg = document.getElementById('txnMessage');
-      msg.style.display = 'block';
+      msg.classList.remove('hidden');
 
       if (fromId === toId) {
         msg.innerHTML = '<strong>Error (422):</strong> Sender and receiver wallets must be different.';
@@ -874,7 +926,7 @@
       document.getElementById('walletCards').innerHTML = visibleWallets.map(w => `
         <div class="stat-card">
           <div class="stat-label">${w.kind} WALLET</div>
-          <div style="font-weight:700; margin-top:2px;">${w.name}</div>
+          <div class="stat-name">${w.name}</div>
           <div class="stat-value">${fmt(w.balance)}</div>
         </div>
       `).join('');
@@ -884,12 +936,12 @@
         const canRev = t.status.startsWith('COMPLETED') && t.type !== 'REVERSAL';
         return `
           <tr>
-            <td class="mono">${t.id}<br><span style="color:var(--muted);">key: ${t.key}</span></td>
+            <td class="mono">${t.id}<br><span class="muted-text">key: ${t.key}</span></td>
             <td>${t.type}</td>
             <td>${t.from} → ${t.to}</td>
             <td class="mono">${fmt(t.amount)}</td>
             <td><strong>${t.status}</strong></td>
-            <td>${canRev ? `<button class="btn-outline" style="padding:3px 8px; font-size:11px;" onclick="reverseTxn('${t.id}')">Reverse</button>` : '—'}</td>
+            <td>${canRev ? `<button type="button" class="btn-outline btn-xs" onclick="reverseTxn('${t.id}')">Reverse</button>` : '—'}</td>
           </tr>
         `;
       }).join('');
@@ -899,7 +951,7 @@
         const bad = isTampered && idx === 1;
         const shownAmount = bad ? fmt(e.amount + 5000) : fmt(e.amount);
         return `
-          <tr style="${bad ? 'background:var(--alert-row); font-weight:700;' : ''}">
+          <tr class="${bad ? 'tampered-row' : ''}">
             <td class="mono">#${e.seq}</td>
             <td>${e.wallet}</td>
             <td class="mono">${e.step}</td>

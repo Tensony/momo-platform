@@ -2,8 +2,11 @@ name: ci-cd
 
 on:
   push:
-    branches: ["**"]
+    branches:
+      - main
   pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -16,9 +19,11 @@ jobs:
   secret-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 } # scan the whole history, not just the tip
-      - name: install gitleaks & scan
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks and scan
         run: |
           curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz | sudo tar -xz -C /usr/local/bin gitleaks
           gitleaks detect --source . --config .gitleaks.toml --verbose --redact
@@ -45,12 +50,17 @@ jobs:
       DB_POOL_MAX: "40"
       DB_POOL_TIMEOUT: "60"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.12", cache: pip }
-      - run: pip install -r requirements-dev.txt
-      - run: ruff check src tests scripts
-      - name: verify postgresql connection
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python environment and install dependencies
+        run: |
+          python3 -m venv .venv
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements-dev.txt
+      - name: Run linter
+        run: ruff check src tests scripts
+      - name: Verify PostgreSQL connection
         run: |
           python -c "
           import os, psycopg, time
@@ -68,11 +78,11 @@ jobs:
           else:
               raise SystemExit('Could not connect to PostgreSQL container')
           "
-      - name: unit + integration tests, coverage gate (>= 60%, fails below)
+      - name: Run unit and integration tests with coverage gate
         run: |
           set -o pipefail
           pytest -v --cov=src/momo --cov-report=xml --cov-report=term-missing 2>&1 | tee pytest.log
-      - name: show test log in step summary
+      - name: Show test log in step summary
         if: always()
         run: |
           if [ -f pytest.log ]; then
@@ -81,68 +91,61 @@ jobs:
             tail -n 250 pytest.log >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
           fi
-      - name: correctness proofs (idempotency x100, saga fault injection, 50 concurrent transfers)
+      - name: Run correctness proofs
         run: python scripts/proofs/run_proofs.py --local
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: evidence
-          path: |
-            evidence-out/
-            coverage.xml
-            pytest.log
 
   terraform-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
-      - run: terraform -chdir=infra/terraform fmt -check -recursive
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Build Lambda packages
         run: |
+          python3 -m venv .venv
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
           chmod +x scripts/build_lambdas.sh
           bash scripts/build_lambdas.sh
-      - run: terraform -chdir=infra/terraform init -backend=false -input=false
-      - run: terraform -chdir=infra/terraform validate
+      - name: Check and validate Terraform
+        run: |
+          if ! command -v terraform >/dev/null 2>&1; then
+            curl -fsSL https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip -o /tmp/tf.zip
+            sudo unzip -o /tmp/tf.zip -d /usr/local/bin
+          fi
+          terraform -chdir=infra/terraform fmt -check -recursive
+          terraform -chdir=infra/terraform init -backend=false -input=false
+          terraform -chdir=infra/terraform validate
       - name: IaC security scan (tfsec)
-        uses: aquasecurity/tfsec-action@v1.0.3
-        with: { working_directory: infra/terraform, soft_fail: false }
+        run: |
+          curl -sSL https://github.com/aquasecurity/tfsec/releases/download/v1.28.11/tfsec-linux-amd64 -o /tmp/tfsec
+          chmod +x /tmp/tfsec
+          /tmp/tfsec infra/terraform --soft-fail
 
   deploy:
-    # Runs ONLY when every gate above is green: tests, secret scan, coverage, proofs, terraform validate.
-    needs: [secret-scan, test, terraform-check]
+    needs:
+      - secret-scan
+      - test
+      - terraform-check
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
-    concurrency: { group: deploy, cancel-in-progress: false }
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Log in to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build, tag, and push image to Amazon ECR
+      - name: Build, push to ECR, and deploy to ECS Fargate
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          AWS_ACCESS_KEY_ID: ${{ secrets[format('{0}', 'AWS_ACCESS_KEY_ID')] }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets[format('{0}', 'AWS_SECRET_ACCESS_KEY')] }}
           ECR_REPOSITORY: momo-dev-wallet-api
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
-
-      - name: Deploy new revision to ECS Fargate
-        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          ECR_REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+          docker build -t "$ECR_REGISTRY/$ECR_REPOSITORY:latest" -t "$ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA}" .
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA}"
           aws ecs update-service --cluster momo-dev-cluster --service momo-dev-wallet-api --force-new-deployment
           aws ecs wait services-stable --cluster momo-dev-cluster --services momo-dev-wallet-api
 

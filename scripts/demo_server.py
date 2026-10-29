@@ -79,6 +79,7 @@ class DemoHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(raw)
 
+    # pyrefly: ignore[bad-override-param-name]
     def log_message(self, fmt: str, *args) -> None:
         return
 

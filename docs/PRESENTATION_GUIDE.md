@@ -26,7 +26,7 @@
 
 ### Member 1: Project Overview & Cloud Setup
 
-#### What this means in plain words
+#### Member 1 — What this means in plain words
 
 * We built a mobile payment app (like MTN Mobile Money, Airtel Money, or PayPal).
 * When people send money on weak mobile phone networks, buttons get tapped multiple times, connections cut off, and servers crash.
@@ -35,6 +35,7 @@
 #### Slide 1: What We Built
 
 * **What you say:**
+
   > *"Hello everyone. Today our team is presenting our Cloud Mobile Money Platform.
   >
   > Think of apps like Apple Pay or Mobile Money. People use them every day to send money to family or buy food.
@@ -49,6 +50,7 @@
 #### Slide 2: How Our Cloud is Built
 
 * **What you say:**
+
   > *"To keep the app running 24/7 without crashing, we host everything on Amazon Web Services (AWS):
   > * **Two Data Centers**: If one AWS building loses power, the other building immediately takes over.
   > * **Private and Safe**: Customers only see our secure front door. Our database and servers are locked inside a private network with no public internet access.
@@ -60,7 +62,7 @@
 
 ### Member 2: Preventing Double-Spending & Crashes
 
-#### What this means in plain words
+#### Member 2 — What this means in plain words
 
 * **Idempotency** means: If you press "Pay $10" five times, the system recognizes it's the exact same order and only charges you once.
 * **Saga Pattern** means: Putting money into a temporary "holding box" (escrow) first. If the transfer finishes, give it to the receiver. If anything breaks, return it to the sender.
@@ -69,6 +71,7 @@
 #### Slide 3: Stopping Double-Spending and Overdrafts
 
 * **What you say:**
+
   > *"Thank you. When customers send money, two big problems can happen:
   >
   > First: **Double-Charging**.
@@ -81,6 +84,7 @@
 #### Slide 4: What Happens When the Server Crashes?
 
 * **What you say:**
+
   > *"Imagine you send $50 to a friend. The system takes $50 from your account, but before your friend gets it, the server crashes. Where is your money?
   >
   > We use a 3-step safety process called a **Saga**:
@@ -96,7 +100,7 @@
 
 ### Member 3: Security, Tamper Protection & Automation
 
-#### What this means in plain words
+#### Member 3 — What this means in plain words
 
 * **Hash Chain** means: Like pages in a bank book where each page has a stamp from the previous page. If someone rips out or changes page 2, all pages after it become invalid.
 * **CI/CD** means: An automated robot that checks our homework (tests our code) before letting it go live to real users.
@@ -104,6 +108,7 @@
 #### Slide 5: Stopping Hackers & Fake Transactions
 
 * **What you say:**
+
   > *"Thank you. In a bank, you have to worry about hackers or even dishonest employees trying to edit balances.
   >
   > We solved this with two major security shields:
@@ -115,6 +120,7 @@
 #### Slide 6: Automated Testing & Deployment
 
 * **What you say:**
+
   > *"We don't deploy updates by hand. We use an automated pipeline on GitHub:
   > * Every time we write code, an automated robot scans for secret leaks.
   > * It runs over **100 tests** checking every single financial calculation.
@@ -127,7 +133,7 @@
 
 ### Member 4: Live Monitoring & Cloud Cost Savings
 
-#### What this means in plain words
+#### Member 4 — What this means in plain words
 
 * **Golden Signals** means: The dashboard shows 4 simple gauges (Speed, Traffic, Errors, and Server Energy).
 * **Cost Optimization** means: We used smart AWS settings so we only pay for what we use, cutting our monthly bill by more than half.
@@ -135,6 +141,7 @@
 #### Slide 7: Watching the Live System (Observability)
 
 * **What you say:**
+
   > *"Thank you. You cannot protect what you cannot see.
   >
   > We built a live CloudWatch dashboard that tracks the health of our bank in real time:
@@ -146,6 +153,7 @@
 #### Slide 8: How We Cut AWS Costs
 
 * **What you say:**
+
   > *"Running bank servers on AWS can get very expensive if you are not careful.
   >
   > We made four smart engineering decisions:
@@ -170,6 +178,7 @@
 * **Member 1 speaks:**
 * **Screen:** Open browser to: `https://momo-dev-alb-5850337.us-east-1.elb.amazonaws.com/health`
 * **What you say:**
+
   > *"First, here is our live system running in the cloud right now. The status says `ok` with code 200, meaning our AWS cluster is healthy and ready for traffic."*
 
 ---
@@ -179,6 +188,7 @@
 * **Member 1 speaks:**
 * **Screen:** Open file `evidence-out/proof-results.md` (look at Section 1).
 * **What you say:**
+
   > *"Here is proof #1. We sent 100 payments at the same time using the exact same request key. As you can see: exactly 1 payment was approved, 99 were recognized as duplicate replays, and the customer was only debited once."*
 
 ---
@@ -188,6 +198,7 @@
 * **Member 2 speaks:**
 * **Screen:** Scroll down to Section 2 in `evidence-out/proof-results.md`.
 * **What you say:**
+
   > *"Here is proof #2. We intentionally crashed the server at 5 different moments during a payment. Every time, the compensation kicked in, funds were returned to the sender, and the bank ledger remained completely balanced."*
 
 ---
@@ -197,6 +208,7 @@
 * **Member 2 speaks:**
 * **Screen:** Scroll down to Section 3 in `evidence-out/proof-results.md`.
 * **What you say:**
+
   > *"Here is proof #3. A user with only $10 tried to make 50 transfers of 30 cents at once. Exactly 33 payments succeeded ($9.90 total), the other 17 were blocked for insufficient funds, and the balance ended at 10 cents. No overdraft occurred."*
 
 ---
@@ -206,6 +218,7 @@
 * **Member 3 speaks:**
 * **Screen:** Open file `db/schema.sql` (around line 85).
 * **What you say:**
+
   > *"Here in our database code, you can see our security rules: no one is allowed to edit or delete history rows, and each row carries a cryptographic SHA-256 fingerprint of the previous row."*
 
 ---
@@ -215,6 +228,7 @@
 * **Member 3 speaks:**
 * **Screen:** Open your GitHub repo page (`Tensony/momo-platform/actions`).
 * **What you say:**
+
   > *"Here is our GitHub Actions page showing green checkmarks. Every test, security scan, and build ran automatically before code was allowed onto AWS."*
 
 ---
@@ -224,6 +238,7 @@
 * **Member 4 speaks:**
 * **Screen:** Open AWS CloudWatch Dashboard (`momo-dev-golden-signals`) or show `DESIGN.md` Section 7.
 * **What you say:**
+
   > *"Here is our live CloudWatch monitoring dashboard showing real-time transaction speed, error rates, and server workload."*
 
 ---
@@ -233,6 +248,7 @@
 * **Member 4 speaks:**
 * **Screen:** Open `docs/DESIGN.md` Section 10 (Table 10.0).
 * **What you say:**
+
   > *"And finally, here is our cost table showing our monthly cost of $193, and how our smart serverless setup saves over $400 every month.
   >
   > That completes our presentation and demonstration. Thank you, and we welcome your questions!"*
