@@ -1,0 +1,183 @@
+MOBILE MONEY PLATFORM — 5-MEMBER LIVE DEMO GUIDE
+Step-by-Step Team Presentation Handout (5 Members = 5 Tabs, Plain English & Zambian Kwacha)
+===========================================================================================
+
+
+QUICK SUMMARY: WHO PRESENTS WHICH TAB (5 MEMBERS)
+-------------------------------------------------
+- Member 1 — Tab 1 (1. Send & Receive Money):
+  Live customer wallets in Kwacha, sending money, receipt generation, passbook records, and official payment refunds.
+
+- Member 2 — Tab 2 (2. Double-Click Protection - 100 Taps):
+  How the platform protects customers on slow phone networks from being charged twice (100 rapid taps test).
+
+- Member 3 — Tab 3 (3. Crash Refund & No Overdraft):
+  How the platform automatically refunds money if the network crashes mid-transfer, plus the 50 simultaneous payments overdraft test.
+
+- Member 4 — Tab 4 (4. Anti-Hacking Protection):
+  How the customer passbook locks every payment with a digital security seal and freezes the account if a hacker changes a balance.
+
+- Member 5 — Tab 5 (5. Cloud Speed & Cost Savings):
+  Live payment speed and accuracy gauges, monthly AWS cloud bill in Kwacha, and 4 cloud cost-saving measures saving 71%.
+
+
+BEFORE YOU START: HOW TO OPEN THE DEMO SCREEN
+---------------------------------------------
+1. Open on Live AWS Server:
+   Open https://momo-dev-alb-5850337.us-east-1.elb.amazonaws.com/ in your web browser.
+
+2. Open on Laptop (Offline Backup):
+   Double-click run_demo_ui.bat (or open demo/index.html in your web browser).
+
+3. Top-Right Controls:
+   - Click "Dark Mode" to switch between Light and Dark themes for the projector.
+   - Click "Reset All Balances" anytime to return all customer wallets to their starting Kwacha amounts:
+     * Alice Customer: K1,000.00
+     * Bob Customer: K500.00
+     * Shoprite Store: K2,500.00
+     * Agent-1 Booth: K10,000.00
+
+
+===========================================================================================
+MEMBER 1: TAB 1 — SEND & RECEIVE MONEY (EVERYDAY WALLETS & REFUNDS)
+===========================================================================================
+
+Step 1A: Send a Normal Payment (K125.00)
+  What to Click:
+    On Tab 1 ("1. Send & Receive Money"), keep "From Customer" as Alice (K1,000.00), "To Customer" as Bob (K500.00), "Amount" as 125.00, and click the black "Send Money" button.
+
+  What Happens on Screen:
+    Alice's balance updates to K875.00, Bob's balance updates to K625.00, a Payment Receipt appears in the middle, and two matching entries (-K125.00 Money Out and +K125.00 Money In) appear in the Customer Passbook table at the bottom.
+
+  What to Say to the Lecturer:
+    "Good day Sir. I am presenting Tab 1, which shows our everyday Mobile Money wallets in Zambian Kwacha. When Alice sends K125 to Bob, our system records two matching entries in the Customer Passbook — K125 out of Alice and K125 into Bob — so money can never vanish or be created out of thin air."
+
+
+Step 1B: Try Spending More Money Than Available
+  What to Click:
+    Click the button labeled "3. Try Spending K999,999 (Not Enough Balance)".
+
+  What Happens on Screen:
+    The receipt displays "Payment Declined — Not Enough Money" and Alice's balance stays safe at K875.00.
+
+  What to Say to the Lecturer:
+    "If a customer tries to send K999,999 when they only have K875, the system blocks the transfer immediately so no wallet can ever go negative."
+
+
+Step 1C: Refund a Previous Payment
+  What to Click:
+    On the right panel under "Refund a Previous Payment", select the K125.00 payment and click "Refund Selected Payment".
+
+  What Happens on Screen:
+    Alice returns to K1,000.00, Bob returns to K500.00, and two new official Refund entries appear in the Customer Passbook.
+
+  What to Say to the Lecturer:
+    "When a customer or merchant refunds a payment, we never delete old records from the passbook. Instead, we record a new official refund entry so the audit trail stays 100 percent complete."
+
+
+===========================================================================================
+MEMBER 2: TAB 2 — DOUBLE-CLICK PROTECTION (100 TAPS ON SLOW NETWORK)
+===========================================================================================
+
+Step 2A: Quick Double-Tap Preview on Tab 1
+  What to Click:
+    First click "1. Test Double-Tap Protection (Click Twice)" on Tab 1 to show a quick 2-tap example, then click the second tab at the top ("2. Double-Click Protection (100 Taps)").
+
+Step 2B: Run the 100 Rapid Taps Simulation
+  What to Click:
+    On Tab 2, click the black button labeled "Simulate 100 Rapid Taps (K150.00)".
+
+  What Happens on Screen:
+    The three summary boxes show:
+    - Charged Only Once: 1 Time (K150.00)
+    - Duplicate Taps Blocked: 99 Blocked
+    - Customer Money Saved: K14,850.00
+    Below, Tap #1 turns black (Charged K150.00) and Taps #2 through #100 stay white (Duplicate Blocked — K0.00).
+
+  What to Say to the Lecturer:
+    "I am presenting Tab 2, which solves one of the biggest complaints in Mobile Money: being charged twice when the network is slow. Here we simulate a customer's phone retrying the same K150 payment 100 times in a row. Tap number 1 pays K150, and Taps 2 through 100 are all safely ignored, saving the customer K14,850 in accidental duplicate charges."
+
+
+===========================================================================================
+MEMBER 3: TAB 3 — CRASH REFUND & NO OVERDRAFT (NETWORK FAILURE & HIGH RUSH)
+===========================================================================================
+
+Step 3A: 3-Step Automatic Crash Refund (Left Panel)
+  What to Click:
+    Click the third tab ("3. Crash Refund & No Overdraft"), then click "Simulate Mid-Payment Crash & Auto-Refund" on the left panel.
+
+  What Happens on Screen:
+    Three visual step boxes show:
+    - Step 1 moves K150.00 from Alice into temporary holding.
+    - Step 2 experiences a Power/Network Failure before Bob receives the money.
+    - Step 3 automatically returns the K150.00 to Alice so her balance stays K1,000.00.
+
+  What to Say to the Lecturer:
+    "I am presenting Tab 3. First, on the left, what happens if money leaves Alice's wallet and the power or network crashes before Bob receives it? As shown in these 3 steps, when Step 2 fails, Step 3 automatically refunds Alice's K150 immediately so her money is never left hanging."
+
+
+Step 3B: 50 Simultaneous Payments Test (Right Panel)
+  What to Click:
+    On the right panel, click "Run 50 Simultaneous Payments Test".
+
+  What Happens on Screen:
+    A wallet with only K10.00 receives 50 simultaneous payment requests of K0.30 each:
+    - Approved: 33 Payments (K9.90)
+    - Declined (No Funds): 17 Declined
+    - Final Balance: K0.10 (Never Negative)
+
+  What to Say to the Lecturer:
+    "Second, on the right, we test what happens if a wallet only has K10.00 and 50 payments of 30 Ngwee arrive at the exact same instant. Our system lines them up one by one: 33 payments succeed for K9.90, 17 are declined because only 10 Ngwee is left, and the wallet never drops below zero."
+
+
+===========================================================================================
+MEMBER 4: TAB 4 — ANTI-HACKING PROTECTION (TAMPER-PROOF PASSBOOK)
+===========================================================================================
+
+Step 4A: Simulate a Hacker Altering a Passbook Balance
+  What to Click:
+    Click the fourth tab ("4. Anti-Hacking Protection"), then click "1. Simulate Hacker Changing a Balance".
+
+  What Happens on Screen:
+    Record #2 in the passbook changes from K250.00 to K999,999.00, its status changes to "TAMPERED / BROKEN SEAL", and the top alarm banner turns black: "SECURITY ALARM: TAMPERING DETECTED — ACCOUNT FROZEN".
+
+  What to Say to the Lecturer:
+    "I am presenting Tab 4, which protects our Mobile Money records against internal fraud or hackers. Every payment in the passbook is locked with a digital security seal linked to the payment before it. When we click this button to simulate someone secretly changing K250 to K999,999, the digital seal breaks immediately, raises a security alarm, and freezes the account."
+
+
+Step 4B: Restore Original Safe Records
+  What to Click:
+    Click "2. Restore Original Safe Records" to return the passbook to "ALL RECORDS VERIFIED & SAFE".
+
+
+===========================================================================================
+MEMBER 5: TAB 5 — CLOUD SPEED & COST SAVINGS (AWS HEALTH & KWACHA BUDGET)
+===========================================================================================
+
+Step 5A: Live Cloud Speed & Reliability Gauges (Top Row)
+  What to Click:
+    Click the fifth tab ("5. Cloud Speed & Cost Savings") and point to the 4 gauges at the top.
+
+  What Happens on Screen:
+    - Payment Speed: 0.14 Seconds (Faster than our 0.30s goal)
+    - System Uptime: 99.9% Online (0 Failed Payments)
+    - Money Accuracy: 100% Exact (Zero Missing Kwacha)
+    - Safety Checks Passed: 128 of 128
+
+  What to Say to the Lecturer:
+    "I am presenting Tab 5, which covers our live AWS cloud performance and monthly budget in Zambian Kwacha. At the top, our payments finish in 0.14 seconds — more than twice as fast as our 0.30-second target — with 99.9 percent uptime and 100 percent money accuracy across all 128 automated safety checks."
+
+
+Step 5B: Monthly AWS Cloud Bill & 71% Cost Savings (Bottom Row)
+  What to Point Out on the Left (Monthly Cloud Bill Table):
+    - Normal Daily Traffic (50 payments/sec): K5,298.44 per month
+    - Busy End-of-Month Payday (500 payments/sec — 10x traffic): K12,071.70 per month
+
+  What to Point Out on the Right (Four Cost-Saving Measures — Saves K13,203.02/month):
+    - Direct Internal AWS Connections: Saves K1,760.00 / month
+    - Express Payment Workflows: Saves K10,931.25 / month
+    - Automatic Low-Cost Receipt Archiving: Saves K316.25 / month
+    - Automatic Old Backup Cleanup: Saves K195.52 / month
+
+  What to Say to the Lecturer:
+    "At the bottom left, our normal monthly AWS bill is K5,298.44, and even when payday traffic jumps 10 times higher, our bill only roughly doubles to K12,071.70. On the bottom right, our four cloud cost-saving measures save K13,203.02 every single month — reducing our total cloud bill by 71 percent."
