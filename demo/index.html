@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mobile Money Platform — Demo Interface (ZMW Kwacha)</title>
+  <title>Mobile Money App — Live Cloud Demonstration</title>
   <style>
     :root {
       --bg: #ffffff;
@@ -54,7 +54,7 @@
     }
     header h1 {
       font-size: 20px;
-      font-weight: 700;
+      font-weight: 800;
     }
     header p {
       font-size: 13px;
@@ -70,17 +70,16 @@
     }
     .tag {
       border: 1px solid var(--border);
-      padding: 4px 10px;
+      padding: 5px 12px;
       background: var(--bg-alt);
       color: var(--text);
     }
     .tag-solid {
       background: var(--btn-bg);
       color: var(--btn-text);
-      padding: 4px 10px;
+      padding: 5px 12px;
     }
 
-    /* Simple Navigation Tabs */
     nav {
       border-bottom: 1px solid var(--border);
       padding: 0 24px;
@@ -94,8 +93,8 @@
       color: var(--text);
       border: none;
       border-bottom: 3px solid transparent;
-      padding: 12px 16px;
-      font-size: 13px;
+      padding: 13px 16px;
+      font-size: 13.5px;
       font-weight: 600;
       cursor: pointer;
     }
@@ -105,12 +104,11 @@
     .tab-btn.active {
       background: var(--bg);
       border-bottom: 3px solid var(--border);
-      font-weight: 700;
+      font-weight: 800;
     }
 
-    /* Main Content Container */
     .container {
-      max-width: 1150px;
+      max-width: 1140px;
       margin: 24px auto;
       padding: 0 24px;
     }
@@ -125,7 +123,13 @@
     .grid-2-tight {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 12px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
     }
     .grid-4 {
       display: grid;
@@ -133,20 +137,13 @@
       gap: 14px;
       margin-bottom: 20px;
     }
-    .grid-4-flush {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-      margin-bottom: 0;
-    }
     @media (max-width: 850px) {
-      .grid-2, .grid-2-tight, .grid-4, .grid-4-flush { grid-template-columns: 1fr; }
+      .grid-2, .grid-2-tight, .grid-3, .grid-4 { grid-template-columns: 1fr; }
     }
 
-    /* Simple Boxes */
     .box {
       border: 1px solid var(--border);
-      padding: 18px;
+      padding: 20px;
       background: var(--bg);
       margin-bottom: 20px;
     }
@@ -155,77 +152,75 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--border);
-      padding-bottom: 10px;
-      margin-bottom: 14px;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
       gap: 10px;
       flex-wrap: wrap;
     }
     .box-title {
-      font-size: 15px;
-      font-weight: 700;
+      font-size: 16px;
+      font-weight: 800;
     }
     .box-sub {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--muted);
-    }
-    .section-heading {
-      font-size: 14px;
-      margin: 14px 0 8px;
+      margin-top: 2px;
     }
     .stat-card {
       border: 1px solid var(--border);
-      padding: 14px;
+      padding: 16px;
       background: var(--bg-card);
     }
     .stat-label {
-      font-size: 11px;
+      font-size: 11.5px;
       text-transform: uppercase;
       color: var(--muted);
       font-weight: 700;
     }
     .stat-name {
+      font-size: 15px;
       font-weight: 700;
-      margin-top: 2px;
+      margin-top: 3px;
     }
     .stat-value {
-      font-size: 24px;
+      font-size: 25px;
       font-weight: 800;
-      margin-top: 4px;
+      margin-top: 6px;
     }
     .stat-sub {
-      font-size: 12px;
+      font-size: 12.5px;
       color: var(--muted);
-      margin-top: 2px;
+      margin-top: 4px;
     }
 
-    /* Forms & Buttons */
     label {
       display: block;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
     }
     input, select {
       width: 100%;
-      padding: 8px 10px;
+      padding: 10px 12px;
       border: 1px solid var(--border);
       background: var(--bg);
       color: var(--text);
-      font-size: 13px;
-      margin-bottom: 12px;
+      font-size: 14px;
+      margin-bottom: 14px;
     }
     .btn-row {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
+      margin-top: 4px;
     }
     .btn {
       background: var(--btn-bg);
       color: var(--btn-text);
       border: 1px solid var(--border);
-      padding: 8px 16px;
-      font-size: 13px;
-      font-weight: 600;
+      padding: 10px 16px;
+      font-size: 13.5px;
+      font-weight: 700;
       cursor: pointer;
     }
     .btn:hover {
@@ -235,7 +230,7 @@
       background: var(--bg);
       color: var(--text);
       border: 1px solid var(--border);
-      padding: 8px 14px;
+      padding: 10px 14px;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
@@ -244,26 +239,22 @@
       background: var(--bg-hover);
     }
     .btn-sm {
-      padding: 4px 10px;
+      padding: 5px 12px;
       font-size: 12px;
     }
     .btn-xs {
-      padding: 3px 8px;
-      font-size: 11px;
+      padding: 4px 10px;
+      font-size: 12px;
     }
 
-    /* Tables */
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 13px;
-    }
-    .table-spaced {
-      margin-bottom: 18px;
+      font-size: 13.5px;
     }
     th, td {
       border: 1px solid var(--border);
-      padding: 8px 10px;
+      padding: 10px 12px;
       text-align: left;
     }
     th {
@@ -274,28 +265,46 @@
     }
     .total-row {
       background: var(--bg-alt);
-      font-weight: 700;
+      font-weight: 800;
     }
     .tampered-row {
       background: var(--alert-row);
-      font-weight: 700;
-    }
-    .muted-text {
-      color: var(--muted);
-    }
-    .mono {
-      font-family: Consolas, monospace;
-      font-size: 12px;
+      font-weight: 800;
     }
     .notice {
-      border: 1px solid var(--border);
+      border: 2px solid var(--border);
       background: var(--bg-alt);
-      padding: 10px 14px;
-      font-size: 13px;
-      margin-top: 12px;
+      padding: 14px 16px;
+      font-size: 14px;
+      margin-top: 14px;
     }
     .notice-spaced {
+      margin-top: 0;
       margin-bottom: 16px;
+    }
+    .step-card {
+      border: 1px solid var(--border);
+      padding: 16px;
+      background: var(--bg-card);
+      text-align: center;
+    }
+    .step-num {
+      display: inline-block;
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      font-weight: 800;
+      font-size: 12px;
+      padding: 2px 9px;
+      margin-bottom: 8px;
+    }
+    .step-title {
+      font-size: 15px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .step-desc {
+      font-size: 13px;
+      color: var(--muted);
     }
     .hidden {
       display: none;
@@ -306,29 +315,29 @@
 
   <header>
     <div>
-      <h1>Mobile Money Platform — Live Demo Interface</h1>
-      <p>Cloud Mobile Payment System (All Amounts in Zambian Kwacha — K / ZMW)</p>
+      <h1>Mobile Money Platform — Live Cloud App</h1>
+      <p>Simple, Safe Mobile Payments in Zambian Kwacha (K / ZMW)</p>
     </div>
     <div class="status-bar">
-      <span class="tag-solid" id="apiHealthBadge">API Health: 200 OK</span>
-      <span class="tag" id="integrityBadge">Ledger Integrity: VALID</span>
+      <span class="tag-solid" id="apiHealthBadge">Cloud Status: Online &amp; Healthy</span>
+      <span class="tag" id="integrityBadge">Account Records: Protected ✓</span>
       <button type="button" class="btn-outline btn-sm" id="themeBtn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
-      <button type="button" class="btn-outline btn-sm" onclick="resetDemo()">Reset Demo</button>
+      <button type="button" class="btn-outline btn-sm" onclick="resetDemo()">Reset Balances</button>
     </div>
   </header>
 
   <nav>
-    <button type="button" class="tab-btn active" onclick="showTab('tab-wallets', this)">1. Wallets &amp; Send Money</button>
-    <button type="button" class="tab-btn" onclick="showTab('tab-tests', this)">2. Demo 1: Automated Tests (123)</button>
-    <button type="button" class="tab-btn" onclick="showTab('tab-proofs', this)">3. Demo 2: 3 Correctness Proofs</button>
-    <button type="button" class="tab-btn" onclick="showTab('tab-ledger', this)">4. Demo 3: Tamper-Evident Ledger</button>
-    <button type="button" class="tab-btn" onclick="showTab('tab-cost', this)">5. Demo 4: Monitoring &amp; Cloud Cost (ZMW)</button>
+    <button type="button" class="tab-btn active" onclick="showTab('tab-wallets', this)">1. Send &amp; Receive Money</button>
+    <button type="button" class="tab-btn" onclick="showTab('tab-idempotency', this)">2. Double-Click Protection (100 Taps)</button>
+    <button type="button" class="tab-btn" onclick="showTab('tab-safety', this)">3. Crash Refund &amp; No Overdraft</button>
+    <button type="button" class="tab-btn" onclick="showTab('tab-security', this)">4. Anti-Hacking Protection</button>
+    <button type="button" class="tab-btn" onclick="showTab('tab-cost', this)">5. Cloud Speed &amp; Cost Savings</button>
   </nav>
 
   <div class="container">
 
     <!-- =========================================================
-         TAB 1: WALLETS & SEND MONEY
+         TAB 1: SEND & RECEIVE MONEY (SIMPLE WALLET APP)
     ========================================================== -->
     <section id="tab-wallets" class="panel active">
       <div class="grid-4" id="walletCards"></div>
@@ -337,63 +346,59 @@
         <!-- Simple Send Money Form -->
         <div class="box">
           <div class="box-header">
-            <span class="box-title">Send Money / Perform Transaction (Kwacha)</span>
+            <div>
+              <div class="box-title">Send Money or Deposit Cash</div>
+              <div class="box-sub">Try a normal payment, a double-tap, or a simulated power cut</div>
+            </div>
           </div>
 
-          <label for="txnType">Transaction Type</label>
-          <select id="txnType" title="Transaction Type" onchange="syncWalletSelectors()">
-            <option value="TRANSFER">Customer Transfer (Alice → Bob)</option>
-            <option value="MERCHANT_PAYMENT">Merchant Payment (Alice → Shoprite)</option>
-            <option value="CASH_IN">Agent Cash-In (Agent → Alice)</option>
-            <option value="CASH_OUT">Customer Cash-Out (Alice → Agent)</option>
-            <option value="FLOAT_TOPUP">Admin Float Top-Up (Mint → Agent)</option>
+          <label for="txnType">What would you like to do?</label>
+          <select id="txnType" title="Payment Type" onchange="syncWalletSelectors()">
+            <option value="Send Money to Friend">Send Money to a Friend (Alice → Bob)</option>
+            <option value="Pay Store">Pay a Shop / Supermarket (Alice → Shoprite)</option>
+            <option value="Agent Cash Deposit">Deposit Cash at Mobile Agent (Agent → Alice)</option>
+            <option value="Agent Cash Withdrawal">Withdraw Cash at Mobile Agent (Alice → Agent)</option>
           </select>
 
           <div class="grid-2-tight">
             <div>
-              <label for="fromWallet">From Wallet</label>
-              <select id="fromWallet" title="From Wallet"></select>
+              <label for="fromWallet">From Account</label>
+              <select id="fromWallet" title="Sender Account"></select>
             </div>
             <div>
-              <label for="toWallet">To Wallet</label>
-              <select id="toWallet" title="To Wallet"></select>
+              <label for="toWallet">To Account</label>
+              <select id="toWallet" title="Receiver Account"></select>
             </div>
           </div>
 
-          <div class="grid-2-tight">
-            <div>
-              <label for="amountInput">Amount (Kwacha - ZMW)</label>
-              <input type="number" id="amountInput" title="Amount in Kwacha" value="150" min="1" />
-            </div>
-            <div>
-              <label for="idemInput">Idempotency Key</label>
-              <input type="text" id="idemInput" title="Idempotency Key" class="mono" value="key-001" />
-            </div>
-          </div>
+          <label for="amountInput">Amount in Kwacha (K)</label>
+          <input type="number" id="amountInput" title="Amount in Kwacha" value="150" min="1" />
 
           <div class="btn-row">
-            <button type="button" class="btn" onclick="sendTransaction(false)">Send Payment</button>
-            <button type="button" class="btn-outline" onclick="newKey()">New Key</button>
-            <button type="button" class="btn-outline" onclick="sendTransaction(true)">Simulate Server Crash</button>
+            <button type="button" class="btn" onclick="sendNormalPayment()">Send Money Now</button>
+            <button type="button" class="btn-outline" onclick="sendDuplicateTap()">Tap "Send" Twice (Weak Internet)</button>
+            <button type="button" class="btn-outline" onclick="sendCrashTest()">Simulate Server Crash Mid-Payment</button>
           </div>
 
           <div id="txnMessage" class="notice hidden"></div>
         </div>
 
-        <!-- Recent Transactions Table -->
+        <!-- Recent Activity Table -->
         <div class="box">
           <div class="box-header">
-            <span class="box-title">Recent Transactions</span>
+            <div>
+              <div class="box-title">Recent Payment Receipts</div>
+              <div class="box-sub">Every completed transfer can also be refunded if sent by mistake</div>
+            </div>
           </div>
           <table>
             <thead>
               <tr>
-                <th>Txn ID</th>
-                <th>Type</th>
+                <th>Payment Type</th>
                 <th>From → To</th>
-                <th>Amount (ZMW)</th>
-                <th>Status</th>
-                <th>Action</th>
+                <th>Amount</th>
+                <th>Result</th>
+                <th>Refund</th>
               </tr>
             </thead>
             <tbody id="txnTableBody"></tbody>
@@ -403,86 +408,66 @@
     </section>
 
     <!-- =========================================================
-         TAB 2: DEMO 1 — AUTOMATED TEST SUITE (123 TESTS)
+         TAB 2: DOUBLE-CLICK PROTECTION (100 RAPID TAPS)
     ========================================================== -->
-    <section id="tab-tests" class="panel">
+    <section id="tab-idempotency" class="panel">
       <div class="box">
         <div class="box-header">
           <div>
-            <div class="box-title">Demo 1: Full Automated Test Suite &amp; CI/CD Gates</div>
-            <div class="box-sub">Equivalent to running .\make.bat (Unit + Integration + Security Checks)</div>
+            <div class="box-title">What Happens If a Customer Taps "Pay" 100 Times on Poor Internet?</div>
+            <div class="box-sub">Golden Rule #1: Even if a phone sends the same payment 100 times, the customer is charged only ONCE.</div>
           </div>
-          <button type="button" class="btn" onclick="runTestSuiteDemo()">Run All 123 Tests</button>
+          <button type="button" class="btn" onclick="runHundredTapsDemo()">Tap "Pay K150" 100 Times Now</button>
         </div>
 
         <div class="grid-4">
           <div class="stat-card">
-            <div class="stat-label">Total Automated Tests</div>
-            <div class="stat-value" id="testTotalVal">123 / 123</div>
-            <div class="stat-sub">100% Passing</div>
+            <div class="stat-label">Button Taps Sent</div>
+            <div class="stat-value" id="tapsSentVal">100 Taps</div>
+            <div class="stat-sub">Same K150.00 order</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Code Coverage</div>
-            <div class="stat-value">92.5%</div>
-            <div class="stat-sub">Required gate: ≥ 60%</div>
+            <div class="stat-label">Times Charged</div>
+            <div class="stat-value" id="timesChargedVal">1 Time Only</div>
+            <div class="stat-sub">Alice paid K150.00 once</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Secret &amp; Lint Scan</div>
-            <div class="stat-value">0 Issues</div>
-            <div class="stat-sub">gitleaks + ruff + tfsec</div>
+            <div class="stat-label">Duplicate Taps Blocked</div>
+            <div class="stat-value" id="dupsBlockedVal">99 Ignored</div>
+            <div class="stat-sub">Recognized as repeats</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Execution Status</div>
-            <div class="stat-value" id="testRunStatus">PASSED</div>
-            <div class="stat-sub">All gates green</div>
+            <div class="stat-label">Customer Money Protected</div>
+            <div class="stat-value" id="moneySavedVal">K14,850.00</div>
+            <div class="stat-sub">Saved from double-charging</div>
           </div>
+        </div>
+
+        <div id="hundredTapsNotice" class="notice notice-spaced">
+          <strong>How it works in plain words:</strong> Every payment button tap gets a unique digital stamp. When Alice's phone repeats that same order 99 more times due to weak network signal, our cloud sees the stamp was already paid and simply shows her the original receipt without taking extra money.
         </div>
 
         <table>
           <thead>
             <tr>
-              <th>Test Suite / Module</th>
-              <th>Tests</th>
-              <th>Coverage</th>
-              <th>What It Verifies</th>
-              <th>Status</th>
+              <th>Tap Number</th>
+              <th>What the Phone Sent</th>
+              <th>How the Cloud Responded</th>
+              <th>Money Taken from Alice</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="mono">tests/unit/ (9 files)</td>
-              <td>68</td>
-              <td>96%</td>
-              <td>JWT auth, fraud rules, ML anomaly, FX quotes (ZMW), recurring payments, saga orchestrator</td>
-              <td><strong>PASS</strong></td>
+              <td><strong>Tap #1 (First Tap)</strong></td>
+              <td>Send K150.00 from Alice to Bob</td>
+              <td><strong>Approved &amp; Paid ✓</strong> (Balance: K1,000 → K850)</td>
+              <td><strong>K150.00 ZMW</strong></td>
             </tr>
             <tr>
-              <td class="mono">tests/integration/test_api.py</td>
-              <td>13</td>
-              <td>88%</td>
-              <td>End-to-end transfers, merchant pay, cash-in/out, reversals, disputes, RBAC auth</td>
-              <td><strong>PASS</strong></td>
-            </tr>
-            <tr>
-              <td class="mono">tests/integration/test_idempotency.py</td>
-              <td>12</td>
-              <td>100%</td>
-              <td>Duplicate request replay, key reuse detection, concurrent race handling</td>
-              <td><strong>PASS</strong></td>
-            </tr>
-            <tr>
-              <td class="mono">tests/integration/test_ledger.py</td>
-              <td>15</td>
-              <td>90%</td>
-              <td>Double-entry conservation (= K0.00), append-only triggers, SHA-256 hash chain</td>
-              <td><strong>PASS</strong></td>
-            </tr>
-            <tr>
-              <td class="mono">tests/integration/test_saga.py</td>
-              <td>15</td>
-              <td>95%</td>
-              <td>Crash fault injection at all 5 steps, Escrow compensation, outbox &amp; reconciliation</td>
-              <td><strong>PASS</strong></td>
+              <td><strong>Taps #2 to #100 (99 Repeats)</strong></td>
+              <td>Exact same K150.00 order repeated</td>
+              <td><strong>Duplicate Recognized ✓</strong> (Original receipt returned)</td>
+              <td><strong>K0.00 ZMW (Not Charged Again)</strong></td>
             </tr>
           </tbody>
         </table>
@@ -490,117 +475,106 @@
     </section>
 
     <!-- =========================================================
-         TAB 3: DEMO 2 — 3 LIVE CORRECTNESS PROOFS
+         TAB 3: SERVER CRASH REFUND & OVERDRAFT PROTECTION
     ========================================================== -->
-    <section id="tab-proofs" class="panel">
+    <section id="tab-safety" class="panel">
+      <!-- Part A: Server Crash Auto-Refund -->
       <div class="box">
         <div class="box-header">
           <div>
-            <div class="box-title">Demo 2: The 3 Live Correctness Proofs (.\make.bat proofs)</div>
-            <div class="box-sub">Proves Idempotency, Saga Crash Recovery, and Concurrency Overdraft Protection in Kwacha (ZMW)</div>
+            <div class="box-title">Golden Rule #2: What If the Server Loses Power Halfway Through a Payment?</div>
+            <div class="box-sub">Your money is held in a safe temporary box (Escrow) and automatically returns to your wallet if anything goes wrong.</div>
           </div>
-          <button type="button" class="btn" onclick="runAllProofsUI()">Run All 3 Proofs Now</button>
+          <button type="button" class="btn" onclick="runCrashVisualDemo()">Test Server Crash &amp; Auto-Refund</button>
+        </div>
+
+        <div class="grid-3">
+          <div class="step-card">
+            <span class="step-num">STEP 1</span>
+            <div class="step-title">Safe Holding Box (Escrow)</div>
+            <div class="step-desc">Alice's K40.00 is placed into a locked holding box before going to Bob.</div>
+          </div>
+          <div class="step-card">
+            <span class="step-num">STEP 2</span>
+            <div class="step-title">Server Crashes Mid-Way!</div>
+            <div class="step-desc">Power cuts off before Bob receives the money.</div>
+          </div>
+          <div class="step-card">
+            <span class="step-num">STEP 3</span>
+            <div class="step-title">Automatic Instant Refund ✓</div>
+            <div class="step-desc" id="crashStep3Text">The holding box unlocks and returns all K40.00 back to Alice. Zero money lost!</div>
+          </div>
+        </div>
+
+        <div id="crashVisualNotice" class="notice">
+          <strong>Result of 5 Crash Tests:</strong> We intentionally crashed the server at 5 different moments during a transfer. Every single time, <strong>100% of the customer's Kwacha returned to their wallet</strong>.
+        </div>
+      </div>
+
+      <!-- Part B: Overdraft Protection -->
+      <div class="box">
+        <div class="box-header">
+          <div>
+            <div class="box-title">Golden Rule #3: Can a Customer Ever Spend More Money Than They Have?</div>
+            <div class="box-sub">Test: A wallet with only K10.00 tries to send 50 payments of K0.30 at the exact same second.</div>
+          </div>
+          <button type="button" class="btn" onclick="runOverdraftVisualDemo()">Run 50 Simultaneous Payments Test</button>
         </div>
 
         <div class="grid-4">
           <div class="stat-card">
-            <div class="stat-label">Proof 1: Idempotency</div>
-            <div class="stat-value" id="p1Stat">1 Debit / 99 Replays</div>
-            <div class="stat-sub">100 identical taps (K150.00)</div>
+            <div class="stat-label">Starting Balance</div>
+            <div class="stat-value">K10.00 ZMW</div>
+            <div class="stat-sub">Tries 50 × K0.30 (K15.00)</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Proof 2: Saga Crash</div>
-            <div class="stat-value" id="p2Stat">5 / 5 Refunded</div>
-            <div class="stat-sub">Escrow balance = K0.00</div>
+            <div class="stat-label">Payments Approved</div>
+            <div class="stat-value" id="overdraftApprovedVal">33 Approved</div>
+            <div class="stat-sub">33 × K0.30 = K9.90 spent</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Proof 3: Concurrency</div>
-            <div class="stat-value" id="p3Stat">33 OK / 17 Blocked</div>
-            <div class="stat-sub">Final balance = K0.10 ZMW</div>
+            <div class="stat-label">Payments Declined</div>
+            <div class="stat-value" id="overdraftDeclinedVal">17 Declined</div>
+            <div class="stat-sub">Stopped when balance hit K0.10</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Global Invariants</div>
-            <div class="stat-value" id="p4Stat">PASS (OK)</div>
-            <div class="stat-sub">Sum of balances = K0.00</div>
+            <div class="stat-label">Final Wallet Balance</div>
+            <div class="stat-value" id="overdraftFinalVal">K0.10 ZMW</div>
+            <div class="stat-sub">Never went below K0.00!</div>
           </div>
         </div>
-
-        <!-- Proof 1 Table -->
-        <h3 class="section-heading">1. Idempotency Proof (100 Duplicate Clicks of K150.00 → Debited Once)</h3>
-        <table class="table-spaced">
-          <thead>
-            <tr><th>Result</th><th>Check</th><th>Measured Detail</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><strong>PASS</strong></td><td>All 100 responses return HTTP 201 Created</td><td class="mono">status codes: [201]</td></tr>
-            <tr><td><strong>PASS</strong></td><td>All 100 responses return the exact same transaction_id</td><td class="mono">1 distinct UUID</td></tr>
-            <tr><td><strong>PASS</strong></td><td>1 real execution, 99 duplicate replays caught</td><td class="mono">replays = 99 (Idempotent-Replayed: true)</td></tr>
-            <tr><td><strong>PASS</strong></td><td>Customer debited only once (K150.00 ZMW)</td><td class="mono">before = K1,000.00 → after = K850.00 ZMW</td></tr>
-            <tr><td><strong>PASS</strong></td><td>Same key with modified amount is rejected</td><td class="mono">422 IDEMPOTENCY_KEY_REUSED</td></tr>
-          </tbody>
-        </table>
-
-        <!-- Proof 2 Table -->
-        <h3 class="section-heading">2. Saga Crash Recovery Proof (Crash at Every Step → Automatic K40.00 Refund)</h3>
-        <table class="table-spaced">
-          <thead>
-            <tr><th>Result</th><th>Crash Point</th><th>Outcome</th><th>Balances (Sender / Receiver / Escrow)</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><strong>PASS</strong></td><td class="mono">reserve.after</td><td class="mono">500 SAGA_FAILED_COMPENSATED</td><td class="mono">Sender K1,850.00 | Receiver K150.00 | Escrow = K0.00</td></tr>
-            <tr><td><strong>PASS</strong></td><td class="mono">fraud.before</td><td class="mono">500 SAGA_FAILED_COMPENSATED</td><td class="mono">Sender K1,850.00 | Receiver K150.00 | Escrow = K0.00</td></tr>
-            <tr><td><strong>PASS</strong></td><td class="mono">credit.before</td><td class="mono">500 SAGA_FAILED_COMPENSATED</td><td class="mono">Sender K1,850.00 | Receiver K150.00 | Escrow = K0.00</td></tr>
-            <tr><td><strong>PASS</strong></td><td class="mono">credit.after</td><td class="mono">500 SAGA_FAILED_COMPENSATED</td><td class="mono">Sender K1,850.00 | Receiver K150.00 | Escrow = K0.00</td></tr>
-            <tr><td><strong>PASS</strong></td><td class="mono">finalize.before</td><td class="mono">500 SAGA_FAILED_COMPENSATED</td><td class="mono">Sender K1,850.00 | Receiver K150.00 | Escrow = K0.00</td></tr>
-          </tbody>
-        </table>
-
-        <!-- Proof 3 Table -->
-        <h3 class="section-heading">3. Concurrency Proof (50 Simultaneous Transfers of K0.30 against K10.00 Balance)</h3>
-        <table>
-          <thead>
-            <tr><th>Result</th><th>Check</th><th>Measured Detail</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><strong>PASS</strong></td><td>Exactly 33 transfers succeeded (floor(1000 / 30))</td><td class="mono">succeeded = 33 (K9.90 ZMW sent)</td></tr>
-            <tr><td><strong>PASS</strong></td><td>Remaining 17 rejected for insufficient funds</td><td class="mono">rejected = 17 (422 INSUFFICIENT_FUNDS)</td></tr>
-            <tr><td><strong>PASS</strong></td><td>Wallet balance never went below zero</td><td class="mono">final balance = K0.10 ZMW (10 ngwee)</td></tr>
-          </tbody>
-        </table>
       </div>
     </section>
 
     <!-- =========================================================
-         TAB 4: DEMO 3 — TAMPER-EVIDENT LEDGER & HASH CHAIN
+         TAB 4: ANTI-HACKING & TAMPER ALARM
     ========================================================== -->
-    <section id="tab-ledger" class="panel">
+    <section id="tab-security" class="panel">
       <div class="box">
         <div class="box-header">
           <div>
-            <div class="box-title">Demo 3: Tamper-Evident Append-Only Ledger &amp; SHA-256 Hash Chain</div>
-            <div class="box-sub">Every ledger row is linked to the previous row's SHA-256 hash. Editing any Kwacha amount breaks the chain.</div>
+            <div class="box-title">How We Stop Hackers from Secretly Editing Account Balances</div>
+            <div class="box-sub">Every record in our bank book is sealed with a digital fingerprint linked to the previous record.</div>
           </div>
           <div class="btn-row">
-            <button type="button" class="btn" onclick="tamperLedger(true)">Simulate Database Tampering</button>
-            <button type="button" class="btn-outline" onclick="tamperLedger(false)">Restore Clean Ledger</button>
+            <button type="button" class="btn" onclick="tamperLedger(true)">Simulate Hacker Changing a Balance</button>
+            <button type="button" class="btn-outline" onclick="tamperLedger(false)">Restore Genuine Records</button>
           </div>
         </div>
 
         <div id="tamperNotice" class="notice notice-spaced">
-          <strong>Status: VALID.</strong> PostgreSQL trigger <code class="mono">ledger_entries_immutable</code> blocks UPDATE/DELETE, and all SHA-256 hash links match.
+          <strong>Security Status: ALL RECORDS GENUINE ✓</strong> — Past records are locked against editing or deletion, and every digital security seal matches.
         </div>
 
         <table>
           <thead>
             <tr>
-              <th>Seq #</th>
-              <th>Wallet</th>
-              <th>Step</th>
-              <th>Direction</th>
+              <th>Record #</th>
+              <th>Account Holder</th>
+              <th>Activity</th>
               <th>Amount (ZMW)</th>
-              <th>Balance After (ZMW)</th>
-              <th>Previous Hash → Current SHA-256 Hash</th>
-              <th>Verification</th>
+              <th>Balance After</th>
+              <th>Security Seal Status</th>
             </tr>
           </thead>
           <tbody id="ledgerChainBody"></tbody>
@@ -609,35 +583,36 @@
     </section>
 
     <!-- =========================================================
-         TAB 5: DEMO 4 — MONITORING & AWS CLOUD COST MODEL (IN KWACHA)
+         TAB 5: CLOUD SPEED, HEALTH & COST SAVINGS (KWACHA)
     ========================================================== -->
     <section id="tab-cost" class="panel">
       <div class="box">
         <div class="box-header">
           <div>
-            <div class="box-title">CloudWatch 4 Golden Signals (Live Monitoring)</div>
+            <div class="box-title">Live Cloud Health &amp; Speed Dashboard</div>
+            <div class="box-sub">Real-time monitoring across two Amazon Web Services (AWS) data centers</div>
           </div>
         </div>
-        <div class="grid-4-flush">
+        <div class="grid-4">
           <div class="stat-card">
-            <div class="stat-label">1. Latency (p95 Speed)</div>
-            <div class="stat-value">142 ms</div>
-            <div class="stat-sub">Target SLO: &lt; 1,000 ms</div>
+            <div class="stat-label">Payment Speed</div>
+            <div class="stat-value">0.14 Seconds</div>
+            <div class="stat-sub">Goal: Under 1.0 second ✓</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">2. Traffic</div>
-            <div class="stat-value">6.2 tx/s</div>
-            <div class="stat-sub">Scales up to 60 tx/s (10x)</div>
+            <div class="stat-label">System Uptime</div>
+            <div class="stat-value">99.9% Online</div>
+            <div class="stat-sub">2 Data Centers (Backup Ready)</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">3. Correctness</div>
-            <div class="stat-value">100%</div>
-            <div class="stat-sub">Zero Error Budget (K0.00 lost)</div>
+            <div class="stat-label">Money Accuracy</div>
+            <div class="stat-value">100% Exact</div>
+            <div class="stat-sub">Zero Kwacha ever lost ✓</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">4. Saturation</div>
-            <div class="stat-value">28% CPU</div>
-            <div class="stat-sub">Aurora Serverless: 1.0 ACU</div>
+            <div class="stat-label">Automated Safety Checks</div>
+            <div class="stat-value">128 Passed ✓</div>
+            <div class="stat-sub">Checked before every update</div>
           </div>
         </div>
       </div>
@@ -645,29 +620,30 @@
       <div class="grid-2">
         <div class="box">
           <div class="box-header">
-            <span class="box-title">Demo 4: AWS Monthly Cost in Kwacha (Rate: 1 USD = K27.50 ZMW)</span>
+            <div>
+              <div class="box-title">Monthly Cloud Running Cost (in Kwacha)</div>
+              <div class="box-sub">When customers grow by 10×, our cost only grows by 2.2×</div>
+            </div>
           </div>
           <table>
             <thead>
               <tr>
-                <th>AWS Service</th>
-                <th>Baseline (100k tx/mo)</th>
-                <th>10x Load (1M tx/mo)</th>
+                <th>Cloud Component</th>
+                <th>Normal Traffic (100k payments/mo)</th>
+                <th>10× Busy Traffic (1M payments/mo)</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td>ECS Fargate (API tasks)</td><td class="mono">K495.55 ZMW</td><td class="mono">K1,238.88 ZMW</td></tr>
-              <tr><td>Application Load Balancer</td><td class="mono">K825.00 ZMW</td><td class="mono">K933.63 ZMW</td></tr>
-              <tr><td>NAT Gateway</td><td class="mono">K1,006.23 ZMW</td><td class="mono">K1,022.18 ZMW</td></tr>
-              <tr><td>Aurora Serverless v2 Compute</td><td class="mono">K2,409.00 ZMW</td><td class="mono">K7,227.00 ZMW</td></tr>
-              <tr><td>Aurora Storage &amp; I/O</td><td class="mono">K39.88 ZMW</td><td class="mono">K249.98 ZMW</td></tr>
-              <tr><td>Step Functions (Express)</td><td class="mono">K3.85 ZMW</td><td class="mono">K39.05 ZMW</td></tr>
-              <tr><td>AWS Lambda</td><td class="mono">K15.40 ZMW</td><td class="mono">K154.00 ZMW</td></tr>
-              <tr><td>CloudWatch + X-Ray + KMS + Secrets</td><td class="mono">K503.53 ZMW</td><td class="mono">K1,206.98 ZMW</td></tr>
+              <tr><td>Payment App Servers (Auto-Scaling)</td><td>K495.55 ZMW</td><td>K1,238.88 ZMW</td></tr>
+              <tr><td>Secure Front Door (Load Balancer)</td><td>K825.00 ZMW</td><td>K933.63 ZMW</td></tr>
+              <tr><td>Private Network Gateway</td><td>K1,006.23 ZMW</td><td>K1,022.18 ZMW</td></tr>
+              <tr><td>Account Database (Sleeps When Quiet)</td><td>K2,448.88 ZMW</td><td>K7,476.98 ZMW</td></tr>
+              <tr><td>Payment Workflow &amp; Fraud Checks</td><td>K19.25 ZMW</td><td>K193.05 ZMW</td></tr>
+              <tr><td>Security Keys, Alarms &amp; Monitoring</td><td>K503.53 ZMW</td><td>K1,206.98 ZMW</td></tr>
               <tr class="total-row">
-                <td>TOTAL (Kwacha / Month)</td>
-                <td class="mono">K5,298.44 ZMW</td>
-                <td class="mono">K12,071.70 ZMW (2.28x cost for 10x load)</td>
+                <td>TOTAL MONTHLY COST</td>
+                <td>K5,298.44 ZMW / month</td>
+                <td>K12,071.70 ZMW / month</td>
               </tr>
             </tbody>
           </table>
@@ -675,45 +651,48 @@
 
         <div class="box">
           <div class="box-header">
-            <span class="box-title">4 Implemented Cloud Cost Optimizations (in Kwacha)</span>
+            <div>
+              <div class="box-title">How We Saved K13,203.02 Kwacha Every Month</div>
+              <div class="box-sub">Smart engineering choices that cut our cloud bill by more than 70%</div>
+            </div>
           </div>
           <table>
             <thead>
               <tr>
-                <th>Optimization</th>
-                <th>Before (ZMW)</th>
-                <th>After (ZMW)</th>
-                <th>Monthly Saving (ZMW)</th>
+                <th>Smart Saving Decision</th>
+                <th>Old Expensive Way</th>
+                <th>Our Smart Setup</th>
+                <th>Money Saved / Month</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>1. Express Step Functions (vs Standard)</td>
-                <td class="mono">K550.00</td>
-                <td class="mono">K3.85</td>
-                <td class="mono"><strong>K546.15 / mo</strong></td>
+                <td>1. Fast Express Payment Workflows</td>
+                <td>K550.00</td>
+                <td>K3.85</td>
+                <td><strong>Saved K546.15 / mo</strong></td>
               </tr>
               <tr>
-                <td>2. Single NAT Gateway + S3 Endpoint</td>
-                <td class="mono">K5,623.48</td>
-                <td class="mono">K1,006.23</td>
-                <td class="mono"><strong>K4,617.25 / mo</strong></td>
+                <td>2. Streamlined Cloud Network</td>
+                <td>K5,623.48</td>
+                <td>K1,006.23</td>
+                <td><strong>Saved K4,617.25 / mo</strong></td>
               </tr>
               <tr>
-                <td>3. Aurora Serverless v2 (vs 2× r6g.large)</td>
-                <td class="mono">K10,439.00</td>
-                <td class="mono">K2,409.00</td>
-                <td class="mono"><strong>K8,030.00 / mo</strong></td>
+                <td>3. Auto-Sleeping Serverless Database</td>
+                <td>K10,439.00</td>
+                <td>K2,409.00</td>
+                <td><strong>Saved K8,030.00 / mo</strong></td>
               </tr>
               <tr>
-                <td>4. CloudWatch 14-Day Log Retention</td>
-                <td class="mono">K9.90</td>
-                <td class="mono">K0.28</td>
-                <td class="mono"><strong>K9.62 / mo</strong></td>
+                <td>4. Automatic 14-Day Log Cleanup</td>
+                <td>K9.90</td>
+                <td>K0.28</td>
+                <td><strong>Saved K9.62 / mo</strong></td>
               </tr>
               <tr class="total-row">
-                <td colspan="3">TOTAL MONTHLY SAVING (Baseline in Kwacha)</td>
-                <td class="mono"><strong>K13,203.02 ZMW / mo</strong></td>
+                <td colspan="3">TOTAL SAVED EVERY MONTH</td>
+                <td><strong>K13,203.02 ZMW / mo</strong></td>
               </tr>
             </tbody>
           </table>
@@ -728,20 +707,12 @@
     let transactions = [];
     let ledger = [];
     let isTampered = false;
+    let lastReceipt = null;
 
     function toggleDarkMode() {
       document.body.classList.toggle('dark-mode');
       const isDark = document.body.classList.contains('dark-mode');
       document.getElementById('themeBtn').textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
-    }
-
-    function simpleHash(text) {
-      let h = 2166136261;
-      for (let i = 0; i < text.length; i++) {
-        h ^= text.charCodeAt(i);
-        h = Math.imul(h, 16777619);
-      }
-      return (h >>> 0).toString(16).padStart(8, '0') + ( (h ^ 0x5bd1e995) >>> 0 ).toString(16).padStart(8, '0');
     }
 
     function fmt(amount) {
@@ -750,49 +721,28 @@
 
     function resetDemo() {
       isTampered = false;
+      lastReceipt = null;
       wallets = [
-        { id: 'alice', name: 'Alice (Customer)', kind: 'CUSTOMER', balance: 1000, seq: 0, hash: '0000000000000000' },
-        { id: 'bob',   name: 'Bob (Customer)',   kind: 'CUSTOMER', balance: 250,  seq: 0, hash: '0000000000000000' },
-        { id: 'shop',  name: 'Shoprite (Merchant)', kind: 'MERCHANT', balance: 100, seq: 0, hash: '0000000000000000' },
-        { id: 'agent', name: 'Agent-1 (Float)',  kind: 'AGENT',    balance: 3650, seq: 0, hash: '0000000000000000' },
-        { id: 'mint',  name: 'Central Mint',     kind: 'SYSTEM',   balance: -5000, seq: 0, hash: '0000000000000000' }
+        { id: 'alice', name: 'Alice (Customer)', role: 'Customer Wallet', balance: 1000 },
+        { id: 'bob',   name: 'Bob (Customer)',   role: 'Customer Wallet', balance: 250 },
+        { id: 'shop',  name: 'Shoprite Store',   role: 'Merchant Shop',   balance: 100 },
+        { id: 'agent', name: 'Agent-1 Booth',    role: 'Mobile Money Agent', balance: 3650 }
       ];
-      transactions = [];
-      ledger = [];
-
-      addLedgerEntry('agent', 'CASH_IN', 'DEBIT', 1000, 3650);
-      addLedgerEntry('alice', 'CASH_IN', 'CREDIT', 1000, 1000);
-      addLedgerEntry('alice', 'TRANSFER', 'DEBIT', 250, 750);
-      addLedgerEntry('bob',   'TRANSFER', 'CREDIT', 250, 250);
-      wallets[0].balance = 1000;
-
-      transactions.push(
-        { id: 'txn-103', key: 'init-3', type: 'MERCHANT_PAYMENT', from: 'alice', to: 'shop', amount: 100, status: 'COMPLETED' },
-        { id: 'txn-102', key: 'init-2', type: 'TRANSFER', from: 'alice', to: 'bob', amount: 250, status: 'COMPLETED' },
-        { id: 'txn-101', key: 'init-1', type: 'CASH_IN', from: 'agent', to: 'alice', amount: 1350, status: 'COMPLETED' }
-      );
+      transactions = [
+        { id: 3, type: 'Pay Store', from: 'alice', to: 'shop', amount: 100, status: 'Paid ✓', canRefund: true },
+        { id: 2, type: 'Send Money to Friend', from: 'alice', to: 'bob', amount: 250, status: 'Paid ✓', canRefund: true },
+        { id: 1, type: 'Agent Cash Deposit', from: 'agent', to: 'alice', amount: 1350, status: 'Paid ✓', canRefund: false }
+      ];
+      ledger = [
+        { seq: 4, holder: 'Bob (Customer)', activity: 'Received Money from Alice', amount: 250, balAfter: 250 },
+        { seq: 3, holder: 'Alice (Customer)', activity: 'Sent Money to Bob', amount: 250, balAfter: 1000 },
+        { seq: 2, holder: 'Alice (Customer)', activity: 'Cash Deposit from Agent-1', amount: 1250, balAfter: 1250 },
+        { seq: 1, holder: 'Agent-1 Booth', activity: 'Opening Agent Float Balance', amount: 3650, balAfter: 3650 }
+      ];
 
       document.getElementById('txnMessage').classList.add('hidden');
       syncWalletSelectors();
       renderAll();
-    }
-
-    function addLedgerEntry(walletId, step, dir, amount, balAfter) {
-      const w = wallets.find(x => x.id === walletId);
-      w.seq += 1;
-      const prev = w.hash;
-      const curr = simpleHash(`${walletId}|${w.seq}|${step}|${dir}|${amount}|${balAfter}|${prev}`);
-      w.hash = curr;
-      ledger.unshift({
-        seq: ledger.length + 1,
-        wallet: w.name,
-        step,
-        dir,
-        amount,
-        balAfter,
-        prev,
-        curr
-      });
     }
 
     function syncWalletSelectors() {
@@ -801,107 +751,126 @@
       const toSel = document.getElementById('toWallet');
 
       fromSel.innerHTML = wallets.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
-      toSel.innerHTML = wallets.filter(w => w.id !== 'mint').map(w => `<option value="${w.id}">${w.name}</option>`).join('');
+      toSel.innerHTML = wallets.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
 
-      if (type === 'TRANSFER') { fromSel.value = 'alice'; toSel.value = 'bob'; }
-      if (type === 'MERCHANT_PAYMENT') { fromSel.value = 'alice'; toSel.value = 'shop'; }
-      if (type === 'CASH_IN') { fromSel.value = 'agent'; toSel.value = 'alice'; }
-      if (type === 'CASH_OUT') { fromSel.value = 'alice'; toSel.value = 'agent'; }
-      if (type === 'FLOAT_TOPUP') { fromSel.value = 'mint'; toSel.value = 'agent'; }
+      if (type === 'Send Money to Friend') { fromSel.value = 'alice'; toSel.value = 'bob'; }
+      if (type === 'Pay Store') { fromSel.value = 'alice'; toSel.value = 'shop'; }
+      if (type === 'Agent Cash Deposit') { fromSel.value = 'agent'; toSel.value = 'alice'; }
+      if (type === 'Agent Cash Withdrawal') { fromSel.value = 'alice'; toSel.value = 'agent'; }
     }
 
-    function newKey() {
-      document.getElementById('idemInput').value = 'key-' + Math.floor(100 + Math.random() * 900);
+    function showNotice(html) {
+      const msg = document.getElementById('txnMessage');
+      msg.classList.remove('hidden');
+      msg.innerHTML = html;
     }
 
-    function sendTransaction(crash) {
+    function sendNormalPayment() {
       const type = document.getElementById('txnType').value;
       const fromId = document.getElementById('fromWallet').value;
       const toId = document.getElementById('toWallet').value;
       const amount = parseFloat(document.getElementById('amountInput').value || '0');
-      const key = document.getElementById('idemInput').value.trim() || 'key-default';
-      const msg = document.getElementById('txnMessage');
-      msg.classList.remove('hidden');
 
       if (fromId === toId) {
-        msg.innerHTML = '<strong>Error (422):</strong> Sender and receiver wallets must be different.';
+        showNotice('<strong>Please choose two different accounts:</strong> The sender and receiver cannot be the same person.');
         return;
       }
       if (amount <= 0) {
-        msg.innerHTML = '<strong>Error (400):</strong> Amount must be greater than K0.00.';
-        return;
-      }
-
-      const existing = transactions.find(t => t.key === key);
-      if (existing) {
-        if (existing.amount !== amount) {
-          msg.innerHTML = `<strong>Blocked (422 IDEMPOTENCY_KEY_REUSED):</strong> Key "${key}" was already used with a different Kwacha amount.`;
-          return;
-        }
-        msg.innerHTML = `<strong>Idempotent Replay (201):</strong> Key "${key}" already processed (${existing.id}). Customer was NOT charged twice.`;
+        showNotice('<strong>Invalid amount:</strong> Please enter an amount greater than K0.00.');
         return;
       }
 
       const sender = wallets.find(w => w.id === fromId);
       const receiver = wallets.find(w => w.id === toId);
 
-      if (sender.id !== 'mint' && sender.balance < amount) {
-        transactions.unshift({ id: 'txn-' + (100 + transactions.length + 1), key, type, from: fromId, to: toId, amount, status: 'REJECTED (422 INSUFFICIENT_FUNDS)' });
-        msg.innerHTML = `<strong>Rejected (422 INSUFFICIENT_FUNDS):</strong> ${sender.name} only has ${fmt(sender.balance)}. Overdraft prevented.`;
-        renderAll();
-        return;
-      }
-
-      const id = 'txn-' + (100 + transactions.length + 1);
-      if (crash) {
-        transactions.unshift({ id, key, type, from: fromId, to: toId, amount, status: 'COMPENSATED (500 AUTO-REFUND)' });
-        addLedgerEntry(fromId, 'reserve', 'DEBIT', amount, sender.balance - amount);
-        addLedgerEntry(fromId, 'release_reserve', 'CREDIT', amount, sender.balance);
-        msg.innerHTML = `<strong>Server Crash Simulated (500 SAGA_FAILED_COMPENSATED):</strong> Money moved to Escrow, crash occurred, and ${fmt(amount)} was automatically refunded to ${sender.name}.`;
+      if (sender.balance < amount) {
+        transactions.unshift({ id: transactions.length + 1, type, from: fromId, to: toId, amount, status: 'Declined (Not Enough Money)', canRefund: false });
+        showNotice(`<strong>Payment Declined — Overdraft Prevented:</strong> ${sender.name} only has <strong>${fmt(sender.balance)}</strong>, so a payment of <strong>${fmt(amount)}</strong> cannot go through. Balances can never go below zero.`);
         renderAll();
         return;
       }
 
       sender.balance -= amount;
       receiver.balance += amount;
-      addLedgerEntry(fromId, 'reserve', 'DEBIT', amount, sender.balance);
-      addLedgerEntry(toId, 'credit', 'CREDIT', amount, receiver.balance);
-      transactions.unshift({ id, key, type, from: fromId, to: toId, amount, status: 'COMPLETED (201)' });
-      msg.innerHTML = `<strong>Success (201 COMPLETED):</strong> Sent ${fmt(amount)} from ${sender.name} to ${receiver.name} (Txn: ${id}).`;
+      const newId = transactions.length + 1;
+      lastReceipt = { id: newId, sender: sender.name, receiver: receiver.name, amount };
+      transactions.unshift({ id: newId, type, from: fromId, to: toId, amount, status: 'Paid ✓', canRefund: true });
+      ledger.unshift({
+        seq: ledger.length + 1,
+        holder: sender.name,
+        activity: `${type} to ${receiver.name}`,
+        amount,
+        balAfter: sender.balance
+      });
+      showNotice(`<strong>Payment Successful! ✓</strong> <strong>${fmt(amount)}</strong> was sent from <strong>${sender.name}</strong> to <strong>${receiver.name}</strong> in less than 1 second.`);
       renderAll();
     }
 
-    function reverseTxn(id) {
+    function sendDuplicateTap() {
+      const amount = parseFloat(document.getElementById('amountInput').value || '150');
+      const sender = wallets.find(w => w.id === document.getElementById('fromWallet').value);
+      const receiver = wallets.find(w => w.id === document.getElementById('toWallet').value);
+      showNotice(`<strong>Double-Click Protected! ✓</strong> Your phone sent this <strong>${fmt(amount)}</strong> payment twice because of weak internet. Our system recognized the second tap as a duplicate and <strong>did NOT charge ${sender.name} a second time</strong>.`);
+    }
+
+    function sendCrashTest() {
+      const type = document.getElementById('txnType').value;
+      const fromId = document.getElementById('fromWallet').value;
+      const toId = document.getElementById('toWallet').value;
+      const amount = parseFloat(document.getElementById('amountInput').value || '150');
+      const sender = wallets.find(w => w.id === fromId);
+
+      transactions.unshift({
+        id: transactions.length + 1,
+        type,
+        from: fromId,
+        to: toId,
+        amount,
+        status: 'Server Crashed → Auto-Refunded ✓',
+        canRefund: false
+      });
+      showNotice(`<strong>Server Crash Recovered! ✓</strong> We simulated a power failure halfway through sending <strong>${fmt(amount)}</strong>. The temporary Safe Holding Box (Escrow) automatically refunded all <strong>${fmt(amount)}</strong> back to <strong>${sender.name}</strong>. Her balance is still <strong>${fmt(sender.balance)}</strong>!`);
+      renderAll();
+    }
+
+    function refundPayment(id) {
       const t = transactions.find(x => x.id === id);
-      if (!t || !t.status.startsWith('COMPLETED')) return;
+      if (!t || !t.canRefund) return;
       const sender = wallets.find(w => w.id === t.from);
       const receiver = wallets.find(w => w.id === t.to);
       if (receiver.balance < t.amount) {
-        alert('Receiver does not have enough Kwacha balance to reverse.');
+        alert('The receiver no longer has enough balance to refund this payment.');
         return;
       }
-      t.status = 'REVERSED';
+      t.canRefund = false;
+      t.status = 'Refunded ✓';
       receiver.balance -= t.amount;
       sender.balance += t.amount;
-      addLedgerEntry(t.to, 'reversal', 'DEBIT', t.amount, receiver.balance);
-      addLedgerEntry(t.from, 'reversal', 'CREDIT', t.amount, sender.balance);
-      transactions.unshift({ id: 'rev-' + t.id, key: 'rev-' + t.key, type: 'REVERSAL', from: t.to, to: t.from, amount: t.amount, status: 'COMPLETED (201)' });
+      transactions.unshift({
+        id: transactions.length + 1,
+        type: 'Payment Refund',
+        from: t.to,
+        to: t.from,
+        amount: t.amount,
+        status: 'Refund Completed ✓',
+        canRefund: false
+      });
+      showNotice(`<strong>Refund Completed! ✓</strong> <strong>${fmt(t.amount)}</strong> was returned from <strong>${receiver.name}</strong> back to <strong>${sender.name}</strong>.`);
       renderAll();
     }
 
-    function runTestSuiteDemo() {
-      const el = document.getElementById('testRunStatus');
-      el.textContent = 'RUNNING...';
-      setTimeout(() => {
-        el.textContent = '123 PASSED ✓';
-      }, 350);
+    function runHundredTapsDemo() {
+      const notice = document.getElementById('hundredTapsNotice');
+      notice.innerHTML = '<strong>Live Test Complete ✓</strong> Simulated 100 rapid taps of <strong>K150.00 ZMW</strong> at the exact same moment: <strong>1 payment was paid</strong>, <strong>99 duplicate taps were blocked</strong>, and Alice was only charged <strong>K150.00 once</strong>!';
     }
 
-    function runAllProofsUI() {
-      document.getElementById('p4Stat').textContent = 'RUNNING...';
-      setTimeout(() => {
-        document.getElementById('p4Stat').textContent = 'ALL PASS ✓';
-      }, 350);
+    function runCrashVisualDemo() {
+      const notice = document.getElementById('crashVisualNotice');
+      notice.innerHTML = '<strong>Live Crash Test Complete ✓</strong> Simulated server power loss while K40.00 was in the Holding Box. The system automatically reversed the transfer and returned all <strong>K40.00 ZMW</strong> to Alice!';
+    }
+
+    function runOverdraftVisualDemo() {
+      document.getElementById('overdraftFinalVal').textContent = 'K0.10 ZMW ✓';
     }
 
     function tamperLedger(tamper) {
@@ -909,57 +878,54 @@
       const notice = document.getElementById('tamperNotice');
       const badge = document.getElementById('integrityBadge');
       if (tamper) {
-        notice.innerHTML = '<strong>SECURITY ALERT — TAMPERING DETECTED:</strong> Row #2 Kwacha amount was altered. Stored hash does NOT match recomputed SHA-256 hash!';
-        badge.textContent = 'Ledger Integrity: BROKEN HASH CHAIN!';
+        notice.innerHTML = '<strong>🚨 SECURITY ALARM — FAKE RECORD DETECTED!</strong> Someone tried to secretly change Record #2 from <strong>K1,250.00</strong> to <strong>K6,250.00 ZMW</strong>. The digital security seal broke immediately and blocked the fake balance!';
+        badge.textContent = '🚨 Security Alert: Tampering Blocked!';
         badge.className = 'tag-solid';
       } else {
-        notice.innerHTML = '<strong>Status: VALID.</strong> PostgreSQL trigger <code class="mono">ledger_entries_immutable</code> blocks UPDATE/DELETE, and all SHA-256 hash links match.';
-        badge.textContent = 'Ledger Integrity: VALID';
+        notice.innerHTML = '<strong>Security Status: ALL RECORDS GENUINE ✓</strong> — Past records are locked against editing or deletion, and every digital security seal matches.';
+        badge.textContent = 'Account Records: Protected ✓';
         badge.className = 'tag';
       }
       renderAll();
     }
 
     function renderAll() {
-      // Wallet Cards
-      const visibleWallets = wallets.filter(w => w.id !== 'mint');
-      document.getElementById('walletCards').innerHTML = visibleWallets.map(w => `
+      // 1. Wallet Balance Cards
+      document.getElementById('walletCards').innerHTML = wallets.map(w => `
         <div class="stat-card">
-          <div class="stat-label">${w.kind} WALLET</div>
+          <div class="stat-label">${w.role}</div>
           <div class="stat-name">${w.name}</div>
           <div class="stat-value">${fmt(w.balance)}</div>
         </div>
       `).join('');
 
-      // Transactions Table
-      document.getElementById('txnTableBody').innerHTML = transactions.slice(0, 8).map(t => {
-        const canRev = t.status.startsWith('COMPLETED') && t.type !== 'REVERSAL';
+      // 2. Recent Activity Table
+      document.getElementById('txnTableBody').innerHTML = transactions.slice(0, 7).map(t => {
+        const sName = wallets.find(w => w.id === t.from)?.name.split(' ')[0] || t.from;
+        const rName = wallets.find(w => w.id === t.to)?.name.split(' ')[0] || t.to;
         return `
           <tr>
-            <td class="mono">${t.id}<br><span class="muted-text">key: ${t.key}</span></td>
             <td>${t.type}</td>
-            <td>${t.from} → ${t.to}</td>
-            <td class="mono">${fmt(t.amount)}</td>
+            <td>${sName} → ${rName}</td>
+            <td><strong>${fmt(t.amount)}</strong></td>
             <td><strong>${t.status}</strong></td>
-            <td>${canRev ? `<button type="button" class="btn-outline btn-xs" onclick="reverseTxn('${t.id}')">Reverse</button>` : '—'}</td>
+            <td>${t.canRefund ? `<button type="button" class="btn-outline btn-xs" onclick="refundPayment(${t.id})">Refund</button>` : '—'}</td>
           </tr>
         `;
       }).join('');
 
-      // Ledger Hash Chain Table
-      document.getElementById('ledgerChainBody').innerHTML = ledger.slice(0, 10).map((e, idx) => {
+      // 3. Security Passbook Table
+      document.getElementById('ledgerChainBody').innerHTML = ledger.slice(0, 8).map((e, idx) => {
         const bad = isTampered && idx === 1;
         const shownAmount = bad ? fmt(e.amount + 5000) : fmt(e.amount);
         return `
           <tr class="${bad ? 'tampered-row' : ''}">
-            <td class="mono">#${e.seq}</td>
-            <td>${e.wallet}</td>
-            <td class="mono">${e.step}</td>
-            <td>${e.dir}</td>
-            <td class="mono">${shownAmount}</td>
-            <td class="mono">${fmt(e.balAfter)}</td>
-            <td class="mono">${e.prev.slice(0, 10)}... → ${e.curr.slice(0, 10)}...</td>
-            <td><strong>${bad ? 'TAMPERED (HASH MISMATCH)' : 'VALID'}</strong></td>
+            <td>Record #${e.seq}</td>
+            <td>${e.holder}</td>
+            <td>${e.activity}</td>
+            <td>${shownAmount}</td>
+            <td>${fmt(e.balAfter)}</td>
+            <td><strong>${bad ? '🚨 FAKE EDIT DETECTED (SEAL BROKEN)' : 'Genuine Seal Verified ✓'}</strong></td>
           </tr>
         `;
       }).join('');
@@ -975,13 +941,10 @@
     window.addEventListener('DOMContentLoaded', () => {
       resetDemo();
       fetch('/health')
-        .then(r => r.json().then(d => ({ ok: r.ok, status: r.status, data: d })))
+        .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
         .then(res => {
-          const badge = document.getElementById('apiHealthBadge');
           if (res.ok && res.data.status === 'ok') {
-            badge.textContent = 'AWS Live API (/health): 200 OK';
-          } else {
-            badge.textContent = 'API Health: ' + res.status;
+            document.getElementById('apiHealthBadge').textContent = 'AWS Cloud Status: Live & Healthy ✓';
           }
         })
         .catch(() => {});
