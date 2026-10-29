@@ -18,7 +18,7 @@ if "%TARGET%"=="" set "TARGET=test"
 
 if /I "%TARGET%"=="test" (
     echo Running unit + integration tests...
-    "%PYTEST%" -v
+    "%PYTEST%" -v %2 %3 %4 %5
     goto :eof
 )
 
@@ -52,6 +52,12 @@ if /I "%TARGET%"=="build" (
     goto :eof
 )
 
+if /I "%TARGET%"=="ui" (
+    echo Launching Interactive Demo Interface...
+    "%PYTHON%" scripts\demo_server.py
+    goto :eof
+)
+
 echo Unknown target: %TARGET%
-echo Available targets: test, cover, proofs, lint, install, build
+echo Available targets: test, cover, proofs, lint, install, build, ui
 exit /b 1

@@ -2,6 +2,7 @@
 
 > **Goal:** An easy-to-read guide written in plain, simple English so every team member can present with confidence without memorizing heavy technical jargon.  
 > **Structure:**  
+>
 > 1. Presentation Slides (~6 minutes: 1.5 minutes per person)  
 > 2. Live Demos (~3–4 minutes: quick screen walkthrough)  
 > 3. Cheat Sheet for Teacher Questions  
@@ -49,9 +50,9 @@
 
 * **What you say:**
   > *"To keep the app running 24/7 without crashing, we host everything on Amazon Web Services (AWS):
-  > - **Two Data Centers**: If one AWS building loses power, the other building immediately takes over.
-  > - **Private and Safe**: Customers only see our secure front door. Our database and servers are locked inside a private network with no public internet access.
-  > - **Instant Notifications**: The moment money moves, an automated background message notifies the fraud engine to check for suspicious activity.
+  > * **Two Data Centers**: If one AWS building loses power, the other building immediately takes over.
+  > * **Private and Safe**: Customers only see our secure front door. Our database and servers are locked inside a private network with no public internet access.
+  > * **Instant Notifications**: The moment money moves, an automated background message notifies the fraud engine to check for suspicious activity.
   >
   > Now Member 2 will explain how we prevent money loss and overdrafts."*
 
@@ -115,10 +116,10 @@
 
 * **What you say:**
   > *"We don't deploy updates by hand. We use an automated pipeline on GitHub:
-  > - Every time we write code, an automated robot scans for secret leaks.
-  > - It runs over **100 tests** checking every single financial calculation.
-  > - If even a single test fails, the robot stops the deployment immediately.
-  > - When all tests pass, it updates the live AWS cloud with zero downtime for users.
+  > * Every time we write code, an automated robot scans for secret leaks.
+  > * It runs over **100 tests** checking every single financial calculation.
+  > * If even a single test fails, the robot stops the deployment immediately.
+  > * When all tests pass, it updates the live AWS cloud with zero downtime for users.
   >
   > Now Member 4 will explain how we monitor the live system and keep costs low."*
 
@@ -137,10 +138,10 @@
   > *"Thank you. You cannot protect what you cannot see.
   >
   > We built a live CloudWatch dashboard that tracks the health of our bank in real time:
-  > - **Speed**: Making sure 95% of payments finish in less than 1 second.
-  > - **Traffic**: Counting how many transactions happen per second.
-  > - **Errors**: Flagging if anything fails so engineers get an email alert right away.
-  > - **Tracing**: Every transaction has a tracking number, like a postal package. We can follow one single payment across every server in seconds."*
+  > * **Speed**: Making sure 95% of payments finish in less than 1 second.
+  > * **Traffic**: Counting how many transactions happen per second.
+  > * **Errors**: Flagging if anything fails so engineers get an email alert right away.
+  > * **Tracing**: Every transaction has a tracking number, like a postal package. We can follow one single payment across every server in seconds."*
 
 #### Slide 8: How We Cut AWS Costs
 

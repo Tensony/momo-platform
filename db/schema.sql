@@ -73,12 +73,12 @@ CREATE TABLE IF NOT EXISTS ledger_entries (
 CREATE INDEX IF NOT EXISTS ledger_txn_idx    ON ledger_entries (txn_id);
 CREATE INDEX IF NOT EXISTS ledger_wallet_idx ON ledger_entries (wallet_id, wallet_seq);
 
-CREATE OR REPLACE FUNCTION forbid_ledger_mutation() RETURNS trigger AS $$
-BEGIN
-    RAISE EXCEPTION 'ledger_entries is append-only (% blocked)', TG_OP
-        USING ERRCODE = 'integrity_constraint_violation';
-END;
-$$ LANGUAGE plpgsql;
+CREATE OR REPLACE FUNCTION forbid_ledger_mutation() RETURNS trigger
+LANGUAGE plpgsql AS
+'BEGIN
+    RAISE EXCEPTION ''ledger_entries is append-only (% blocked)'', TG_OP
+        USING ERRCODE = ''integrity_constraint_violation'';
+END;';
 
 DROP TRIGGER IF EXISTS ledger_no_update_delete ON ledger_entries;
 CREATE TRIGGER ledger_no_update_delete
@@ -174,12 +174,15 @@ ON CONFLICT (id) DO NOTHING;
 
 -- ---------------------------------------------------------------- application role (least privilege)
 -- Created by infra/terraform (db_init Lambda) in AWS; shown here for documentation and local use.
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'momo_app') THEN
+CREATE OR REPLACE FUNCTION ensure_momo_app_role() RETURNS void
+LANGUAGE plpgsql AS
+'BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = ''momo_app'') THEN
         CREATE ROLE momo_app NOLOGIN;
     END IF;
-END $$;
+END;';
+SELECT ensure_momo_app_role();
+DROP FUNCTION ensure_momo_app_role();
 GRANT SELECT, INSERT, UPDATE ON wallets, transactions, sagas, idempotency_keys,
       fraud_alerts, outbox_events, settlement_reports, disputes TO momo_app;
 GRANT SELECT, INSERT ON ledger_entries TO momo_app;      -- no UPDATE / DELETE / TRUNCATE

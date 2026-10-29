@@ -9,7 +9,7 @@ A payments platform where **correctness under concurrency and failure is non-neg
 serves three invariants, each enforced by the database and proved by an automated test:
 
 | Invariant | Enforced by | Proved by |
-|---|---|---|
+| --- | --- | --- |
 | Replaying a request any number of times debits **once** | `idempotency_keys` primary key + deterministic txn id + `UNIQUE (txn_id, step, direction)` on the ledger | `scripts/proofs/run_proofs.py` §1, `tests/integration/test_idempotency.py` |
 | A failure mid-transaction **creates or destroys no money** | Saga with compensation, every step idempotent, double-entry ledger, `SUM(balances) = 0` | proof §2 (crash injected at 5 points), `tests/integration/test_saga.py` |
 | Concurrent debits **never overdraw** | `SELECT … FOR UPDATE` in sorted order, balance checked *after* the lock, `CHECK (balance >= 0)` backstop | proof §3 (50 parallel), `tests/integration/test_ledger.py` |
@@ -54,7 +54,7 @@ flowchart LR
 ### 2.1 Independently deployable services (requirement: ≥ 3)
 
 | # | Service | Runtime | Deploy unit | Trigger |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | 1 | **wallet-api** — wallets, transfers, merchant payments, agent cash-in/out, reversals, disputes | ECS Fargate container | ECR image, blue/green via CodeDeploy | ALB (HTTPS) |
 | 2 | **saga-steps** — one saga step per call (reserve, credit, finalize, compensations) | Lambda | `saga-steps.zip` | Step Functions |
 | 3 | **fraud-engine** — sync decision inside the saga + async post-completion review | Lambda | `fraud-engine.zip` | Step Functions + SQS |
@@ -94,7 +94,7 @@ produces the same result because the idempotency record lives in the database, n
 **Aurora PostgreSQL (Serverless v2), Multi-AZ**, justified by the access patterns:
 
 | Access pattern | Why relational |
-|---|---|
+| --- | --- |
 | Move money between two wallets atomically | Multi-row ACID transaction; one commit covers both balances and both ledger rows |
 | 50 concurrent debits of one wallet must serialise | Row-level locks (`FOR UPDATE`) — a primitive DynamoDB does not offer; it would push locking into application code |
 | Exactly-once per Idempotency-Key | `PRIMARY KEY`/`UNIQUE` constraints make duplicates impossible *by construction* |
@@ -142,7 +142,7 @@ Even if all of 1–5 were bypassed, the ledger's `UNIQUE (txn_id, step, directio
 
 ### 4.2 Saga — "failure mid-transaction leaves no money created or destroyed"
 
-```
+```text
 reserve  (payer -> ESCROW)        fails fast on insufficient funds
 fraud    (no money moves)         DECLINE -> release
 credit   (ESCROW -> payee)
@@ -187,7 +187,7 @@ created. A dispute is raised by either party; an admin resolves it with `REVERSE
 Pure functions (`fraud/rules.py`, 100 % covered), I/O isolated in `fraud/service.py`, thresholds tunable at runtime in SSM Parameter Store (no redeploy):
 
 | Rule | Trigger | Decision |
-|---|---|---|
+| --- | --- | --- |
 | Velocity | ≥ 5 transactions from a wallet in 60 s | DECLINE (saga releases the hold) |
 | Unusual amount | > hard cap, or > 5× the wallet's 30-day average (with history) | DECLINE / REVIEW |
 | Geographic anomaly | > 50 km from the previous location at an impossible speed (> 900 km/h) | REVIEW |
@@ -205,7 +205,7 @@ per-merchant gross settlements and agent float, stored in `settlement_reports` a
 ## 5. Security
 
 | Requirement | Implementation |
-|---|---|
+| --- | --- |
 | **No credentials in source control, scan confirms** | None exist: the DB uses **IAM authentication** (15-min tokens, no password); the only DB password is RDS-managed in Secrets Manager and read by one Lambda; tests generate throw-away RSA keys in memory. `gitleaks` runs on **full history** in CI and **fails the build** (no allowlists; a strict default-rules scan of the tracked files reports *no leaks*); `.gitignore` blocks `.env`, `*.pem`, `*.tfvars`, tfstate. |
 | **Secrets in Secrets Manager / Parameter Store** | DB master secret: Secrets Manager (`manage_master_user_password`, KMS-encrypted, rotation managed by RDS). Fraud thresholds: SSM. Cognito IDs / ARNs in env vars are identifiers, not secrets. |
 | **Least-privilege IAM** | Separate role per service; table below. No `*` actions; `*` resources only where AWS offers no resource-level scoping (marked). |
@@ -220,7 +220,7 @@ per-merchant gross settlements and agent float, stored in `settlement_reports` a
 ### 5.1 IAM permissions and why each exists
 
 | Role | Permission | Justification |
-|---|---|---|
+| --- | --- | --- |
 | ECS **execution** | `ecr:GetAuthorizationToken` (`*`), `ecr:BatchGetImage`/`GetDownloadUrlForLayer`/`BatchCheckLayerAvailability` on the one repo, `logs:CreateLogStream/PutLogEvents` on one log group, `kms:Decrypt` on data key | Pull its own image, write its own logs. `GetAuthorizationToken` cannot be resource-scoped. |
 | ECS **task** (the running app) | `states:StartSyncExecution` on the saga ARN; `rds-db:connect` as `momo_app` only; X-Ray put (`*`, unscopable) | The only three things the API does. No S3, no Secrets Manager, no SQS. |
 | **saga-steps** | `rds-db:connect`; `sns:Publish` on the events topic; `kms:GenerateDataKey/Decrypt` on data key; X-Ray; logs on its group; ENI create/delete (`*`, required for VPC Lambdas) | Run steps, publish outbox events. |
@@ -246,7 +246,7 @@ Assessment requirement-to-evidence mapping and the distinction between configura
 ## 7. Observability
 
 | Requirement | Implementation |
-|---|---|
+| --- | --- |
 | **Structured logs + correlation IDs across services** | JSON logs (`common/logging_setup.py`) with `correlation_id` and `trace_id` on every line. Flow: `X-Correlation-ID` header (or generated) → API → saga input → Step Functions → Lambdas → SNS message attribute → SQS → fraud consumer. Echoed in every response and error body. Logs Insights query in RUNBOOK finds one request across all services. |
 | **Distributed tracing** | X-Ray: Flask middleware + daemon sidecar, `patch_all()` for boto3, Lambda active tracing, Step Functions tracing → one trace spans API → saga → Lambdas → DB calls. |
 | **Dashboard — golden signals** | `${name}-golden-signals`: **Latency** (ALB p50/p95/p99 vs SLO line), **Traffic** (requests, saga starts), **Errors** (5xx, 4xx, saga failures, unhandled exceptions, business outcomes), **Saturation** (ECS CPU/mem, Aurora ACU + connections, queue depth, task count), plus alarm status. |
@@ -258,7 +258,7 @@ Assessment requirement-to-evidence mapping and the distinction between configura
 Journey: `POST /transfers` (Idempotency-Key) → `201 COMPLETED` or a clean `422` rejection, and the money is where the receipt says it is.
 
 | SLI (how measured) | SLO (30-day window) | Error budget | Alarm |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **Availability** — requests not answered 5xx ÷ all requests (ALB `HTTPCode_Target_5XX / RequestCount`; 4xx are client/business outcomes and count as *good*) | **99.5 %** | 0.5 % ≈ 3.6 h of full outage | `api-5xx-rate` (> 2 % for 3/5 min) |
 | **Latency** — ALB `TargetResponseTime` p95 for the whole synchronous saga | **p95 < 1 s** in ≥ 99 % of 5-min windows | 1 % of windows | `api-latency-p95` |
 | **Correctness** — reconciliation runs with zero discrepancies ÷ runs | **100 %** (zero tolerance: money) | none | `reconciliation-discrepancy`, `saga-compensation-failed` |
@@ -286,7 +286,7 @@ Demonstration: `load/k6-autoscale.js` ramps 5 → 120 req/s; `scripts/autoscale_
 Assumptions: baseline = 100 k transactions/month (≈ 6 tx/s peak), 2 API tasks, ≈ 1 ACU average, 1 GB logs/month. 10× = 1 M tx/month (≈ 60 tx/s peak), ≈ 5 tasks, ≈ 3 ACU, 10 GB logs.
 
 | Service | Baseline | **10× projection** | Actual (fill in) |
-|---|---:|---:|---|
+| --- | ---: | ---: | --- |
 | ECS Fargate (API tasks) | 18.02 | 45.05 | |
 | Application Load Balancer (incl. public IPv4) | 30.00 | 33.95 | |
 | NAT gateway (1) | 36.59 | 37.17 | |
@@ -305,7 +305,7 @@ Assumptions: baseline = 100 k transactions/month (≈ 6 tx/s peak), 2 API tasks,
 ### 10.1–10.4 Four optimisations — implemented, quantified (`scripts/cost_model.py`)
 
 | # | Optimisation (where implemented) | Before | After | Saving / month |
-|---|---|---:|---:|---|
+| --- | --- | ---: | ---: | --- |
 | 1 | **Step Functions *Express* instead of Standard** (`stepfunctions.tf`, `type = "EXPRESS"`). Standard bills per state transition (~8 per saga); Express per request + duration. | 20.00 @ 100 k · **200.00 @ 1 M** | 0.14 · 1.42 | **$19.86 → $198.58** (and growing linearly with volume) |
 | 2 | **One NAT gateway, interface VPC endpoints off by default** (`single_nat_gateway`, `enable_interface_endpoints`). 9 interface endpoints × 2 AZ × $0.01/h ≈ $131/month — more than the NAT traffic they would replace at this volume. | 204.49 (NAT per AZ + 9 endpoints) | 36.59 | **$167.90** — *trade-off:* single egress AZ (§2.4); turn endpoints on at high traffic or if policy forbids internet egress |
 | 3 | **Aurora Serverless v2 instead of always-on provisioned** (`aurora.tf`, 0.5–4 ACU). Provisioned comparison is 2 × db.r6g.large, the size needed to survive the 10× peak. | 379.60 | 87.60 @ baseline · 262.80 @ 10× | **$292.00 → $116.80** |
@@ -316,7 +316,7 @@ Honest note: an early draft of this design proposed VPC endpoints as a *saving*.
 ## 11. Requirement traceability
 
 | Gate | Where |
-|---|---|
+| --- | --- |
 | AWS, ≥ 2 AZs | `network.tf` (2 AZs everywhere), `aurora.tf` (writer + reader in different AZs) |
 | ≥ 3 independent services | §2.1 — wallet-api, saga-steps, fraud-engine, reconciliation |
 | Async path | §2.2 — outbox → SNS → SQS → fraud Lambda (+ DLQ) |
