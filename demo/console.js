@@ -21,7 +21,7 @@
     return {data,response};
   }
   function setHealth(ok,label){$("healthDot").className=`dot ${ok?"ok":"bad"}`;$("healthText").textContent=label}
-  function openConnect(){ $("connectModal").classList.add("open");$("connectError").classList.add("hidden");if(state.base)$("apiBase").value=state.base;$("accessToken").focus() }
+  function openConnect(){ $("connectModal").classList.add("open");$("connectError").classList.add("hidden");state.base=state.base||window.location.origin;$("apiBase").value=state.base;$("accessToken").focus() }
   function navigate(name){if(!titles[name])return;state.selectedView=name;document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===`view-${name}`));document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===name));$("topTitle").textContent=titles[name];$("sidebar").classList.remove("open");history.replaceState(null,"",`#${name}`);if(state.token)loadView(name)}
   function query(params){const q=new URLSearchParams(Object.entries(params).filter(([,v])=>v!==""&&v!==null&&v!==undefined));return q.toString()?`?${q}`:""}
   function tableEmpty(message,columns=1){return `<div class="empty" style="grid-column:1/-1">${esc(message)}</div>`}

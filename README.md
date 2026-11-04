@@ -16,11 +16,20 @@ pages so authentication and service requests go to the same origin. The previous
 operations console remains available at `/demo` (also `/console`) for its additional wallet,
 ledger, dispute, fraud-alert, and reconciliation views.
 
-For a local static preview, start the existing server with `.\run_demo_ui.bat` and open
-`http://127.0.0.1:5050`; this preview server does not proxy API traffic or provide authentication.
-For local cross-origin use, configure the API process with
-`CORS_ALLOWED_ORIGINS=http://127.0.0.1:5050`; origins must be explicitly listed, comma-separated.
-CORS is disabled when the setting is empty and never reflects unconfigured origins.
+For local development, start the API with the database setup above in one terminal. In another,
+start the frontend proxy:
+
+```powershell
+$env:MOMO_API_BASE_URL = "http://127.0.0.1:8080"
+.\run_demo_ui.bat
+```
+
+Open the URL printed by the server (normally `http://127.0.0.1:5050`). The frontend server proxies
+the role login, session, wallet, transaction, and administrative API routes to the Flask API, so
+browser requests remain same-origin and do not require CORS configuration. Set
+`MOMO_API_BASE_URL` to another HTTP(S) API origin, such as `http://127.0.0.1:5080`, when needed.
+The backend must be running; an unavailable backend returns an explicit `502` instead of demo data.
+The separate in-memory simulation routes under `/api/*` are not the authenticated transaction API.
 
 The role-specific workspaces and console read balances and transaction results from the API; they
 do not seed demonstration data or calculate authoritative balances. Payment requests require
@@ -73,7 +82,7 @@ Stop the local database when finished:
 docker stop momo-postgres
 ```
 
-For Linux/macOS, install dependencies with `python3.12 -m pip install -r requirements-dev.txt`; use `make test`, `make lint`, and `make proofs`.
+For Linux/macOS, install dependencies with `python3.12 -m pip install -r requirements-dev.txt`; use `make test`, `make lint`, and `make proofs`. Start the API and frontend proxy in separate terminals, setting `MOMO_API_BASE_URL` before starting `scripts/demo_server.py` if the API is not at `http://127.0.0.1:8080`.
 
 ### Run the API and role-based login locally (Windows)
 

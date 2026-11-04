@@ -71,23 +71,28 @@ backend stores alerts but has no review lifecycle.
 
 1. Follow the Python/PostgreSQL setup in the repository README and initialize the schema.
 2. Start the API with the local database configured, or deploy the existing API.
-3. Open the API root (`http://127.0.0.1:8080/`) for the landing page. Sign in through `/login` or
+3. Optionally start `.\run_demo_ui.bat` as a local frontend server. It serves the role pages and
+   proxies the known application API routes to the Flask API at `MOMO_API_BASE_URL` (default
+   `http://127.0.0.1:8080`). The proxy keeps browser requests same-origin; no CORS allowlist is
+   needed for this path. If the backend is unavailable, the proxy returns `502` and does not
+   substitute demo data.
+4. Open either the API root or the URL printed by the frontend server. Sign in through `/login` or
    register a customer through `/register`.
-4. The login endpoint selects the role-specific authentication contract; the workspace then
+5. The login endpoint selects the role-specific authentication contract; the workspace then
    verifies the returned identity with `/auth/me`. Directly opening another role's page redirects
    according to the API-verified role, while every data/action endpoint remains protected by
    backend authorization.
-5. To demonstrate payments, use wallets the authenticated identity is authorized to operate.
+6. To demonstrate payments, use wallets the authenticated identity is authorized to operate.
    Review the confirmation before submission. An uncertain result remains locked and can be looked
    up using the original idempotency key; do not make a new payment until the result is resolved.
-6. `/demo` remains the integrated operations console for ledger, disputes, fraud-alert, and
+7. `/demo` remains the integrated operations console for ledger, disputes, fraud-alert, and
    settlement views. A settlement report appears only after the scheduled reconciliation job has
    written one.
 
-The static preview server (`.\run_demo_ui.bat`) does not proxy API calls and does not provide demo
-data or credentials. For local use, configure the API process with
-`CORS_ALLOWED_ORIGINS=http://127.0.0.1:5050`. Only explicitly listed origins are allowed; unset
-means CORS disabled.
+The frontend proxy does not provide credentials or bypass API authorization. Its separate
+in-memory simulation endpoints under `/api/*` must not be confused with the authenticated Flask
+API. Direct cross-origin browser access, if deliberately used instead of the proxy, still requires
+an explicit `CORS_ALLOWED_ORIGINS` allowlist on the API.
 
 ## Verification coverage
 
