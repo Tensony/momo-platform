@@ -3,951 +3,1860 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mobile Money App — Live Cloud Demonstration</title>
+  <title>Mobile Money Platform — Enterprise Financial Operations &amp; Verification Console</title>
   <style>
     :root {
       --bg: #ffffff;
-      --bg-alt: #f5f5f5;
-      --bg-card: #fafafa;
-      --bg-hover: #eaeaea;
-      --text: #000000;
-      --muted: #444444;
-      --border: #000000;
-      --btn-bg: #000000;
+      --bg-alt: #f6f7f9;
+      --bg-card: #ffffff;
+      --bg-hover: #f0f2f5;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #cbd5e1;
+      --border-dark: #0f172a;
+      --btn-bg: #0f172a;
       --btn-text: #ffffff;
-      --btn-hover: #333333;
-      --alert-row: #e5e5e5;
+      --btn-hover: #334155;
+      --badge-bg: #f1f5f9;
+      --badge-text: #0f172a;
+      --success-bg: #f0fdf4;
+      --success-border: #86efac;
+      --success-text: #166534;
+      --danger-bg: #fef2f2;
+      --danger-border: #fca5a5;
+      --danger-text: #991b1b;
+      --warning-bg: #fffbeb;
+      --warning-border: #fde68a;
+      --warning-text: #92400e;
+      --info-bg: #eff6ff;
+      --info-border: #93c5fd;
+      --info-text: #1e40af;
     }
 
     body.dark-mode {
-      --bg: #0a0a0a;
-      --bg-alt: #141414;
-      --bg-card: #181818;
-      --bg-hover: #262626;
-      --text: #ffffff;
-      --muted: #b5b5b5;
-      --border: #ffffff;
-      --btn-bg: #ffffff;
-      --btn-text: #000000;
-      --btn-hover: #dcdcdc;
-      --alert-row: #2b2b2b;
+      --bg: #090d16;
+      --bg-alt: #0f172a;
+      --bg-card: #131c31;
+      --bg-hover: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
+      --border-dark: #f8fafc;
+      --btn-bg: #f8fafc;
+      --btn-text: #090d16;
+      --btn-hover: #cbd5e1;
+      --badge-bg: #1e293b;
+      --badge-text: #f8fafc;
+      --success-bg: #052e16;
+      --success-border: #15803d;
+      --success-text: #86efac;
+      --danger-bg: #450a0a;
+      --danger-border: #b91c1c;
+      --danger-text: #fca5a5;
+      --warning-bg: #451a03;
+      --warning-border: #b45309;
+      --warning-text: #fde68a;
+      --info-bg: #172554;
+      --info-border: #1d4ed8;
+      --info-text: #bfdbfe;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.5;
-      padding-bottom: 50px;
+      padding-bottom: 60px;
       transition: background 0.15s, color 0.15s;
     }
+
+    /* Header & Navigation */
     header {
-      border-bottom: 2px solid var(--border);
-      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 12px;
-      background: var(--bg);
+      gap: 16px;
+      background: var(--bg-card);
+      position: sticky;
+      top: 0;
+      z-index: 50;
     }
-    header h1 {
-      font-size: 20px;
-      font-weight: 800;
-    }
-    header p {
-      font-size: 13px;
-      color: var(--muted);
-    }
-    .status-bar {
+    .header-brand {
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
       align-items: center;
-      font-size: 12px;
-      font-weight: 600;
+      gap: 12px;
     }
-    .tag {
-      border: 1px solid var(--border);
-      padding: 5px 12px;
-      background: var(--bg-alt);
-      color: var(--text);
-    }
-    .tag-solid {
+    .brand-logo {
       background: var(--btn-bg);
       color: var(--btn-text);
-      padding: 5px 12px;
+      font-weight: 900;
+      font-size: 14px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .brand-title {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+    .brand-sub {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .role-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12.5px;
+      font-weight: 600;
+    }
+    .role-badge select {
+      border: none;
+      background: transparent;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 12.5px;
+      cursor: pointer;
+      outline: none;
     }
 
     nav {
       border-bottom: 1px solid var(--border);
-      padding: 0 24px;
+      padding: 0 28px;
       background: var(--bg-alt);
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 2px;
+      overflow-x: auto;
     }
-    .tab-btn {
+    .nav-tab {
       background: transparent;
-      color: var(--text);
+      color: var(--muted);
       border: none;
       border-bottom: 3px solid transparent;
-      padding: 13px 16px;
+      padding: 13px 18px;
       font-size: 13.5px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
     }
-    .tab-btn:hover {
+    .nav-tab:hover {
+      color: var(--text);
       background: var(--bg-hover);
     }
-    .tab-btn.active {
+    .nav-tab.active {
+      color: var(--text);
       background: var(--bg);
-      border-bottom: 3px solid var(--border);
-      font-weight: 800;
+      border-bottom: 3px solid var(--border-dark);
     }
 
+    /* Container & Layout */
     .container {
-      max-width: 1140px;
+      max-width: 1320px;
       margin: 24px auto;
       padding: 0 24px;
     }
-    .panel { display: none; }
-    .panel.active { display: block; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 
-    .grid-2 {
+    /* KPI Strip */
+    .kpi-strip {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    .grid-2-tight {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    .grid-3 {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 14px;
-      margin-bottom: 18px;
+      margin-bottom: 24px;
     }
-    .grid-4 {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-      margin-bottom: 20px;
-    }
-    @media (max-width: 850px) {
-      .grid-2, .grid-2-tight, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-    }
-
-    .box {
+    .kpi-card {
+      background: var(--bg-card);
       border: 1px solid var(--border);
-      padding: 20px;
-      background: var(--bg);
-      margin-bottom: 20px;
+      padding: 14px 16px;
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     }
-    .box-header {
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+    }
+    .kpi-value {
+      font-size: 21px;
+      font-weight: 800;
+      margin: 4px 0 2px 0;
+      letter-spacing: -0.5px;
+    }
+    .kpi-sub {
+      font-size: 11.5px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    /* Grids & Cards */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    @media (max-width: 1024px) {
+      .kpi-strip { grid-template-columns: repeat(3, 1fr); }
+      .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px;
+      margin-bottom: 22px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--border);
       padding-bottom: 12px;
       margin-bottom: 16px;
-      gap: 10px;
+      gap: 12px;
       flex-wrap: wrap;
     }
-    .box-title {
+    .card-title {
       font-size: 16px;
       font-weight: 800;
+      letter-spacing: -0.2px;
     }
-    .box-sub {
-      font-size: 13px;
+    .card-sub {
+      font-size: 12.5px;
       color: var(--muted);
       margin-top: 2px;
     }
-    .stat-card {
-      border: 1px solid var(--border);
-      padding: 16px;
-      background: var(--bg-card);
-    }
-    .stat-label {
-      font-size: 11.5px;
-      text-transform: uppercase;
-      color: var(--muted);
-      font-weight: 700;
-    }
-    .stat-name {
-      font-size: 15px;
-      font-weight: 700;
-      margin-top: 3px;
-    }
-    .stat-value {
-      font-size: 25px;
-      font-weight: 800;
-      margin-top: 6px;
-    }
-    .stat-sub {
-      font-size: 12.5px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
 
+    /* Forms & Controls */
     label {
       display: block;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 700;
       margin-bottom: 5px;
+      color: var(--text);
     }
-    input, select {
+    input, select, textarea {
       width: 100%;
-      padding: 10px 12px;
+      padding: 9px 12px;
       border: 1px solid var(--border);
+      border-radius: 4px;
       background: var(--bg);
       color: var(--text);
-      font-size: 14px;
+      font-size: 13.5px;
+      font-family: inherit;
       margin-bottom: 14px;
+      outline: none;
+      transition: border 0.15s;
     }
-    .btn-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 4px;
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--border-dark);
     }
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* Buttons */
     .btn {
       background: var(--btn-bg);
       color: var(--btn-text);
-      border: 1px solid var(--border);
-      padding: 10px 16px;
-      font-size: 13.5px;
+      border: 1px solid var(--btn-bg);
+      padding: 9px 16px;
+      font-size: 13px;
       font-weight: 700;
+      border-radius: 4px;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
     }
     .btn:hover {
       background: var(--btn-hover);
+      border-color: var(--btn-hover);
     }
     .btn-outline {
-      background: var(--bg);
+      background: transparent;
       color: var(--text);
       border: 1px solid var(--border);
-      padding: 10px 14px;
-      font-size: 13px;
+      padding: 8px 14px;
+      font-size: 12.5px;
       font-weight: 600;
+      border-radius: 4px;
       cursor: pointer;
+      transition: all 0.15s;
     }
     .btn-outline:hover {
       background: var(--bg-hover);
+      border-color: var(--border-dark);
     }
-    .btn-sm {
-      padding: 5px 12px;
-      font-size: 12px;
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-xs { padding: 3px 8px; font-size: 11.5px; }
+    .btn-danger {
+      background: var(--danger-bg);
+      color: var(--danger-text);
+      border: 1px solid var(--danger-border);
     }
-    .btn-xs {
-      padding: 4px 10px;
-      font-size: 12px;
+    .btn-danger:hover {
+      background: var(--danger-text);
+      color: #ffffff;
     }
 
+    /* Tables */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-top: 10px;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 13.5px;
+      font-size: 13px;
+      text-align: left;
     }
     th, td {
-      border: 1px solid var(--border);
-      padding: 10px 12px;
-      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
     }
     th {
       background: var(--bg-alt);
       font-weight: 700;
-      font-size: 12px;
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-hover); }
+
+    /* Badges & Pills */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
       text-transform: uppercase;
     }
-    .total-row {
-      background: var(--bg-alt);
-      font-weight: 800;
+    .badge-success { background: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); }
+    .badge-danger { background: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-border); }
+    .badge-warning { background: var(--warning-bg); color: var(--warning-text); border: 1px solid var(--warning-border); }
+    .badge-info { background: var(--info-bg); color: var(--info-text); border: 1px solid var(--info-border); }
+    .badge-muted { background: var(--badge-bg); color: var(--muted); border: 1px solid var(--border); }
+
+    .hash-code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      color: var(--muted);
     }
-    .tampered-row {
-      background: var(--alert-row);
-      font-weight: 800;
-    }
-    .notice {
-      border: 2px solid var(--border);
-      background: var(--bg-alt);
-      padding: 14px 16px;
-      font-size: 14px;
-      margin-top: 14px;
-    }
-    .notice-spaced {
-      margin-top: 0;
-      margin-bottom: 16px;
-    }
-    .step-card {
+
+    /* Alerts & Notifications */
+    .notice-box {
       border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 12px 16px;
+      margin: 14px 0;
+      font-size: 13px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .notice-success { background: var(--success-bg); border-color: var(--success-border); color: var(--success-text); }
+    .notice-danger { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger-text); }
+    .notice-warning { background: var(--warning-bg); border-color: var(--warning-border); color: var(--warning-text); }
+    .notice-info { background: var(--info-bg); border-color: var(--info-border); color: var(--info-text); }
+
+    /* Modal System */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
       padding: 16px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
       background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      max-width: 580px;
+      width: 100%;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+    .modal-title { font-size: 16px; font-weight: 800; }
+    .modal-close {
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--muted);
+    }
+
+    /* Step Cards */
+    .step-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 14px 0;
+    }
+    .step-box {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 14px;
+      background: var(--bg-alt);
       text-align: center;
     }
-    .step-num {
+    .step-tag {
       display: inline-block;
       background: var(--btn-bg);
       color: var(--btn-text);
+      font-size: 10.5px;
       font-weight: 800;
-      font-size: 12px;
-      padding: 2px 9px;
-      margin-bottom: 8px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      margin-bottom: 6px;
     }
-    .step-title {
-      font-size: 15px;
-      font-weight: 800;
-      margin-bottom: 4px;
-    }
-    .step-desc {
-      font-size: 13px;
-      color: var(--muted);
-    }
-    .hidden {
-      display: none;
-    }
+    .step-head { font-weight: 800; font-size: 13.5px; margin-bottom: 4px; }
+    .step-text { font-size: 12px; color: var(--muted); }
+
+    .hidden { display: none !important; }
+  
+    /* Utility & Semantic CSS Classes (Eliminating Inline Styles) */
+    .role-label { display: inline; margin: 0; font-size: inherit; font-weight: inherit; }
+    .table-scroll-280 { max-height: 280px; }
+    .flex-gap-8 { display: flex; gap: 8px; margin-bottom: 14px; }
+    .flex-gap-10 { display: flex; gap: 10px; }
+    .flex-wrap-10 { display: flex; gap: 10px; flex-wrap: wrap; }
+    .flex-align-center { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .flex-end-10 { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+    .flex-end-16 { display: flex; justify-content: flex-end; margin-top: 16px; }
+    .flex-between-10 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .mb-0 { margin-bottom: 0 !important; }
+    .mt-8 { margin-top: 8px; }
+    .mt-14 { margin-top: 14px; }
+    .receipt-placeholder { text-align: center; padding: 40px 20px; color: var(--muted); }
+    .receipt-box { border: 2px dashed var(--border); padding: 18px; border-radius: 6px; background: var(--bg-alt); margin-bottom: 14px; }
+    .receipt-amount { font-size: 26px; font-weight: 900; margin-bottom: 8px; }
+    .receipt-row { font-size: 13px; margin-bottom: 4px; }
+    .receipt-meta { font-size: 11.5px; color: var(--muted); margin-top: 8px; }
+    .search-input-w240 { width: 240px; margin-bottom: 0; }
+    .select-w140 { width: 140px; margin-bottom: 0; }
+    .card-accent { border-left: 4px solid var(--border-dark); }
+    .card-header-clean { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .proof-card { margin-bottom: 0; background: var(--bg-alt); }
+    .proof-title { font-weight: 800; font-size: 14.5px; margin-bottom: 4px; }
+    .proof-desc { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+    .proof-stat { font-size: 20px; font-weight: 800; margin-bottom: 2px; }
+    .proof-highlight { font-size: 12px; color: var(--success-text); font-weight: 700; margin-bottom: 10px; }
+    .tr-total { background: var(--bg-alt); font-weight: 800; }
+    .text-success { color: var(--success-text); font-weight: 700; }
+    .dispute-summary-text { font-size: 13px; margin-bottom: 12px; color: var(--muted); }
+    .wallet-card-pos { margin-bottom: 0; position: relative; }
+    .wallet-header-flex { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .wallet-card-name { font-weight: 800; font-size: 15px; margin-bottom: 2px; }
+    .wallet-card-id { margin-bottom: 8px; }
+    .wallet-card-balance { font-size: 22px; font-weight: 900; margin-bottom: 10px; }
+    .font-weight-800 { font-weight: 800; }
+    .fs-12 { font-size: 12px; }
+    .fs-12-5 { font-size: 12.5px; }
+    .fs-14 { font-size: 14px; }
+    .link-detail { color: inherit; text-decoration: underline; font-weight: 700; }
+    .link-subtle { color: inherit; text-decoration: underline; }
+    .empty-table-msg { text-align: center; color: var(--muted); padding: 18px; }
+    .tr-tampered { background: var(--danger-bg); }
+    .detail-row { margin-bottom: 12px; }
+    .detail-amount { font-size: 18px; font-weight: 800; }
+    .saga-step-list { margin: 6px 0 0 20px; font-size: 12.5px; color: var(--muted); }
   </style>
 </head>
 <body>
 
+  <!-- =========================================================
+       GLOBAL APP HEADER & ROLE SWITCHER
+  ========================================================== -->
   <header>
-    <div>
-      <h1>Mobile Money Platform — Live Cloud App</h1>
-      <p>Simple, Safe Mobile Payments in Zambian Kwacha (K / ZMW)</p>
+    <div class="header-brand">
+      <div class="brand-logo">MOMO</div>
+      <div>
+        <div class="brand-title">Mobile Money Platform — Financial Operations Console</div>
+        <div class="brand-sub">Distributed Double-Entry Ledger &bull; Saga Orchestrator &bull; Zambian Kwacha (K / ZMW)</div>
+      </div>
     </div>
-    <div class="status-bar">
-      <span class="tag-solid" id="apiHealthBadge">Cloud Status: Online &amp; Healthy</span>
-      <span class="tag" id="integrityBadge">Account Records: Protected ✓</span>
-      <button type="button" class="btn-outline btn-sm" id="themeBtn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
-      <button type="button" class="btn-outline btn-sm" onclick="resetDemo()">Reset Balances</button>
+    <div class="header-actions">
+      <div class="role-badge">
+        <label for="activeRoleSelector" class="role-label">Active Role:</label>
+        <select id="activeRoleSelector" title="Active Role" aria-label="Active Role" onchange="onRoleChange()">
+          <option value="customer">Customer (Alice Mwamba)</option>
+          <option value="merchant">Merchant (Shoprite Cairo Rd)</option>
+          <option value="agent">Agent (Agent-1 Lusaka Booth)</option>
+          <option value="admin" selected>Platform Admin (Auditor)</option>
+        </select>
+      </div>
+      <span class="badge badge-success" id="cloudHealthBadge">AWS Cloud: Healthy &#10003;</span>
+      <span class="badge badge-info" id="ledgerInvariantBadge">Ledger: Conserved (K0.00)</span>
+      <button type="button" class="btn-outline btn-sm" id="themeToggleBtn" onclick="toggleDarkMode()">&#9790; Dark Mode</button>
+      <button type="button" class="btn-outline btn-sm" onclick="resetPlatformState()">Reset State</button>
     </div>
   </header>
 
+  <!-- =========================================================
+       PRIMARY NAVIGATION (5 MODULES)
+  ========================================================== -->
   <nav>
-    <button type="button" class="tab-btn active" onclick="showTab('tab-wallets', this)">1. Send &amp; Receive Money</button>
-    <button type="button" class="tab-btn" onclick="showTab('tab-idempotency', this)">2. Double-Click Protection (100 Taps)</button>
-    <button type="button" class="tab-btn" onclick="showTab('tab-safety', this)">3. Crash Refund &amp; No Overdraft</button>
-    <button type="button" class="tab-btn" onclick="showTab('tab-security', this)">4. Anti-Hacking Protection</button>
-    <button type="button" class="tab-btn" onclick="showTab('tab-cost', this)">5. Cloud Speed &amp; Cost Savings</button>
+    <button type="button" class="nav-tab active" onclick="switchTab('tab-dashboard', this)">1. Executive Dashboard &amp; Wallets</button>
+    <button type="button" class="nav-tab" onclick="switchTab('tab-operations', this)">2. Transaction Operations</button>
+    <button type="button" class="nav-tab" onclick="switchTab('tab-transactions', this)">3. Transactions, Disputes &amp; Reversals</button>
+    <button type="button" class="nav-tab" onclick="switchTab('tab-ledger', this)">4. Double-Entry Ledger &amp; Reconciliation</button>
+    <button type="button" class="nav-tab" onclick="switchTab('tab-governance', this)">5. Fraud Engine, Proofs &amp; Cloud Economics</button>
   </nav>
 
   <div class="container">
 
+    <!-- KPI STRIP -->
+    <div class="kpi-strip">
+      <div class="kpi-card">
+        <div class="kpi-label">Processed Volume</div>
+        <div class="kpi-value" id="kpiVolumeVal">K0.00</div>
+        <div class="kpi-sub">Completed money movement</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Transactions</div>
+        <div class="kpi-value" id="kpiTxnCountVal">0</div>
+        <div class="kpi-sub" id="kpiTxnBreakdown">0 success &bull; 0 rejected</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">User Circulation</div>
+        <div class="kpi-value" id="kpiCirculationVal">K0.00</div>
+        <div class="kpi-sub">Customers, Merchants &amp; Agents</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Ledger Conservation</div>
+        <div class="kpi-value" id="kpiConservationVal">K0.00</div>
+        <div class="kpi-sub">Net Sum of All Balances</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Open Disputes</div>
+        <div class="kpi-value" id="kpiDisputesVal">0</div>
+        <div class="kpi-sub">Awaiting Admin resolution</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Fraud Alerts</div>
+        <div class="kpi-value" id="kpiFraudVal">0</div>
+        <div class="kpi-sub">High-risk &amp; anomaly flags</div>
+      </div>
+    </div>
+
     <!-- =========================================================
-         TAB 1: SEND & RECEIVE MONEY (SIMPLE WALLET APP)
+         TAB 1: EXECUTIVE DASHBOARD & WALLET DIRECTORY
     ========================================================== -->
-    <section id="tab-wallets" class="panel active">
-      <div class="grid-4" id="walletCards"></div>
+    <section id="tab-dashboard" class="tab-panel active">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Participant Wallet Directory</div>
+            <div class="card-sub">Active Customer, Merchant, and Agent float accounts held in Aurora PostgreSQL</div>
+          </div>
+          <div>
+            <button type="button" class="btn btn-sm" onclick="openNewWalletModal()">+ Create New Wallet</button>
+          </div>
+        </div>
+        <div class="grid-4" id="walletCardsGrid"></div>
+      </div>
 
       <div class="grid-2">
-        <!-- Simple Send Money Form -->
-        <div class="box">
-          <div class="box-header">
+        <div class="card">
+          <div class="card-header">
             <div>
-              <div class="box-title">Send Money or Deposit Cash</div>
-              <div class="box-sub">Try a normal payment, a double-tap, or a simulated power cut</div>
+              <div class="card-title">System Invariant Accounts (Mint &amp; Escrow)</div>
+              <div class="card-sub">Core financial primitives guaranteeing zero net currency creation</div>
             </div>
           </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>System Account</th>
+                  <th>Role</th>
+                  <th>Current Balance</th>
+                  <th>Conservation Property</th>
+                </tr>
+              </thead>
+              <tbody id="systemWalletsBody"></tbody>
+            </table>
+          </div>
+        </div>
 
-          <label for="txnType">What would you like to do?</label>
-          <select id="txnType" title="Payment Type" onchange="syncWalletSelectors()">
-            <option value="Send Money to Friend">Send Money to a Friend (Alice → Bob)</option>
-            <option value="Pay Store">Pay a Shop / Supermarket (Alice → Shoprite)</option>
-            <option value="Agent Cash Deposit">Deposit Cash at Mobile Agent (Agent → Alice)</option>
-            <option value="Agent Cash Withdrawal">Withdraw Cash at Mobile Agent (Alice → Agent)</option>
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Real-Time Security &amp; Audit Trail</div>
+              <div class="card-sub">Append-only log of administrative and financial operations</div>
+            </div>
+          </div>
+          <div class="table-container table-scroll-280">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Action</th>
+                  <th>Actor</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="auditTrailBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         TAB 2: TRANSACTION OPERATIONS (TRANSFERS, PAYMENTS, CASH-IN/OUT)
+    ========================================================== -->
+    <section id="tab-operations" class="tab-panel">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Execute Financial Operation</div>
+              <div class="card-sub">Initiate atomic transfers through the distributed Saga Orchestrator</div>
+            </div>
+            <span class="badge badge-info" id="opRoleBadge">Role: Admin</span>
+          </div>
+
+          <label for="opTxnType">Operation Type</label>
+          <select id="opTxnType" title="Operation Type" aria-label="Operation Type" onchange="onTxnTypeChange()">
+            <option value="TRANSFER">Wallet Transfer (P2P Customer to Customer/Merchant)</option>
+            <option value="MERCHANT_PAYMENT">Merchant Payment (Customer to Merchant)</option>
+            <option value="CASH_IN">Agent Cash-In (Deposit: Agent Float to Customer)</option>
+            <option value="CASH_OUT">Agent Cash-Out (Withdrawal: Customer to Agent Float)</option>
+            <option value="FLOAT_TOPUP">Admin Float Top-Up (Mint to Agent Float)</option>
           </select>
 
-          <div class="grid-2-tight">
+          <div class="input-row">
             <div>
-              <label for="fromWallet">From Account</label>
-              <select id="fromWallet" title="Sender Account"></select>
+              <label for="opFromWallet">Source (Paying) Wallet</label>
+              <select id="opFromWallet" title="Source Wallet" aria-label="Source (Paying) Wallet"></select>
             </div>
             <div>
-              <label for="toWallet">To Account</label>
-              <select id="toWallet" title="Receiver Account"></select>
+              <label for="opToWallet">Destination (Receiving) Wallet</label>
+              <select id="opToWallet" title="Destination Wallet" aria-label="Destination (Receiving) Wallet"></select>
             </div>
           </div>
 
-          <label for="amountInput">Amount in Kwacha (K)</label>
-          <input type="number" id="amountInput" title="Amount in Kwacha" value="150" min="1" />
-
-          <div class="btn-row">
-            <button type="button" class="btn" onclick="sendNormalPayment()">Send Money Now</button>
-            <button type="button" class="btn-outline" onclick="sendDuplicateTap()">Tap "Send" Twice (Weak Internet)</button>
-            <button type="button" class="btn-outline" onclick="sendCrashTest()">Simulate Server Crash Mid-Payment</button>
+          <div class="input-row">
+            <div>
+              <label for="opAmount">Amount in Zambian Kwacha (K)</label>
+              <input type="number" id="opAmount" title="Amount in Zambian Kwacha" aria-label="Amount in Zambian Kwacha" value="150.00" min="0.10" step="0.50" />
+            </div>
+            <div>
+              <label for="opReason">Payment Reference / Note</label>
+              <input type="text" id="opReason" title="Payment Reference or Note" aria-label="Payment Reference or Note" value="Mobile Transfer Reference" />
+            </div>
           </div>
 
-          <div id="txnMessage" class="notice hidden"></div>
+          <label for="opIdemKey">Idempotency-Key (Client-Provided Guarantee)</label>
+          <div class="flex-gap-8">
+            <input type="text" id="opIdemKey" title="Idempotency-Key" aria-label="Idempotency-Key" class="mb-0" />
+            <button type="button" class="btn-outline btn-sm" onclick="generateNewIdemKey()" title="Generate new UUID key">New Key</button>
+          </div>
+
+          <label for="opFaultInjection">Saga Fault &amp; Anomaly Injection (Demonstration Hooks)</label>
+          <select id="opFaultInjection" title="Saga Fault and Anomaly Injection" aria-label="Saga Fault and Anomaly Injection">
+            <option value="none">None (Standard atomic execution)</option>
+            <option value="fail_credit">Simulate Mid-Flight Crash (Fail before credit &bull; Auto-refund Escrow)</option>
+            <option value="geo_jump">Simulate Impossible Travel (Lusaka to London in 10 mins &bull; Fraud Alert)</option>
+            <option value="velocity_spike">Simulate High Velocity Burst (&gt;5 txns/min &bull; Fraud Alert)</option>
+          </select>
+
+          <div class="flex-wrap-10">
+            <button type="button" class="btn" onclick="submitTransactionOperation()">Execute Transaction</button>
+            <button type="button" class="btn-outline" onclick="testReplayIdempotency()">Test Duplicate Tap (Same Key)</button>
+          </div>
+
+          <div id="operationFeedback" class="notice-box hidden"></div>
         </div>
 
-        <!-- Recent Activity Table -->
-        <div class="box">
-          <div class="box-header">
+        <div class="card">
+          <div class="card-header">
             <div>
-              <div class="box-title">Recent Payment Receipts</div>
-              <div class="box-sub">Every completed transfer can also be refunded if sent by mistake</div>
+              <div class="card-title">Live Transaction Receipt &amp; Saga State</div>
+              <div class="card-sub">Decentralized 3-step Escrow coordination verification</div>
             </div>
           </div>
+
+          <div id="receiptPlaceholder" class="receipt-placeholder">
+            <div>&#9881;</div>
+            <div class="font-weight-800 mt-8">No transaction initiated in this session yet</div>
+            <div class="fs-12-5">Execute an operation on the left to inspect its cryptographic receipt and saga steps.</div>
+          </div>
+
+          <div id="receiptContent" class="hidden">
+            <div class="receipt-box">
+              <div class="flex-between-10">
+                <span class="badge" id="receiptStatusBadge">COMPLETED</span>
+                <span class="hash-code" id="receiptIdVal">TXN-00000000</span>
+              </div>
+              <div class="receipt-amount" id="receiptAmountVal">K0.00 ZMW</div>
+              <div class="receipt-row"><strong>From:</strong> <span id="receiptFromVal">-</span></div>
+              <div class="receipt-row"><strong>To:</strong> <span id="receiptToVal">-</span></div>
+              <div class="receipt-row"><strong>Reference:</strong> <span id="receiptReasonVal">-</span></div>
+              <div class="receipt-meta">
+                <strong>Idempotency-Key:</strong> <span class="hash-code" id="receiptKeyVal">-</span> &bull;
+                <strong>Replayed:</strong> <span id="receiptReplayedVal">False</span>
+              </div>
+            </div>
+
+            <div class="step-grid">
+              <div class="step-box">
+                <span class="step-tag">STEP 1</span>
+                <div class="step-head">Reserve Hold</div>
+                <div class="step-text">Debited sender to Escrow</div>
+              </div>
+              <div class="step-box">
+                <span class="step-tag">STEP 2</span>
+                <div class="step-head">Fraud &amp; Policy</div>
+                <div class="step-text" id="receiptFraudDecision">Approved (Score 0.05)</div>
+              </div>
+              <div class="step-box">
+                <span class="step-tag">STEP 3</span>
+                <div class="step-head">Settle Credit</div>
+                <div class="step-text" id="receiptStep3Text">Credited recipient wallet</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         TAB 3: TRANSACTION EXPLORER, DISPUTES & REVERSALS
+    ========================================================== -->
+    <section id="tab-transactions" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Transaction Directory &amp; History</div>
+            <div class="card-sub">Searchable, filterable audit record of all completed, rejected, and reversed transactions</div>
+          </div>
+          <div class="flex-align-center">
+            <input type="text" id="txnSearchInput" title="Filter transactions by ID, wallet or note" aria-label="Filter transactions by ID, wallet or note" placeholder="Filter by ID, wallet or note..." class="search-input-w240" oninput="filterTransactions()" />
+            <select id="txnStatusFilter" title="Filter transactions by status" aria-label="Filter transactions by status" class="select-w140" onchange="filterTransactions()">
+              <option value="ALL">All Statuses</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="REJECTED">Rejected</option>
+              <option value="FAILED">Failed</option>
+              <option value="REVERSED">Reversed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-container">
           <table>
             <thead>
               <tr>
-                <th>Payment Type</th>
-                <th>From → To</th>
+                <th>Transaction ID</th>
+                <th>Type</th>
+                <th>From &rarr; To</th>
+                <th>Amount (ZMW)</th>
+                <th>Status</th>
+                <th>Fraud Decision</th>
+                <th>Time</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="transactionsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Disputes & Admin Reversals Section -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Dispute Management &amp; Compensating Reversals</div>
+            <div class="card-sub">Formal dispute arbitration workflow &bull; Reversals execute as brand-new compensating sagas</div>
+          </div>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Dispute ID</th>
+                <th>Target Transaction</th>
                 <th>Amount</th>
-                <th>Result</th>
-                <th>Refund</th>
+                <th>Parties Involved</th>
+                <th>Raised By</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Admin Actions</th>
               </tr>
             </thead>
-            <tbody id="txnTableBody"></tbody>
+            <tbody id="disputesTableBody"></tbody>
           </table>
         </div>
       </div>
     </section>
 
     <!-- =========================================================
-         TAB 2: DOUBLE-CLICK PROTECTION (100 RAPID TAPS)
+         TAB 4: DOUBLE-ENTRY LEDGER, HASH CHAIN & RECONCILIATION
     ========================================================== -->
-    <section id="tab-idempotency" class="panel">
-      <div class="box">
-        <div class="box-header">
+    <section id="tab-ledger" class="tab-panel">
+      <!-- Tamper Simulation Strip -->
+      <div class="card card-accent">
+        <div class="card-header card-header-clean">
           <div>
-            <div class="box-title">What Happens If a Customer Taps "Pay" 100 Times on Poor Internet?</div>
-            <div class="box-sub">Golden Rule #1: Even if a phone sends the same payment 100 times, the customer is charged only ONCE.</div>
+            <div class="card-title">Cryptographic Tamper-Evident Ledger Integrity</div>
+            <div class="card-sub">Every wallet maintains a strict SHA-256 hash chain: <code>H = SHA256(prev_hash | seq | txn | step | dir | amount | bal_after)</code></div>
           </div>
-          <button type="button" class="btn" onclick="runHundredTapsDemo()">Tap "Pay K150" 100 Times Now</button>
-        </div>
-
-        <div class="grid-4">
-          <div class="stat-card">
-            <div class="stat-label">Button Taps Sent</div>
-            <div class="stat-value" id="tapsSentVal">100 Taps</div>
-            <div class="stat-sub">Same K150.00 order</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Times Charged</div>
-            <div class="stat-value" id="timesChargedVal">1 Time Only</div>
-            <div class="stat-sub">Alice paid K150.00 once</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Duplicate Taps Blocked</div>
-            <div class="stat-value" id="dupsBlockedVal">99 Ignored</div>
-            <div class="stat-sub">Recognized as repeats</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Customer Money Protected</div>
-            <div class="stat-value" id="moneySavedVal">K14,850.00</div>
-            <div class="stat-sub">Saved from double-charging</div>
+          <div class="flex-gap-10">
+            <button type="button" class="btn btn-danger btn-sm" onclick="triggerLedgerTamper(true)">Simulate Database Tampering</button>
+            <button type="button" class="btn-outline btn-sm" onclick="triggerLedgerTamper(false)">Restore Genuine Records</button>
           </div>
         </div>
-
-        <div id="hundredTapsNotice" class="notice notice-spaced">
-          <strong>How it works in plain words:</strong> Every payment button tap gets a unique digital stamp. When Alice's phone repeats that same order 99 more times due to weak network signal, our cloud sees the stamp was already paid and simply shows her the original receipt without taking extra money.
-        </div>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Tap Number</th>
-              <th>What the Phone Sent</th>
-              <th>How the Cloud Responded</th>
-              <th>Money Taken from Alice</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Tap #1 (First Tap)</strong></td>
-              <td>Send K150.00 from Alice to Bob</td>
-              <td><strong>Approved &amp; Paid ✓</strong> (Balance: K1,000 → K850)</td>
-              <td><strong>K150.00 ZMW</strong></td>
-            </tr>
-            <tr>
-              <td><strong>Taps #2 to #100 (99 Repeats)</strong></td>
-              <td>Exact same K150.00 order repeated</td>
-              <td><strong>Duplicate Recognized ✓</strong> (Original receipt returned)</td>
-              <td><strong>K0.00 ZMW (Not Charged Again)</strong></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- =========================================================
-         TAB 3: SERVER CRASH REFUND & OVERDRAFT PROTECTION
-    ========================================================== -->
-    <section id="tab-safety" class="panel">
-      <!-- Part A: Server Crash Auto-Refund -->
-      <div class="box">
-        <div class="box-header">
-          <div>
-            <div class="box-title">Golden Rule #2: What If the Server Loses Power Halfway Through a Payment?</div>
-            <div class="box-sub">Your money is held in a safe temporary box (Escrow) and automatically returns to your wallet if anything goes wrong.</div>
-          </div>
-          <button type="button" class="btn" onclick="runCrashVisualDemo()">Test Server Crash &amp; Auto-Refund</button>
-        </div>
-
-        <div class="grid-3">
-          <div class="step-card">
-            <span class="step-num">STEP 1</span>
-            <div class="step-title">Safe Holding Box (Escrow)</div>
-            <div class="step-desc">Alice's K40.00 is placed into a locked holding box before going to Bob.</div>
-          </div>
-          <div class="step-card">
-            <span class="step-num">STEP 2</span>
-            <div class="step-title">Server Crashes Mid-Way!</div>
-            <div class="step-desc">Power cuts off before Bob receives the money.</div>
-          </div>
-          <div class="step-card">
-            <span class="step-num">STEP 3</span>
-            <div class="step-title">Automatic Instant Refund ✓</div>
-            <div class="step-desc" id="crashStep3Text">The holding box unlocks and returns all K40.00 back to Alice. Zero money lost!</div>
-          </div>
-        </div>
-
-        <div id="crashVisualNotice" class="notice">
-          <strong>Result of 5 Crash Tests:</strong> We intentionally crashed the server at 5 different moments during a transfer. Every single time, <strong>100% of the customer's Kwacha returned to their wallet</strong>.
+        <div id="tamperStatusBanner" class="notice-box notice-success mt-14">
+          <span>&#10003;</span>
+          <div><strong>Ledger Integrity Verified:</strong> All SHA-256 chain links match and no records have been altered or deleted.</div>
         </div>
       </div>
 
-      <!-- Part B: Overdraft Protection -->
-      <div class="box">
-        <div class="box-header">
-          <div>
-            <div class="box-title">Golden Rule #3: Can a Customer Ever Spend More Money Than They Have?</div>
-            <div class="box-sub">Test: A wallet with only K10.00 tries to send 50 payments of K0.30 at the exact same second.</div>
-          </div>
-          <button type="button" class="btn" onclick="runOverdraftVisualDemo()">Run 50 Simultaneous Payments Test</button>
-        </div>
-
-        <div class="grid-4">
-          <div class="stat-card">
-            <div class="stat-label">Starting Balance</div>
-            <div class="stat-value">K10.00 ZMW</div>
-            <div class="stat-sub">Tries 50 × K0.30 (K15.00)</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Payments Approved</div>
-            <div class="stat-value" id="overdraftApprovedVal">33 Approved</div>
-            <div class="stat-sub">33 × K0.30 = K9.90 spent</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Payments Declined</div>
-            <div class="stat-value" id="overdraftDeclinedVal">17 Declined</div>
-            <div class="stat-sub">Stopped when balance hit K0.10</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Final Wallet Balance</div>
-            <div class="stat-value" id="overdraftFinalVal">K0.10 ZMW</div>
-            <div class="stat-sub">Never went below K0.00!</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =========================================================
-         TAB 4: ANTI-HACKING & TAMPER ALARM
-    ========================================================== -->
-    <section id="tab-security" class="panel">
-      <div class="box">
-        <div class="box-header">
-          <div>
-            <div class="box-title">How We Stop Hackers from Secretly Editing Account Balances</div>
-            <div class="box-sub">Every record in our bank book is sealed with a digital fingerprint linked to the previous record.</div>
-          </div>
-          <div class="btn-row">
-            <button type="button" class="btn" onclick="tamperLedger(true)">Simulate Hacker Changing a Balance</button>
-            <button type="button" class="btn-outline" onclick="tamperLedger(false)">Restore Genuine Records</button>
-          </div>
-        </div>
-
-        <div id="tamperNotice" class="notice notice-spaced">
-          <strong>Security Status: ALL RECORDS GENUINE ✓</strong> — Past records are locked against editing or deletion, and every digital security seal matches.
-        </div>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Record #</th>
-              <th>Account Holder</th>
-              <th>Activity</th>
-              <th>Amount (ZMW)</th>
-              <th>Balance After</th>
-              <th>Security Seal Status</th>
-            </tr>
-          </thead>
-          <tbody id="ledgerChainBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- =========================================================
-         TAB 5: CLOUD SPEED, HEALTH & COST SAVINGS (KWACHA)
-    ========================================================== -->
-    <section id="tab-cost" class="panel">
-      <div class="box">
-        <div class="box-header">
-          <div>
-            <div class="box-title">Live Cloud Health &amp; Speed Dashboard</div>
-            <div class="box-sub">Real-time monitoring across two Amazon Web Services (AWS) data centers</div>
-          </div>
-        </div>
-        <div class="grid-4">
-          <div class="stat-card">
-            <div class="stat-label">Payment Speed</div>
-            <div class="stat-value">0.14 Seconds</div>
-            <div class="stat-sub">Goal: Under 1.0 second ✓</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">System Uptime</div>
-            <div class="stat-value">99.9% Online</div>
-            <div class="stat-sub">2 Data Centers (Backup Ready)</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Money Accuracy</div>
-            <div class="stat-value">100% Exact</div>
-            <div class="stat-sub">Zero Kwacha ever lost ✓</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Automated Safety Checks</div>
-            <div class="stat-value">128 Passed ✓</div>
-            <div class="stat-sub">Checked before every update</div>
-          </div>
-        </div>
-      </div>
-
+      <!-- Seven Invariant Reconciliation Grid -->
       <div class="grid-2">
-        <div class="box">
-          <div class="box-header">
+        <div class="card">
+          <div class="card-header">
             <div>
-              <div class="box-title">Monthly Cloud Running Cost (in Kwacha)</div>
-              <div class="box-sub">When customers grow by 10×, our cost only grows by 2.2×</div>
+              <div class="card-title">Automated 7-Invariant Reconciliation Checks</div>
+              <div class="card-sub">Production mathematical invariant suite executed daily &bull; Any discrepancy is P1</div>
             </div>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Cloud Component</th>
-                <th>Normal Traffic (100k payments/mo)</th>
-                <th>10× Busy Traffic (1M payments/mo)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>Payment App Servers (Auto-Scaling)</td><td>K495.55 ZMW</td><td>K1,238.88 ZMW</td></tr>
-              <tr><td>Secure Front Door (Load Balancer)</td><td>K825.00 ZMW</td><td>K933.63 ZMW</td></tr>
-              <tr><td>Private Network Gateway</td><td>K1,006.23 ZMW</td><td>K1,022.18 ZMW</td></tr>
-              <tr><td>Account Database (Sleeps When Quiet)</td><td>K2,448.88 ZMW</td><td>K7,476.98 ZMW</td></tr>
-              <tr><td>Payment Workflow &amp; Fraud Checks</td><td>K19.25 ZMW</td><td>K193.05 ZMW</td></tr>
-              <tr><td>Security Keys, Alarms &amp; Monitoring</td><td>K503.53 ZMW</td><td>K1,206.98 ZMW</td></tr>
-              <tr class="total-row">
-                <td>TOTAL MONTHLY COST</td>
-                <td>K5,298.44 ZMW / month</td>
-                <td>K12,071.70 ZMW / month</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Invariant Rule</th>
+                  <th>Mathematical Condition</th>
+                  <th>Observed Value</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="reconciliationInvariantsBody"></tbody>
+            </table>
+          </div>
         </div>
 
-        <div class="box">
-          <div class="box-header">
+        <div class="card">
+          <div class="card-header">
             <div>
-              <div class="box-title">How We Saved K13,203.02 Kwacha Every Month</div>
-              <div class="box-sub">Smart engineering choices that cut our cloud bill by more than 70%</div>
+              <div class="card-title">Settlement Summary (Merchant &amp; Agent Float)</div>
+              <div class="card-sub">Daily net gross settlements and e-float tracking</div>
             </div>
           </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Entity</th>
+                  <th>Category</th>
+                  <th>Volume / Float</th>
+                  <th>Settlement Status</th>
+                </tr>
+              </thead>
+              <tbody id="settlementSummaryBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Immutable Double-Entry Ledger Entries -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Immutable Double-Entry Ledger Entries (PostgreSQL Table: <code>ledger_entries</code>)</div>
+            <div class="card-sub">Every movement posts equal and opposite DEBIT / CREDIT rows with cryptographic hash linkage</div>
+          </div>
+        </div>
+        <div class="table-container">
           <table>
             <thead>
               <tr>
-                <th>Smart Saving Decision</th>
-                <th>Old Expensive Way</th>
-                <th>Our Smart Setup</th>
-                <th>Money Saved / Month</th>
+                <th>Seq #</th>
+                <th>Wallet Account</th>
+                <th>Direction</th>
+                <th>Amount (ZMW)</th>
+                <th>Balance After</th>
+                <th>Step / Type</th>
+                <th>SHA-256 Entry Hash</th>
+                <th>Integrity</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td>1. Fast Express Payment Workflows</td>
-                <td>K550.00</td>
-                <td>K3.85</td>
-                <td><strong>Saved K546.15 / mo</strong></td>
-              </tr>
-              <tr>
-                <td>2. Streamlined Cloud Network</td>
-                <td>K5,623.48</td>
-                <td>K1,006.23</td>
-                <td><strong>Saved K4,617.25 / mo</strong></td>
-              </tr>
-              <tr>
-                <td>3. Auto-Sleeping Serverless Database</td>
-                <td>K10,439.00</td>
-                <td>K2,409.00</td>
-                <td><strong>Saved K8,030.00 / mo</strong></td>
-              </tr>
-              <tr>
-                <td>4. Automatic 14-Day Log Cleanup</td>
-                <td>K9.90</td>
-                <td>K0.28</td>
-                <td><strong>Saved K9.62 / mo</strong></td>
-              </tr>
-              <tr class="total-row">
-                <td colspan="3">TOTAL SAVED EVERY MONTH</td>
-                <td><strong>K13,203.02 ZMW / mo</strong></td>
-              </tr>
-            </tbody>
+            <tbody id="ledgerEntriesBody"></tbody>
           </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         TAB 5: FRAUD ENGINE, CORRECTNESS PROOFS & AWS ECONOMICS
+    ========================================================== -->
+    <section id="tab-governance" class="tab-panel">
+      <!-- Correctness Proofs Strip -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Formal Distributed Correctness Proofs</div>
+            <div class="card-sub">Automated multi-threaded evidence demonstrating financial invariants under extreme concurrency and failure</div>
+          </div>
+        </div>
+        <div class="grid-3">
+          <div class="card proof-card">
+            <div class="proof-title">1. 100-Thread Idempotency Proof</div>
+            <div class="proof-desc">100 concurrent threads send identical payment request with same key.</div>
+            <div class="proof-stat" id="proof1Result">1 Charged &bull; 99 Replayed</div>
+            <div class="proof-highlight">Protected: K14,850.00 ZMW</div>
+            <button type="button" class="btn-outline btn-xs" onclick="runProofSimulation('idempotency_100')">Re-run Proof</button>
+          </div>
+
+          <div class="card proof-card">
+            <div class="proof-title">2. 5-Stage Saga Crash Recovery</div>
+            <div class="proof-desc">Simulates hard crashes at 5 points during multi-step saga execution.</div>
+            <div class="proof-stat" id="proof2Result">5 of 5 Recovered</div>
+            <div class="proof-highlight">Escrow Balance: K0.00 (Zero Leaks)</div>
+            <button type="button" class="btn-outline btn-xs" onclick="runProofSimulation('saga_crash')">Re-run Proof</button>
+          </div>
+
+          <div class="card proof-card">
+            <div class="proof-title">3. 50-Thread Overdraft Safety</div>
+            <div class="proof-desc">50 parallel debits of K0.30 attack a wallet funded with only K10.00.</div>
+            <div class="proof-stat" id="proof3Result">33 Approved &bull; 17 Blocked</div>
+            <div class="proof-highlight">Final Balance: K0.10 (Never Negative)</div>
+            <button type="button" class="btn-outline btn-xs" onclick="runProofSimulation('concurrency_50')">Re-run Proof</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fraud Engine Rules & Alerts -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Real-Time Fraud Rules &amp; ML Anomaly Scoring</div>
+              <div class="card-sub">Synchronous saga checks (pre-credit) and asynchronous retrospective review</div>
+            </div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rule Name</th>
+                  <th>Trigger Threshold</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Hard Amount Cap</strong></td>
+                  <td>Amount &gt; K50,000.00 ZMW</td>
+                  <td><span class="badge badge-danger">DECLINE</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Velocity Limit</strong></td>
+                  <td>&ge; 5 transactions in 60 seconds</td>
+                  <td><span class="badge badge-danger">DECLINE</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Average Spike</strong></td>
+                  <td>&gt; 5.0&times; 30-day average (&gt;K5,000)</td>
+                  <td><span class="badge badge-warning">REVIEW</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Impossible Travel</strong></td>
+                  <td>Distance &gt; 50 km &bull; Speed &gt; 900 km/h</td>
+                  <td><span class="badge badge-warning">REVIEW</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Daily Outgoing Cap</strong></td>
+                  <td>&gt; K100,000.00 cumulative in 24h</td>
+                  <td><span class="badge badge-warning">REVIEW</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Behavioral ML Model</strong></td>
+                  <td>Calibrated risk score &ge; 0.85 (or &ge; 0.60)</td>
+                  <td><span class="badge badge-danger">DECLINE / REVIEW</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Live Fraud Alerts Feed</div>
+              <div class="card-sub">Flagged transactions requiring operational scrutiny</div>
+            </div>
+          </div>
+          <div class="table-container table-scroll-280">
+            <table>
+              <thead>
+                <tr>
+                  <th>Alert ID</th>
+                  <th>Transaction</th>
+                  <th>Decision</th>
+                  <th>ML Score</th>
+                  <th>Triggered Rule</th>
+                </tr>
+              </thead>
+              <tbody id="fraudAlertsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- AWS Cloud Cost Optimization Model (Zambian Kwacha) -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">AWS Production Monthly Running Costs (in Kwacha)</div>
+              <div class="card-sub">Baseline vs. 10&times; Workload scaling at K27.50 ZMW per 1 USD</div>
+            </div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Infrastructure Layer</th>
+                  <th>Baseline (100k txns/mo)</th>
+                  <th>10&times; Peak (1M txns/mo)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>ECS Fargate API Containers (Auto-scaling)</td><td>K495.55 ZMW</td><td>K1,238.88 ZMW</td></tr>
+                <tr><td>Application Load Balancer (ALB)</td><td>K825.00 ZMW</td><td>K933.63 ZMW</td></tr>
+                <tr><td>VPC Private Networking &amp; NAT</td><td>K1,006.23 ZMW</td><td>K1,022.18 ZMW</td></tr>
+                <tr><td>Aurora Serverless v2 PostgreSQL</td><td>K2,448.88 ZMW</td><td>K7,476.98 ZMW</td></tr>
+                <tr><td>Step Functions &amp; Fraud Lambdas</td><td>K19.25 ZMW</td><td>K193.05 ZMW</td></tr>
+                <tr><td>CloudWatch Logs &amp; KMS Security</td><td>K503.53 ZMW</td><td>K1,206.98 ZMW</td></tr>
+                <tr class="tr-total">
+                  <td>TOTAL MONTHLY EXPENDITURE</td>
+                  <td>K5,298.44 ZMW</td>
+                  <td>K12,071.70 ZMW</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Cost Optimization Strategy (71% Reduction)</div>
+              <div class="card-sub">Architectural decisions saving K13,203.02 ZMW every single month</div>
+            </div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Optimization Decision</th>
+                  <th>Conventional Cost</th>
+                  <th>Our Architecture</th>
+                  <th>Monthly Savings</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Express Saga Workflows</strong></td>
+                  <td>K550.00</td>
+                  <td>K3.85</td>
+                  <td><strong>Saved K546.15/mo</strong></td>
+                </tr>
+                <tr>
+                  <td><strong>VPC Private Gateway Endpoints</strong></td>
+                  <td>K5,623.48</td>
+                  <td>K1,006.23</td>
+                  <td><strong>Saved K4,617.25/mo</strong></td>
+                </tr>
+                <tr>
+                  <td><strong>Serverless Auto-Pause DB</strong></td>
+                  <td>K10,439.00</td>
+                  <td>K2,409.00</td>
+                  <td><strong>Saved K8,030.00/mo</strong></td>
+                </tr>
+                <tr>
+                  <td><strong>14-Day CloudWatch Log Lifecycle</strong></td>
+                  <td>K9.90</td>
+                  <td>K0.28</td>
+                  <td><strong>Saved K9.62/mo</strong></td>
+                </tr>
+                <tr class="tr-total">
+                  <td colspan="3">TOTAL MONTHLY NET SAVINGS</td>
+                  <td class="text-success">K13,203.02 ZMW</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
 
   </div>
 
+  <!-- =========================================================
+       MODALS: CREATE WALLET, DETAIL, DISPUTE
+  ========================================================== -->
+  <!-- Create Wallet Modal -->
+  <div class="modal-overlay" id="newWalletModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Create New Participant Wallet</div>
+        <button type="button" class="modal-close" onclick="closeModal('newWalletModal')">&times;</button>
+      </div>
+      <label for="newWalletLabel">Wallet Label / Owner Name</label>
+      <input type="text" id="newWalletLabel" title="Wallet Label or Owner Name" aria-label="Wallet Label or Owner Name" placeholder="e.g. Chanda Mulenga" />
+
+      <label for="newWalletKind">Account Kind</label>
+      <select id="newWalletKind" title="Account Kind" aria-label="Account Kind">
+        <option value="CUSTOMER">CUSTOMER (Standard User Wallet)</option>
+        <option value="MERCHANT">MERCHANT (Supermarket / Retail Store)</option>
+        <option value="AGENT">AGENT (Mobile Money Float Booth)</option>
+      </select>
+
+      <label for="newWalletCurrency">Currency</label>
+      <input type="text" id="newWalletCurrency" title="Currency" aria-label="Currency" value="ZMW" readonly />
+
+      <div class="flex-end-10">
+        <button type="button" class="btn-outline" onclick="closeModal('newWalletModal')">Cancel</button>
+        <button type="button" class="btn" onclick="submitCreateWallet()">Create Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transaction Details Modal -->
+  <div class="modal-overlay" id="txnDetailModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Transaction Audit Record</div>
+        <button type="button" class="modal-close" onclick="closeModal('txnDetailModal')">&times;</button>
+      </div>
+      <div id="txnDetailContent"></div>
+      <div class="flex-end-16">
+        <button type="button" class="btn" onclick="closeModal('txnDetailModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Raise Dispute Modal -->
+  <div class="modal-overlay" id="raiseDisputeModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Raise Formal Transaction Dispute</div>
+        <button type="button" class="modal-close" onclick="closeModal('raiseDisputeModal')">&times;</button>
+      </div>
+      <input type="hidden" id="disputeTxnId" />
+      <div id="disputeTxnSummary" class="dispute-summary-text"></div>
+
+      <label for="disputeReasonInput">Reason for Dispute (min 3 characters)</label>
+      <textarea id="disputeReasonInput" title="Reason for Dispute" aria-label="Reason for Dispute" rows="3" placeholder="Explain the discrepancy (e.g. duplicate charge, goods not delivered)..."></textarea>
+
+      <div class="flex-end-10">
+        <button type="button" class="btn-outline" onclick="closeModal('raiseDisputeModal')">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="submitRaiseDispute()">Submit Dispute</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       JAVASCRIPT APPLICATION ENGINE
+  ========================================================== -->
   <script>
-    let wallets = [];
-    let transactions = [];
-    let ledger = [];
-    let isTampered = false;
-    let lastReceipt = null;
+    // State storage
+    let platformState = null;
+    let currentRole = "admin";
+    let isOfflineMode = false;
+
+    // Formatting utilities
+    function fmtKwacha(ngwee) {
+      const kwacha = Number(ngwee || 0) / 100;
+      return "K" + kwacha.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " ZMW";
+    }
+
+    function generateUuid() {
+      return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
 
     function toggleDarkMode() {
-      document.body.classList.toggle('dark-mode');
-      const isDark = document.body.classList.contains('dark-mode');
-      document.getElementById('themeBtn').textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+      document.body.classList.toggle("dark-mode");
+      const isDark = document.body.classList.contains("dark-mode");
+      document.getElementById("themeToggleBtn").textContent = isDark ? "\u2600 Light Mode" : "\u263E Dark Mode";
     }
 
-    function fmt(amount) {
-      return 'K' + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ZMW';
+    function switchTab(panelId, btn) {
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      document.querySelectorAll(".nav-tab").forEach(b => b.classList.remove("active"));
+      document.getElementById(panelId).classList.add("active");
+      btn.classList.add("active");
     }
 
-    function resetDemo() {
-      isTampered = false;
-      lastReceipt = null;
-      wallets = [
-        { id: 'alice', name: 'Alice (Customer)', role: 'Customer Wallet', balance: 1000 },
-        { id: 'bob',   name: 'Bob (Customer)',   role: 'Customer Wallet', balance: 250 },
-        { id: 'shop',  name: 'Shoprite Store',   role: 'Merchant Shop',   balance: 100 },
-        { id: 'agent', name: 'Agent-1 Booth',    role: 'Mobile Money Agent', balance: 3650 }
-      ];
-      transactions = [
-        { id: 3, type: 'Pay Store', from: 'alice', to: 'shop', amount: 100, status: 'Paid ✓', canRefund: true },
-        { id: 2, type: 'Send Money to Friend', from: 'alice', to: 'bob', amount: 250, status: 'Paid ✓', canRefund: true },
-        { id: 1, type: 'Agent Cash Deposit', from: 'agent', to: 'alice', amount: 1350, status: 'Paid ✓', canRefund: false }
-      ];
-      ledger = [
-        { seq: 4, holder: 'Bob (Customer)', activity: 'Received Money from Alice', amount: 250, balAfter: 250 },
-        { seq: 3, holder: 'Alice (Customer)', activity: 'Sent Money to Bob', amount: 250, balAfter: 1000 },
-        { seq: 2, holder: 'Alice (Customer)', activity: 'Cash Deposit from Agent-1', amount: 1250, balAfter: 1250 },
-        { seq: 1, holder: 'Agent-1 Booth', activity: 'Opening Agent Float Balance', amount: 3650, balAfter: 3650 }
-      ];
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove("active");
+    }
 
-      document.getElementById('txnMessage').classList.add('hidden');
-      syncWalletSelectors();
+    function openNewWalletModal() {
+      document.getElementById("newWalletLabel").value = "";
+      document.getElementById("newWalletModal").classList.add("active");
+    }
+
+    function generateNewIdemKey() {
+      document.getElementById("opIdemKey").value = "idem-" + generateUuid().substring(0, 12);
+    }
+
+    function onRoleChange() {
+      currentRole = document.getElementById("activeRoleSelector").value;
+      document.getElementById("opRoleBadge").textContent = "Role: " + currentRole.toUpperCase();
       renderAll();
     }
 
-    function syncWalletSelectors() {
-      const type = document.getElementById('txnType').value;
-      const fromSel = document.getElementById('fromWallet');
-      const toSel = document.getElementById('toWallet');
-
-      fromSel.innerHTML = wallets.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
-      toSel.innerHTML = wallets.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
-
-      if (type === 'Send Money to Friend') { fromSel.value = 'alice'; toSel.value = 'bob'; }
-      if (type === 'Pay Store') { fromSel.value = 'alice'; toSel.value = 'shop'; }
-      if (type === 'Agent Cash Deposit') { fromSel.value = 'agent'; toSel.value = 'alice'; }
-      if (type === 'Agent Cash Withdrawal') { fromSel.value = 'alice'; toSel.value = 'agent'; }
-    }
-
-    function showNotice(html) {
-      const msg = document.getElementById('txnMessage');
-      msg.classList.remove('hidden');
-      msg.innerHTML = html;
-    }
-
-    function sendNormalPayment() {
-      const type = document.getElementById('txnType').value;
-      const fromId = document.getElementById('fromWallet').value;
-      const toId = document.getElementById('toWallet').value;
-      const amount = parseFloat(document.getElementById('amountInput').value || '0');
-
-      if (fromId === toId) {
-        showNotice('<strong>Please choose two different accounts:</strong> The sender and receiver cannot be the same person.');
-        return;
+    // Backend API communication
+    async function apiRequest(path, method = "GET", body = null) {
+      try {
+        const opts = { method, headers: { "Content-Type": "application/json" } };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch(path, opts);
+        const data = await res.json();
+        return { ok: res.ok, status: res.status, data };
+      } catch (err) {
+        console.warn("API request to", path, "failed, falling back to local simulation:", err);
+        return { ok: false, status: 0, data: null, error: err };
       }
-      if (amount <= 0) {
-        showNotice('<strong>Invalid amount:</strong> Please enter an amount greater than K0.00.');
-        return;
-      }
-
-      const sender = wallets.find(w => w.id === fromId);
-      const receiver = wallets.find(w => w.id === toId);
-
-      if (sender.balance < amount) {
-        transactions.unshift({ id: transactions.length + 1, type, from: fromId, to: toId, amount, status: 'Declined (Not Enough Money)', canRefund: false });
-        showNotice(`<strong>Payment Declined — Overdraft Prevented:</strong> ${sender.name} only has <strong>${fmt(sender.balance)}</strong>, so a payment of <strong>${fmt(amount)}</strong> cannot go through. Balances can never go below zero.`);
-        renderAll();
-        return;
-      }
-
-      sender.balance -= amount;
-      receiver.balance += amount;
-      const newId = transactions.length + 1;
-      lastReceipt = { id: newId, sender: sender.name, receiver: receiver.name, amount };
-      transactions.unshift({ id: newId, type, from: fromId, to: toId, amount, status: 'Paid ✓', canRefund: true });
-      ledger.unshift({
-        seq: ledger.length + 1,
-        holder: sender.name,
-        activity: `${type} to ${receiver.name}`,
-        amount,
-        balAfter: sender.balance
-      });
-      showNotice(`<strong>Payment Successful! ✓</strong> <strong>${fmt(amount)}</strong> was sent from <strong>${sender.name}</strong> to <strong>${receiver.name}</strong> in less than 1 second.`);
-      renderAll();
     }
 
-    function sendDuplicateTap() {
-      const amount = parseFloat(document.getElementById('amountInput').value || '150');
-      const sender = wallets.find(w => w.id === document.getElementById('fromWallet').value);
-      const receiver = wallets.find(w => w.id === document.getElementById('toWallet').value);
-      showNotice(`<strong>Double-Click Protected! ✓</strong> Your phone sent this <strong>${fmt(amount)}</strong> payment twice because of weak internet. Our system recognized the second tap as a duplicate and <strong>did NOT charge ${sender.name} a second time</strong>.`);
-    }
-
-    function sendCrashTest() {
-      const type = document.getElementById('txnType').value;
-      const fromId = document.getElementById('fromWallet').value;
-      const toId = document.getElementById('toWallet').value;
-      const amount = parseFloat(document.getElementById('amountInput').value || '150');
-      const sender = wallets.find(w => w.id === fromId);
-
-      transactions.unshift({
-        id: transactions.length + 1,
-        type,
-        from: fromId,
-        to: toId,
-        amount,
-        status: 'Server Crashed → Auto-Refunded ✓',
-        canRefund: false
-      });
-      showNotice(`<strong>Server Crash Recovered! ✓</strong> We simulated a power failure halfway through sending <strong>${fmt(amount)}</strong>. The temporary Safe Holding Box (Escrow) automatically refunded all <strong>${fmt(amount)}</strong> back to <strong>${sender.name}</strong>. Her balance is still <strong>${fmt(sender.balance)}</strong>!`);
-      renderAll();
-    }
-
-    function refundPayment(id) {
-      const t = transactions.find(x => x.id === id);
-      if (!t || !t.canRefund) return;
-      const sender = wallets.find(w => w.id === t.from);
-      const receiver = wallets.find(w => w.id === t.to);
-      if (receiver.balance < t.amount) {
-        alert('The receiver no longer has enough balance to refund this payment.');
-        return;
-      }
-      t.canRefund = false;
-      t.status = 'Refunded ✓';
-      receiver.balance -= t.amount;
-      sender.balance += t.amount;
-      transactions.unshift({
-        id: transactions.length + 1,
-        type: 'Payment Refund',
-        from: t.to,
-        to: t.from,
-        amount: t.amount,
-        status: 'Refund Completed ✓',
-        canRefund: false
-      });
-      showNotice(`<strong>Refund Completed! ✓</strong> <strong>${fmt(t.amount)}</strong> was returned from <strong>${receiver.name}</strong> back to <strong>${sender.name}</strong>.`);
-      renderAll();
-    }
-
-    function runHundredTapsDemo() {
-      const notice = document.getElementById('hundredTapsNotice');
-      notice.innerHTML = '<strong>Live Test Complete ✓</strong> Simulated 100 rapid taps of <strong>K150.00 ZMW</strong> at the exact same moment: <strong>1 payment was paid</strong>, <strong>99 duplicate taps were blocked</strong>, and Alice was only charged <strong>K150.00 once</strong>!';
-    }
-
-    function runCrashVisualDemo() {
-      const notice = document.getElementById('crashVisualNotice');
-      notice.innerHTML = '<strong>Live Crash Test Complete ✓</strong> Simulated server power loss while K40.00 was in the Holding Box. The system automatically reversed the transfer and returned all <strong>K40.00 ZMW</strong> to Alice!';
-    }
-
-    function runOverdraftVisualDemo() {
-      document.getElementById('overdraftFinalVal').textContent = 'K0.10 ZMW ✓';
-    }
-
-    function tamperLedger(tamper) {
-      isTampered = tamper;
-      const notice = document.getElementById('tamperNotice');
-      const badge = document.getElementById('integrityBadge');
-      if (tamper) {
-        notice.innerHTML = '<strong>🚨 SECURITY ALARM — FAKE RECORD DETECTED!</strong> Someone tried to secretly change Record #2 from <strong>K1,250.00</strong> to <strong>K6,250.00 ZMW</strong>. The digital security seal broke immediately and blocked the fake balance!';
-        badge.textContent = '🚨 Security Alert: Tampering Blocked!';
-        badge.className = 'tag-solid';
+    async function refreshPlatformState() {
+      const res = await apiRequest("/api/state");
+      if (res.ok && res.data && res.data.status === "ok") {
+        platformState = res.data;
+        isOfflineMode = false;
+        document.getElementById("cloudHealthBadge").className = "badge badge-success";
+        document.getElementById("cloudHealthBadge").textContent = "AWS Cloud: Connected \u2713";
       } else {
-        notice.innerHTML = '<strong>Security Status: ALL RECORDS GENUINE ✓</strong> — Past records are locked against editing or deletion, and every digital security seal matches.';
-        badge.textContent = 'Account Records: Protected ✓';
-        badge.className = 'tag';
+        if (!platformState) {
+          initFallbackState();
+        }
+        isOfflineMode = true;
+        document.getElementById("cloudHealthBadge").className = "badge badge-info";
+        document.getElementById("cloudHealthBadge").textContent = "Demo Engine: In-Memory Active \u2713";
       }
       renderAll();
     }
 
-    function renderAll() {
-      // 1. Wallet Balance Cards
-      document.getElementById('walletCards').innerHTML = wallets.map(w => `
-        <div class="stat-card">
-          <div class="stat-label">${w.role}</div>
-          <div class="stat-name">${w.name}</div>
-          <div class="stat-value">${fmt(w.balance)}</div>
-        </div>
-      `).join('');
+    async function resetPlatformState() {
+      const res = await apiRequest("/api/reset", "POST");
+      if (res.ok && res.data) {
+        platformState = res.data;
+      } else {
+        initFallbackState();
+      }
+      generateNewIdemKey();
+      renderAll();
+    }
 
-      // 2. Recent Activity Table
-      document.getElementById('txnTableBody').innerHTML = transactions.slice(0, 7).map(t => {
-        const sName = wallets.find(w => w.id === t.from)?.name.split(' ')[0] || t.from;
-        const rName = wallets.find(w => w.id === t.to)?.name.split(' ')[0] || t.to;
+    // Fallback in-memory state if server is completely offline
+    function initFallbackState() {
+      platformState = {
+        status: "ok",
+        dashboard: {
+          total_volume_ngwee: 170000,
+          total_transactions: 4,
+          completed_count: 4,
+          rejected_count: 0,
+          failed_count: 0,
+          reversed_count: 0,
+          total_user_balance_ngwee: 500000,
+          open_disputes_count: 0,
+          active_fraud_alerts_count: 0
+        },
+        wallets: [
+          { id: "11111111-1111-4111-8111-111111111111", owner_id: "user-alice", label: "Alice Mwamba (Customer)", kind: "CUSTOMER", currency: "ZMW", balance: 100000, status: "ACTIVE" },
+          { id: "22222222-2222-4222-8222-222222222222", owner_id: "user-bob", label: "Bob Banda (Customer)", kind: "CUSTOMER", currency: "ZMW", balance: 25000, status: "ACTIVE" },
+          { id: "33333333-3333-4333-8333-333333333333", owner_id: "merchant-shoprite", label: "Shoprite Cairo Rd (Merchant)", kind: "MERCHANT", currency: "ZMW", balance: 10000, status: "ACTIVE" },
+          { id: "44444444-4444-4444-8444-444444444444", owner_id: "agent-lusaka-01", label: "Agent-1 Booth (Mobile Agent)", kind: "AGENT", currency: "ZMW", balance: 365000, status: "ACTIVE" }
+        ],
+        system_wallets: [
+          { id: "00000000-0000-0000-0000-000000000001", owner_id: "system", label: "Central Bank Mint (System)", kind: "SYSTEM", currency: "ZMW", balance: -500000, status: "ACTIVE" },
+          { id: "00000000-0000-0000-0000-000000000002", owner_id: "system", label: "Saga Escrow Holding (System)", kind: "SYSTEM", currency: "ZMW", balance: 0, status: "ACTIVE" }
+        ],
+        transactions: [
+          { transaction_id: "tx-seed-04", type: "MERCHANT_PAYMENT", status: "COMPLETED", from_wallet: "11111111-1111-4111-8111-111111111111", from_label: "Alice Mwamba (Customer)", to_wallet: "33333333-3333-4333-8333-333333333333", to_label: "Shoprite Cairo Rd (Merchant)", amount: 10000, currency: "ZMW", idempotency_key: "seed-04", replayed: false, reason: "Groceries", fraud_decision: "APPROVE", ml_risk_score: 0.04, created_at: new Date().toISOString() },
+          { transaction_id: "tx-seed-03", type: "TRANSFER", status: "COMPLETED", from_wallet: "11111111-1111-4111-8111-111111111111", from_label: "Alice Mwamba (Customer)", to_wallet: "22222222-2222-4222-8222-222222222222", to_label: "Bob Banda (Customer)", amount: 25000, currency: "ZMW", idempotency_key: "seed-03", replayed: false, reason: "Family Transfer", fraud_decision: "APPROVE", ml_risk_score: 0.05, created_at: new Date().toISOString() },
+          { transaction_id: "tx-seed-02", type: "CASH_IN", status: "COMPLETED", from_wallet: "44444444-4444-4444-8444-444444444444", from_label: "Agent-1 Booth (Mobile Agent)", to_wallet: "11111111-1111-4111-8111-111111111111", to_label: "Alice Mwamba (Customer)", amount: 135000, currency: "ZMW", idempotency_key: "seed-02", replayed: false, reason: "Cash Deposit", fraud_decision: "APPROVE", ml_risk_score: 0.02, created_at: new Date().toISOString() }
+        ],
+        ledger: [
+          { id: 6, wallet_id: "33333333-3333-4333-8333-333333333333", wallet_label: "Shoprite Cairo Rd (Merchant)", wallet_seq: 1, direction: "CREDIT", amount: 10000, balance_after: 10000, step: "credit", entry_type: "MERCHANT_PAYMENT", entry_hash: "3a8f9c0e1b2d4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a", hash_valid: true },
+          { id: 5, wallet_id: "11111111-1111-4111-8111-111111111111", wallet_label: "Alice Mwamba (Customer)", wallet_seq: 2, direction: "DEBIT", amount: 10000, balance_after: 100000, step: "reserve", entry_type: "MERCHANT_PAYMENT_RESERVE", entry_hash: "2b7e8d9c0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a3a8f9c0e1b2d4f5a", hash_valid: true }
+        ],
+        fraud_alerts: [],
+        disputes: [],
+        reconciliation: {
+          status: "OK",
+          invariants: {
+            conservation_sum_ngwee: 0,
+            ledger_net_ngwee: 0,
+            unbalanced_steps_count: 0,
+            wallet_drift_count: 0,
+            broken_chains_count: 0,
+            stuck_sagas_count: 0,
+            escrow_balance_ngwee: 0
+          },
+          settlement: {
+            merchant_settlements: [{ label: "Shoprite Cairo Rd (Merchant)", payments: 1, gross: 10000, current_balance: 10000 }],
+            agent_float: [{ label: "Agent-1 Booth (Mobile Agent)", float_balance: 365000, cash_in: 135000, cash_out: 0 }]
+          }
+        },
+        proofs: {
+          idempotency_100: { charged_count: 1, replayed_count: 99, amount_saved_ngwee: 1485000 },
+          saga_crash: { fault_points_tested: 5, compensated_count: 5, escrow_final_ngwee: 0 },
+          concurrency_50: { approved_count: 33, declined_count: 17, final_balance_ngwee: 10 }
+        },
+        audit_logs: [
+          { id: 1, action: "SYSTEM_BOOT", actor: "system", detail: "Double-entry platform ledger online and verified", timestamp: new Date().toISOString() }
+        ]
+      };
+    }
+
+    // Rendering functions
+    function renderAll() {
+      if (!platformState) return;
+      renderKPIs();
+      renderWallets();
+      renderSelectors();
+      renderTransactions();
+      renderDisputes();
+      renderLedger();
+      renderReconciliation();
+      renderGovernance();
+    }
+
+    function renderKPIs() {
+      const d = platformState.dashboard || {};
+      document.getElementById("kpiVolumeVal").textContent = fmtKwacha(d.total_volume_ngwee || 0);
+      document.getElementById("kpiTxnCountVal").textContent = d.total_transactions || 0;
+      document.getElementById("kpiTxnBreakdown").textContent = `${d.completed_count || 0} success \u2022 ${d.rejected_count || 0} rejected`;
+      document.getElementById("kpiCirculationVal").textContent = fmtKwacha(d.total_user_balance_ngwee || 0);
+      
+      const netCons = platformState.reconciliation?.invariants?.conservation_sum_ngwee || 0;
+      document.getElementById("kpiConservationVal").textContent = fmtKwacha(netCons);
+      document.getElementById("ledgerInvariantBadge").textContent = netCons === 0 ? "Ledger: Conserved (K0.00) \u2713" : "\u26A0 Conservation Discrepancy!";
+      document.getElementById("ledgerInvariantBadge").className = netCons === 0 ? "badge badge-info" : "badge badge-danger";
+
+      document.getElementById("kpiDisputesVal").textContent = d.open_disputes_count || 0;
+      document.getElementById("kpiFraudVal").textContent = d.active_fraud_alerts_count || 0;
+    }
+
+    function renderWallets() {
+      const grid = document.getElementById("walletCardsGrid");
+      const wallets = platformState.wallets || [];
+      grid.innerHTML = wallets.map(w => {
+        const isFrozen = w.status === "FROZEN";
+        return `
+          <div class="card wallet-card-pos">
+            <div class="wallet-header-flex">
+              <span class="badge ${w.kind === 'CUSTOMER' ? 'badge-info' : w.kind === 'MERCHANT' ? 'badge-warning' : 'badge-success'}">${w.kind}</span>
+              <span class="badge ${isFrozen ? 'badge-danger' : 'badge-muted'}">${w.status}</span>
+            </div>
+            <div class="wallet-card-name">${w.label}</div>
+            <div class="hash-code wallet-card-id">${w.id.substring(0, 13)}...</div>
+            <div class="wallet-card-balance">${fmtKwacha(w.balance)}</div>
+            ${currentRole === 'admin' ? `
+              <button type="button" class="btn-outline btn-xs" onclick="toggleWalletStatus('${w.id}')">
+                ${isFrozen ? 'Unfreeze Account' : 'Freeze Account'}
+              </button>
+            ` : ''}
+          </div>
+        `;
+      }).join("");
+
+      // System Wallets
+      const sysBody = document.getElementById("systemWalletsBody");
+      const sysWallets = platformState.system_wallets || [];
+      sysBody.innerHTML = sysWallets.map(sw => `
+        <tr>
+          <td><strong>${sw.label}</strong><br><span class="hash-code">${sw.id}</span></td>
+          <td><span class="badge badge-muted">${sw.kind}</span></td>
+          <td class="font-weight-800 fs-14">${fmtKwacha(sw.balance)}</td>
+          <td><span class="badge ${sw.balance === 0 || sw.id.includes('0001') ? 'badge-success' : 'badge-warning'}">${sw.id.includes('0001') ? 'MINT: Negative by currency issued' : 'ESCROW: 0 held in-flight'}</span></td>
+        </tr>
+      `).join("");
+
+      // Audit Trail
+      const auditBody = document.getElementById("auditTrailBody");
+      const logs = platformState.audit_logs || [];
+      auditBody.innerHTML = logs.slice(0, 15).map(l => `
+        <tr>
+          <td class="hash-code">${(l.timestamp || '').substring(11, 19)}</td>
+          <td><span class="badge badge-muted">${l.action}</span></td>
+          <td><strong>${l.actor}</strong></td>
+          <td class="fs-12">${l.detail}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderSelectors() {
+      const type = document.getElementById("opTxnType").value;
+      const fromSel = document.getElementById("opFromWallet");
+      const toSel = document.getElementById("opToWallet");
+      const wallets = platformState.wallets || [];
+
+      fromSel.innerHTML = wallets.map(w => `<option value="${w.id}">${w.label} (${fmtKwacha(w.balance)})</option>`).join("");
+      toSel.innerHTML = wallets.map(w => `<option value="${w.id}">${w.label} (${fmtKwacha(w.balance)})</option>`).join("");
+
+      // Default smart selections according to operation type
+      const alice = wallets.find(w => w.label.includes("Alice"));
+      const bob = wallets.find(w => w.label.includes("Bob"));
+      const shop = wallets.find(w => w.kind === "MERCHANT");
+      const agent = wallets.find(w => w.kind === "AGENT");
+
+      if (type === "TRANSFER" && alice && bob) { fromSel.value = alice.id; toSel.value = bob.id; }
+      else if (type === "MERCHANT_PAYMENT" && alice && shop) { fromSel.value = alice.id; toSel.value = shop.id; }
+      else if (type === "CASH_IN" && agent && alice) { fromSel.value = agent.id; toSel.value = alice.id; }
+      else if (type === "CASH_OUT" && alice && agent) { fromSel.value = alice.id; toSel.value = agent.id; }
+      else if (type === "FLOAT_TOPUP" && agent) { toSel.value = agent.id; }
+    }
+
+    function onTxnTypeChange() {
+      const type = document.getElementById("opTxnType").value;
+      const fromSel = document.getElementById("opFromWallet");
+      if (type === "FLOAT_TOPUP") {
+        fromSel.disabled = true;
+      } else {
+        fromSel.disabled = false;
+      }
+      renderSelectors();
+    }
+
+    function renderTransactions() {
+      filterTransactions();
+    }
+
+    function filterTransactions() {
+      const q = (document.getElementById("txnSearchInput")?.value || "").toLowerCase().trim();
+      const st = document.getElementById("txnStatusFilter")?.value || "ALL";
+      const txns = platformState.transactions || [];
+
+      const filtered = txns.filter(t => {
+        const matchesQuery = !q || (t.transaction_id && t.transaction_id.toLowerCase().includes(q)) ||
+                             (t.from_label && t.from_label.toLowerCase().includes(q)) ||
+                             (t.to_label && t.to_label.toLowerCase().includes(q)) ||
+                             (t.reason && t.reason.toLowerCase().includes(q));
+        const matchesStatus = st === "ALL" || t.status === st;
+        return matchesQuery && matchesStatus;
+      });
+
+      const tbody = document.getElementById("transactionsTableBody");
+      tbody.innerHTML = filtered.slice(0, 30).map(t => {
+        const stBadge = t.status === 'COMPLETED' ? 'badge-success' :
+                        t.status === 'REVERSED' ? 'badge-info' :
+                        t.status === 'FAILED' ? 'badge-danger' : 'badge-warning';
         return `
           <tr>
-            <td>${t.type}</td>
-            <td>${sName} → ${rName}</td>
-            <td><strong>${fmt(t.amount)}</strong></td>
-            <td><strong>${t.status}</strong></td>
-            <td>${t.canRefund ? `<button type="button" class="btn-outline btn-xs" onclick="refundPayment(${t.id})">Refund</button>` : '—'}</td>
+            <td>
+              <a href="javascript:void(0)" onclick="inspectTransaction('${t.transaction_id}')" class="link-detail">
+                ${t.transaction_id.substring(0, 13)}...
+              </a>
+            </td>
+            <td><span class="badge badge-muted">${t.type}</span></td>
+            <td>${t.from_label?.split(' ')[0] || t.from_wallet.substring(0, 8)} &rarr; ${t.to_label?.split(' ')[0] || t.to_wallet.substring(0, 8)}</td>
+            <td class="font-weight-800">${fmtKwacha(t.amount)}</td>
+            <td><span class="badge ${stBadge}">${t.status}</span></td>
+            <td><span class="badge ${t.fraud_decision === 'APPROVE' ? 'badge-success' : 'badge-warning'}">${t.fraud_decision || 'APPROVE'}</span></td>
+            <td class="hash-code">${(t.created_at || '').substring(11, 19)}</td>
+            <td>
+              ${t.status === 'COMPLETED' ? `
+                <button type="button" class="btn-outline btn-xs" onclick="openRaiseDisputeModal('${t.transaction_id}')">Dispute</button>
+                ${currentRole === 'admin' ? `
+                  <button type="button" class="btn-outline btn-xs" onclick="directReverseTransaction('${t.transaction_id}')">Reverse</button>
+                ` : ''}
+              ` : '&mdash;'}
+            </td>
           </tr>
         `;
-      }).join('');
+      }).join("");
+    }
 
-      // 3. Security Passbook Table
-      document.getElementById('ledgerChainBody').innerHTML = ledger.slice(0, 8).map((e, idx) => {
-        const bad = isTampered && idx === 1;
-        const shownAmount = bad ? fmt(e.amount + 5000) : fmt(e.amount);
+    function renderDisputes() {
+      const tbody = document.getElementById("disputesTableBody");
+      const disputes = platformState.disputes || [];
+      if (disputes.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-table-msg">No active or resolved disputes.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = disputes.map(d => {
+        const isOpen = d.status === "OPEN";
+        const stBadge = isOpen ? "badge-warning" : d.status.includes("REVERSED") ? "badge-success" : "badge-danger";
         return `
-          <tr class="${bad ? 'tampered-row' : ''}">
-            <td>Record #${e.seq}</td>
-            <td>${e.holder}</td>
-            <td>${e.activity}</td>
-            <td>${shownAmount}</td>
-            <td>${fmt(e.balAfter)}</td>
-            <td><strong>${bad ? '🚨 FAKE EDIT DETECTED (SEAL BROKEN)' : 'Genuine Seal Verified ✓'}</strong></td>
+          <tr>
+            <td class="hash-code">${d.dispute_id.substring(0, 13)}...</td>
+            <td><a href="javascript:void(0)" onclick="inspectTransaction('${d.transaction_id}')" class="link-subtle">${d.transaction_id.substring(0, 13)}...</a></td>
+            <td><strong>${fmtKwacha(d.amount)}</strong></td>
+            <td>${d.from_label} &rarr; ${d.to_label}</td>
+            <td><span class="badge badge-muted">${d.raised_by}</span></td>
+            <td class="fs-12-5">${d.reason}</td>
+            <td><span class="badge ${stBadge}">${d.status}</span></td>
+            <td>
+              ${isOpen && currentRole === 'admin' ? `
+                <button type="button" class="btn btn-sm btn-danger" onclick="resolveDispute('${d.dispute_id}', 'REVERSE')">Approve Reversal</button>
+                <button type="button" class="btn-outline btn-sm" onclick="resolveDispute('${d.dispute_id}', 'REJECT')">Reject</button>
+              ` : d.resolution_note || '&mdash;'}
+            </td>
           </tr>
         `;
-      }).join('');
+      }).join("");
     }
 
-    function showTab(tabId, btn) {
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      btn.classList.add('active');
+    function renderLedger() {
+      const tbody = document.getElementById("ledgerEntriesBody");
+      const entries = platformState.ledger || [];
+      tbody.innerHTML = entries.slice(0, 40).map(e => `
+        <tr class="${!e.hash_valid ? 'tr-tampered' : ''}">
+          <td class="hash-code">#${e.wallet_seq}</td>
+          <td><strong>${e.wallet_label}</strong></td>
+          <td><span class="badge ${e.direction === 'DEBIT' ? 'badge-danger' : 'badge-success'}">${e.direction}</span></td>
+          <td class="font-weight-800">${fmtKwacha(e.amount)}</td>
+          <td>${fmtKwacha(e.balance_after)}</td>
+          <td><span class="badge badge-muted">${e.entry_type}</span></td>
+          <td class="hash-code" title="${e.entry_hash}">${e.entry_hash.substring(0, 18)}...</td>
+          <td>
+            <span class="badge ${e.hash_valid ? 'badge-success' : 'badge-danger'}">
+              ${e.hash_valid ? 'Valid Chain \u2713' : '\u26A0 TAMPERED'}
+            </span>
+          </td>
+        </tr>
+      `).join("");
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      resetDemo();
-      fetch('/health')
-        .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
-        .then(res => {
-          if (res.ok && res.data.status === 'ok') {
-            document.getElementById('apiHealthBadge').textContent = 'AWS Cloud Status: Live & Healthy ✓';
-          }
-        })
-        .catch(() => {});
+    function renderReconciliation() {
+      const r = platformState.reconciliation || {};
+      const inv = r.invariants || {};
+      const isOk = r.status === "OK";
+
+      // Banner update
+      const banner = document.getElementById("tamperStatusBanner");
+      if (isOk) {
+        banner.className = "notice-box notice-success";
+        banner.innerHTML = `<span>\u2713</span><div><strong>Ledger Integrity Verified:</strong> All SHA-256 chain links match and no records have been altered or deleted.</div>`;
+      } else {
+        banner.className = "notice-box notice-danger";
+        banner.innerHTML = `<span>\u26A0</span><div><strong>SECURITY ALERT &bull; DISCREPANCY DETECTED:</strong> Cryptographic hash check failed! Unauthorized modification detected in ledger history.</div>`;
+      }
+
+      // 7-Invariant Table
+      const invBody = document.getElementById("reconciliationInvariantsBody");
+      invBody.innerHTML = `
+        <tr><td><strong>1. Conservation</strong></td><td>SUM(wallet balances) == 0</td><td>${fmtKwacha(inv.conservation_sum_ngwee || 0)}</td><td><span class="badge ${inv.conservation_sum_ngwee === 0 ? 'badge-success' : 'badge-danger'}">${inv.conservation_sum_ngwee === 0 ? 'PASS' : 'FAIL'}</span></td></tr>
+        <tr><td><strong>2. Ledger Net Balance</strong></td><td>SUM(credits) - SUM(debits) == 0</td><td>${fmtKwacha(inv.ledger_net_ngwee || 0)}</td><td><span class="badge ${inv.ledger_net_ngwee === 0 ? 'badge-success' : 'badge-danger'}">${inv.ledger_net_ngwee === 0 ? 'PASS' : 'FAIL'}</span></td></tr>
+        <tr><td><strong>3. Step Balance</strong></td><td>Every saga step debits == credits</td><td>${inv.unbalanced_steps_count || 0} unbalanced</td><td><span class="badge ${inv.unbalanced_steps_count === 0 ? 'badge-success' : 'badge-danger'}">${inv.unbalanced_steps_count === 0 ? 'PASS' : 'FAIL'}</span></td></tr>
+        <tr><td><strong>4. Wallet vs Ledger Drift</strong></td><td>wallet.balance == SUM(entries)</td><td>${inv.wallet_drift_count || 0} drifted</td><td><span class="badge ${inv.wallet_drift_count === 0 ? 'badge-success' : 'badge-danger'}">${inv.wallet_drift_count === 0 ? 'PASS' : 'FAIL'}</span></td></tr>
+        <tr><td><strong>5. SHA-256 Hash Chains</strong></td><td>Every wallet chain recomputes</td><td>${inv.broken_chains_count || 0} broken</td><td><span class="badge ${inv.broken_chains_count === 0 ? 'badge-success' : 'badge-danger'}">${inv.broken_chains_count === 0 ? 'PASS' : 'FAIL'}</span></td></tr>
+        <tr><td><strong>6. Stuck Sagas</strong></td><td>No saga pending &gt; 5 min</td><td>${inv.stuck_sagas_count || 0} stuck</td><td><span class="badge ${inv.stuck_sagas_count === 0 ? 'badge-success' : 'badge-danger'}">${inv.stuck_sagas_count === 0 ? 'PASS' : 'FAIL'}</span></td></tr>
+        <tr><td><strong>7. Escrow Balance</strong></td><td>Escrow == in-flight amount</td><td>${fmtKwacha(inv.escrow_balance_ngwee || 0)}</td><td><span class="badge ${inv.escrow_balance_ngwee === 0 ? 'badge-success' : 'badge-danger'}">${inv.escrow_balance_ngwee === 0 ? 'PASS' : 'FAIL'}</span></td></tr>
+      `;
+
+      // Settlement summaries
+      const setBody = document.getElementById("settlementSummaryBody");
+      const settlements = r.settlement || {};
+      const merchants = settlements.merchant_settlements || [];
+      const agents = settlements.agent_float || [];
+      
+      let rows = merchants.map(m => `
+        <tr>
+          <td><strong>${m.label}</strong></td>
+          <td><span class="badge badge-warning">Merchant</span></td>
+          <td>Gross: <strong>${fmtKwacha(m.gross)}</strong> (${m.payments} payments)</td>
+          <td><span class="badge badge-success">Settled \u2713</span></td>
+        </tr>
+      `);
+      rows = rows.concat(agents.map(a => `
+        <tr>
+          <td><strong>${a.label}</strong></td>
+          <td><span class="badge badge-success">Agent Float</span></td>
+          <td>Current Float: <strong>${fmtKwacha(a.float_balance)}</strong></td>
+          <td><span class="badge badge-info">Float Active</span></td>
+        </tr>
+      `));
+      setBody.innerHTML = rows.join("");
+    }
+
+    function renderGovernance() {
+      // Fraud Alerts Feed
+      const tbody = document.getElementById("fraudAlertsBody");
+      const alerts = platformState.fraud_alerts || [];
+      if (alerts.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-table-msg">No active fraud alerts. All transactions within safe thresholds.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = alerts.map(a => `
+        <tr>
+          <td class="hash-code">ALT-${a.id}</td>
+          <td><a href="javascript:void(0)" onclick="inspectTransaction('${a.txn_id}')" class="link-subtle">${a.txn_id.substring(0, 10)}...</a></td>
+          <td><span class="badge ${a.decision === 'DECLINE' ? 'badge-danger' : 'badge-warning'}">${a.decision}</span></td>
+          <td><strong>${(a.ml_score || 0).toFixed(2)}</strong></td>
+          <td class="fs-12">${(a.rules || []).map(r => r.rule).join(", ") || 'Anomalous behavior'}</td>
+        </tr>
+      `).join("");
+
+      // Proof Results
+      const p = platformState.proofs || {};
+      if (p.idempotency_100) {
+        document.getElementById("proof1Result").textContent = `${p.idempotency_100.charged_count} Charged \u2022 ${p.idempotency_100.replayed_count} Replayed`;
+      }
+      if (p.saga_crash) {
+        document.getElementById("proof2Result").textContent = `${p.saga_crash.compensated_count} of ${p.saga_crash.fault_points_tested} Recovered`;
+      }
+      if (p.concurrency_50) {
+        document.getElementById("proof3Result").textContent = `${p.concurrency_50.approved_count} Approved \u2022 ${p.concurrency_50.declined_count} Blocked`;
+      }
+    }
+
+    // Interactive Action Handlers
+    async function submitTransactionOperation() {
+      const type = document.getElementById("opTxnType").value;
+      const fromWallet = document.getElementById("opFromWallet").value;
+      const toWallet = document.getElementById("opToWallet").value;
+      const amountKwacha = parseFloat(document.getElementById("opAmount").value || "0");
+      const reason = document.getElementById("opReason").value;
+      const idemKey = document.getElementById("opIdemKey").value;
+      const fault = document.getElementById("opFaultInjection").value;
+
+      const fb = document.getElementById("operationFeedback");
+      fb.classList.remove("hidden");
+
+      if (amountKwacha <= 0) {
+        fb.className = "notice-box notice-danger";
+        fb.innerHTML = `<strong>Invalid Amount:</strong> Transaction amount must be greater than K0.00.`;
+        return;
+      }
+
+      const body = {
+        role: currentRole,
+        type,
+        from_wallet: fromWallet,
+        to_wallet: toWallet,
+        amount_ngwee: Math.round(amountKwacha * 100),
+        idempotency_key: idemKey,
+        reason,
+        fault: fault === "fail_credit" ? "fail_credit" : null,
+        simulate_geo_jump: fault === "geo_jump",
+        simulate_velocity_spike: fault === "velocity_spike"
+      };
+
+      const res = await apiRequest("/api/transactions/submit", "POST", body);
+      if (res.ok && res.data) {
+        platformState = res.data.state;
+        const txn = res.data.transaction;
+        fb.className = "notice-box notice-success";
+        fb.innerHTML = `<strong>Operation Successful \u2713</strong> ${txn.type} of ${fmtKwacha(txn.amount)} completed with double-entry posting.`;
+        displayReceipt(txn, res.data.replayed);
+      } else {
+        const err = res.data?.error || { message: "Transaction rejected by business rules or insufficient funds." };
+        fb.className = "notice-box notice-danger";
+        fb.innerHTML = `<strong>Transaction Rejected:</strong> ${err.message}`;
+        if (res.data?.transaction) {
+          displayReceipt(res.data.transaction, false);
+        }
+        if (res.data?.state) {
+          platformState = res.data.state;
+        }
+      }
+      renderAll();
+    }
+
+    async function testReplayIdempotency() {
+      const fb = document.getElementById("operationFeedback");
+      fb.classList.remove("hidden");
+      fb.className = "notice-box notice-info";
+      fb.innerHTML = `<strong>Submitting with existing Idempotency-Key...</strong>`;
+      await submitTransactionOperation();
+    }
+
+    function displayReceipt(txn, replayed) {
+      document.getElementById("receiptPlaceholder").classList.add("hidden");
+      document.getElementById("receiptContent").classList.remove("hidden");
+
+      document.getElementById("receiptStatusBadge").textContent = txn.status;
+      document.getElementById("receiptStatusBadge").className = "badge " + (txn.status === 'COMPLETED' ? 'badge-success' : txn.status === 'REVERSED' ? 'badge-info' : 'badge-danger');
+      document.getElementById("receiptIdVal").textContent = txn.transaction_id;
+      document.getElementById("receiptAmountVal").textContent = fmtKwacha(txn.amount);
+      document.getElementById("receiptFromVal").textContent = txn.from_label;
+      document.getElementById("receiptToVal").textContent = txn.to_label;
+      document.getElementById("receiptReasonVal").textContent = txn.reason;
+      document.getElementById("receiptKeyVal").textContent = txn.idempotency_key;
+      document.getElementById("receiptReplayedVal").textContent = replayed ? "True (Cached outcome returned)" : "False";
+
+      document.getElementById("receiptFraudDecision").textContent = `${txn.fraud_decision || 'APPROVE'} (ML Risk: ${(txn.ml_risk_score || 0.05).toFixed(2)})`;
+      document.getElementById("receiptStep3Text").textContent = txn.status === 'COMPLETED' ? 'Credited recipient wallet' : 'Escrow released back to payer';
+    }
+
+    async function toggleWalletStatus(walletId) {
+      const res = await apiRequest(`/api/wallets/${walletId}/toggle-status`, "POST", { role: currentRole });
+      if (res.ok && res.data) {
+        platformState = res.data.state;
+        renderAll();
+      } else {
+        alert(res.data?.error?.message || "Operation failed");
+      }
+    }
+
+    async function submitCreateWallet() {
+      const label = document.getElementById("newWalletLabel").value;
+      const kind = document.getElementById("newWalletKind").value;
+      const res = await apiRequest("/api/wallets/create", "POST", { role: currentRole, label, kind, currency: "ZMW" });
+      if (res.ok && res.data) {
+        platformState = res.data.state;
+        closeModal("newWalletModal");
+        renderAll();
+      } else {
+        alert(res.data?.error?.message || "Wallet creation failed");
+      }
+    }
+
+    function inspectTransaction(txnId) {
+      const txn = (platformState.transactions || []).find(t => t.transaction_id === txnId);
+      if (!txn) return;
+      const content = document.getElementById("txnDetailContent");
+      content.innerHTML = `
+        <div class="detail-row"><strong>Transaction UUID:</strong> <span class="hash-code">${txn.transaction_id}</span></div>
+        <div class="detail-row"><strong>Operation Type:</strong> <span class="badge badge-muted">${txn.type}</span></div>
+        <div class="detail-row"><strong>Status:</strong> <span class="badge ${txn.status === 'COMPLETED' ? 'badge-success' : 'badge-danger'}">${txn.status}</span></div>
+        <div class="detail-row"><strong>Amount:</strong> <span class="detail-amount">${fmtKwacha(txn.amount)}</span></div>
+        <div class="detail-row"><strong>Sender:</strong> ${txn.from_label} (<span class="hash-code">${txn.from_wallet}</span>)</div>
+        <div class="detail-row"><strong>Receiver:</strong> ${txn.to_label} (<span class="hash-code">${txn.to_wallet}</span>)</div>
+        <div class="detail-row"><strong>Idempotency-Key:</strong> <span class="hash-code">${txn.idempotency_key}</span></div>
+        <div class="detail-row"><strong>Fraud Decision:</strong> ${txn.fraud_decision} (ML Anomaly Score: ${(txn.ml_risk_score || 0).toFixed(2)})</div>
+        <div class="detail-row"><strong>Timestamp:</strong> ${txn.created_at}</div>
+        <div class="mt-14"><strong>Saga Steps Executed:</strong>
+          <ul class="saga-step-list">
+            ${(txn.saga_steps || []).map(s => `<li>${s}</li>`).join("")}
+          </ul>
+        </div>
+      `;
+      document.getElementById("txnDetailModal").classList.add("active");
+    }
+
+    function openRaiseDisputeModal(txnId) {
+      const txn = (platformState.transactions || []).find(t => t.transaction_id === txnId);
+      if (!txn) return;
+      document.getElementById("disputeTxnId").value = txnId;
+      document.getElementById("disputeTxnSummary").textContent = `Disputing ${txn.type} of ${fmtKwacha(txn.amount)} (${txn.from_label} \u2192 ${txn.to_label})`;
+      document.getElementById("disputeReasonInput").value = "";
+      document.getElementById("raiseDisputeModal").classList.add("active");
+    }
+
+    async function submitRaiseDispute() {
+      const txnId = document.getElementById("disputeTxnId").value;
+      const reason = document.getElementById("disputeReasonInput").value;
+      const res = await apiRequest("/api/disputes/raise", "POST", { role: currentRole, txn_id: txnId, reason });
+      if (res.ok && res.data) {
+        platformState = res.data.state;
+        closeModal("raiseDisputeModal");
+        switchTab("tab-transactions", document.querySelectorAll(".nav-tab")[2]);
+        renderAll();
+      } else {
+        alert(res.data?.error?.message || "Failed to raise dispute");
+      }
+    }
+
+    async function resolveDispute(disputeId, action) {
+      const note = prompt(`Enter ${action} note for audit log:`, `Admin ${action} approved`);
+      if (note === null) return;
+      const res = await apiRequest(`/api/disputes/${disputeId}/resolve`, "POST", { role: currentRole, action, note });
+      if (res.ok && res.data) {
+        platformState = res.data.state;
+        renderAll();
+      } else {
+        alert(res.data?.error?.message || "Failed to resolve dispute");
+      }
+    }
+
+    async function directReverseTransaction(txnId) {
+      if (!confirm("Are you sure you want to execute a compensating reversal for this transaction?")) return;
+      const res = await apiRequest(`/api/transactions/${txnId}/reverse`, "POST", { role: currentRole, reason: "Direct Admin reversal" });
+      if (res.ok && res.data) {
+        platformState = res.data.state;
+        renderAll();
+      } else {
+        alert(res.data?.error?.message || "Reversal failed");
+      }
+    }
+
+    async function triggerLedgerTamper(tamper) {
+      const res = await apiRequest("/api/tamper", "POST", { tamper });
+      if (res.ok && res.data) {
+        platformState = res.data;
+        renderAll();
+      }
+    }
+
+    async function runProofSimulation(proofName) {
+      const res = await apiRequest(`/api/proofs/${proofName}`, "POST");
+      if (res.ok && res.data) {
+        platformState = res.data;
+        renderAll();
+      }
+    }
+
+    // Initialization
+    window.addEventListener("DOMContentLoaded", () => {
+      generateNewIdemKey();
+      refreshPlatformState();
     });
   </script>
 </body>
