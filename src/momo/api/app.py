@@ -24,6 +24,7 @@ from ..common.tracing import get_recorder, tracing_enabled
 from ..ledger.core import MINT_WALLET_ID
 from ..saga import faults
 from .auth import JwtVerifier, User, user_from_header
+from . import user_store
 
 _CID_RE = re.compile(r"^[A-Za-z0-9\-_.:]{8,100}$")
 
@@ -35,6 +36,11 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
     app.config["MAX_CONTENT_LENGTH"] = 16 * 1024
     app.json.sort_keys = False
     state = {"verifier": verifier}
+    cors_origins = {
+        origin.strip().rstrip("/")
+        for origin in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",")
+        if origin.strip()
+    }
 
     if tracing_enabled():  # pragma: no cover - needs the X-Ray daemon
         from aws_xray_sdk.ext.flask.middleware import XRayMiddleware
@@ -60,6 +66,15 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
         resp.headers["X-Correlation-ID"] = g.get("cid", "")
         resp.headers["Cache-Control"] = "no-store"
         resp.headers["X-Content-Type-Options"] = "nosniff"
+        origin = request.headers.get("Origin", "").rstrip("/")
+        if origin in cors_origins:
+            resp.headers["Access-Control-Allow-Origin"] = origin
+            resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+            resp.headers["Access-Control-Allow-Headers"] = (
+                "Authorization, Content-Type, Idempotency-Key, X-Correlation-ID"
+            )
+            resp.headers["Access-Control-Max-Age"] = "600"
+            resp.vary.add("Origin")
         if request.path != "/health":  # keep ALB health checks out of the access log / SLIs
             log.info(
                 "request",
@@ -117,6 +132,16 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
 
     def idem_key() -> str | None:
         return request.headers.get("Idempotency-Key")
+
+    def page_args() -> tuple[int, int]:
+        try:
+            limit = int(request.args.get("limit", "50"))
+            offset = int(request.args.get("offset", "0"))
+        except ValueError:
+            raise InvalidRequest("limit and offset must be integers") from None
+        if not 1 <= limit <= 200 or offset < 0:
+            raise InvalidRequest("limit must be 1-200 and offset must be non-negative")
+        return limit, offset
 
     def fault() -> str | None:
         return request.headers.get("X-Fault-Inject") if faults.enabled() else None
@@ -234,6 +259,89 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
         from ..demo_state import get_demo_engine
         return jsonify(get_demo_engine().run_proof_simulation(proof_name=proof_name))
 
+    @app.get("/login")
+    @app.get("/auth")
+    def login_portal():
+        html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "login.html"
+        return Response(html_path.read_text(encoding="utf-8"), mimetype="text/html")
+
+    @app.get("/login/customer")
+    def login_customer_page():
+        html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "login-customer.html"
+        return Response(html_path.read_text(encoding="utf-8"), mimetype="text/html")
+
+    @app.get("/login/agent")
+    def login_agent_page():
+        html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "login-agent.html"
+        return Response(html_path.read_text(encoding="utf-8"), mimetype="text/html")
+
+    @app.get("/login/admin")
+    def login_admin_page():
+        html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "login-admin.html"
+        return Response(html_path.read_text(encoding="utf-8"), mimetype="text/html")
+
+    @app.get("/customer")
+    @app.get("/agent")
+    @app.get("/admin")
+    def role_dashboard():
+        html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "index.html"
+        return Response(html_path.read_text(encoding="utf-8"), mimetype="text/html")
+
+    # ------------------------------------------------------------------ auth API endpoints
+    @app.post("/auth/register")
+    def auth_register():
+        data = body()
+        res = user_store.register_customer(
+            phone=data.get("phone", ""),
+            password=data.get("password", ""),
+            full_name=data.get("full_name", ""),
+            currency=data.get("currency", "ZMW"),
+        )
+        return jsonify(res), 201
+
+    @app.post("/auth/login/customer")
+    def auth_login_customer():
+        data = body()
+        return jsonify(user_store.authenticate_user(
+            identifier=data.get("phone") or data.get("username", ""),
+            password=data.get("password", ""),
+            expected_role="customer",
+        ))
+
+    @app.post("/auth/login/agent")
+    def auth_login_agent():
+        data = body()
+        return jsonify(user_store.authenticate_user(
+            identifier=data.get("agent_id") or data.get("phone") or data.get("username", ""),
+            password=data.get("password", ""),
+            expected_role="agent",
+        ))
+
+    @app.post("/auth/login/admin")
+    def auth_login_admin():
+        data = body()
+        return jsonify(user_store.authenticate_user(
+            identifier=data.get("username") or data.get("email", ""),
+            password=data.get("password", ""),
+            expected_role="admin",
+        ))
+
+    @app.get("/auth/me")
+    def auth_me():
+        user = current_user()
+        return jsonify({
+            "user": {
+                "id": user.sub,
+                "username": user.username or user.sub,
+                "groups": list(user.groups),
+                "is_admin": user.is_admin,
+            }
+        })
+
+    @app.post("/auth/logout")
+    def auth_logout():
+        return jsonify({"status": "ok", "message": "Logged out successfully"})
+
     @app.get("/health")
     def health():
         if os.environ.get("FORCE_UNHEALTHY", "false").lower() == "true":  # rollback demo hook
@@ -244,6 +352,29 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
         except Exception:
             return jsonify({"status": "db_unreachable"}), 503
         return jsonify({"status": "ok"})
+
+    @app.get("/wallets")
+    def list_wallets():
+        user = current_user()
+        limit, offset = page_args()
+        kind = request.args.get("kind")
+        status = request.args.get("status")
+        currency = request.args.get("currency")
+        search = request.args.get("search", "").strip()
+        if len(search) > 100:
+            raise InvalidRequest("search must be at most 100 characters")
+        if kind and kind not in {"CUSTOMER", "MERCHANT", "AGENT"}:
+            raise InvalidRequest("unsupported wallet kind")
+        if status and status not in {"ACTIVE", "FROZEN", "CLOSED"}:
+            raise InvalidRequest("unsupported wallet status")
+        if currency and (len(currency) != 3 or not currency.isalpha()):
+            raise InvalidRequest("currency must be a three-letter code")
+        result = service.list_wallets(
+            user.sub, is_admin=user.is_admin, kind=kind, status=status,
+            currency=currency.upper() if currency else None, search=search or None,
+            limit=limit, offset=offset,
+        )
+        return jsonify(result)
 
     @app.post("/wallets")
     def create_wallet():
@@ -266,6 +397,38 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
             raise NotAuthorized("not your wallet")
         return jsonify(wallet)
 
+    @app.get("/transactions")
+    def list_transactions():
+        user = current_user()
+        limit, offset = page_args()
+        txn_type = request.args.get("type")
+        status = request.args.get("status")
+        wallet_id = request.args.get("wallet_id")
+        search = request.args.get("search", "").strip()
+        if txn_type and txn_type not in {
+            "TRANSFER", "MERCHANT_PAYMENT", "CASH_IN", "CASH_OUT", "FLOAT_TOPUP", "REVERSAL",
+        }:
+            raise InvalidRequest("unsupported transaction type")
+        if status and status not in {"PENDING", "COMPLETED", "REJECTED", "FAILED", "REVERSED"}:
+            raise InvalidRequest("unsupported transaction status")
+        if len(search) > 100:
+            raise InvalidRequest("search must be at most 100 characters")
+        if wallet_id:
+            wallet = service.get_wallet(wallet_id)
+            if not (owns(user, wallet) or user.is_admin):
+                raise NotAuthorized("not your wallet")
+        return jsonify(service.list_transactions(
+            user.sub, is_admin=user.is_admin, txn_type=txn_type, status=status,
+            wallet_id=wallet_id, search=search or None, limit=limit, offset=offset,
+        ))
+
+    @app.get("/operations")
+    def get_operation():
+        user = current_user()
+        txn_type = request.args.get("type", "")
+        key = request.args.get("key", "")
+        return jsonify(service.lookup_operation(user.sub, txn_type, key))
+
     @app.get("/wallets/<wallet_id>/ledger")
     def wallet_ledger(wallet_id):
         user = current_user()
@@ -274,6 +437,21 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
             raise NotAuthorized("not your wallet")
         limit = request.args.get("limit", default=50, type=int)
         return jsonify({"wallet_id": wallet["id"], "entries": service.get_ledger(wallet_id, limit)})
+
+    @app.get("/transactions/<txn_id>/ledger")
+    def transaction_ledger(txn_id):
+        user = current_user()
+        txn = service.get_transaction(txn_id)
+        owners = {
+            service.get_wallet(txn["from_wallet"])["owner_id"],
+            service.get_wallet(txn["to_wallet"])["owner_id"],
+        }
+        if not user.is_admin and user.sub not in owners:
+            raise NotAuthorized("not your transaction")
+        return jsonify({
+            "transaction_id": txn["transaction_id"],
+            "entries": service.get_transaction_ledger(txn_id),
+        })
 
     @app.post("/transfers")
     def transfer():
@@ -373,6 +551,14 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
             raise NotAuthorized("only a party to the transaction can dispute it")
         return jsonify(service.raise_dispute(user.sub, txn_id, body().get("reason"))), 201
 
+    @app.get("/disputes")
+    def list_disputes():
+        user = current_user()
+        limit, offset = page_args()
+        return jsonify(service.list_disputes(
+            user.sub, is_admin=user.is_admin, limit=limit, offset=offset,
+        ))
+
     @app.get("/disputes/<dispute_id>")
     def get_dispute(dispute_id):
         user = current_user()
@@ -389,6 +575,18 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
         return jsonify(
             service.resolve_dispute(user.sub, dispute_id, data.get("action"), data.get("note"), g.cid, runner=runner)
         )
+
+    @app.get("/admin/fraud-alerts")
+    def list_fraud_alerts():
+        current_user().require_group("admins")
+        limit, offset = page_args()
+        return jsonify(service.list_fraud_alerts(limit=limit, offset=offset))
+
+    @app.get("/admin/settlement-reports")
+    def list_settlement_reports():
+        current_user().require_group("admins")
+        limit, offset = page_args()
+        return jsonify(service.list_settlement_reports(limit=limit, offset=offset))
 
     # ------------------------------------------------------------------ stretch goals: FX & Recurring
     @app.get("/fx/rates")

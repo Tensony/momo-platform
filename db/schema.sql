@@ -8,11 +8,27 @@
 --   4. Every wallet has its own hash chain over its ledger entries (tamper evidence).
 --   5. SUM(wallets.balance) == 0 at all times (MINT goes negative by total e-money issued).
 
+-- ---------------------------------------------------------------- users & authentication
+CREATE TABLE IF NOT EXISTS users (
+    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    username        text UNIQUE NOT NULL,                 -- phone number, agent id, or admin email/username
+    phone           text UNIQUE,                          -- E.164 or local phone number
+    email           text UNIQUE,                          -- contact/admin email
+    role            text NOT NULL CHECK (role IN ('customer','agent','admin','merchant')),
+    password_hash   text NOT NULL,                        -- BCrypt password hash
+    full_name       text,
+    status          text NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE','SUSPENDED','CLOSED')),
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    last_login      timestamptz
+);
+CREATE INDEX IF NOT EXISTS users_phone_idx ON users (phone);
+CREATE INDEX IF NOT EXISTS users_username_idx ON users (username);
+CREATE INDEX IF NOT EXISTS users_role_idx ON users (role);
 
 -- ---------------------------------------------------------------- wallets
 CREATE TABLE IF NOT EXISTS wallets (
     id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    owner_id        text        NOT NULL,                 -- Cognito 'sub' (or 'system')
+    owner_id        text        NOT NULL,                 -- Cognito 'sub', user uuid, or 'system'
     kind            text        NOT NULL CHECK (kind IN ('CUSTOMER','MERCHANT','AGENT','SYSTEM')),
     currency        char(3)     NOT NULL DEFAULT 'ZMW',
     balance         bigint      NOT NULL DEFAULT 0,
@@ -184,7 +200,7 @@ END;';
 SELECT ensure_momo_app_role();
 DROP FUNCTION ensure_momo_app_role();
 GRANT SELECT, INSERT, UPDATE ON wallets, transactions, sagas, idempotency_keys,
-      fraud_alerts, outbox_events, settlement_reports, disputes TO momo_app;
+      fraud_alerts, outbox_events, settlement_reports, disputes, users TO momo_app;
 GRANT SELECT, INSERT ON ledger_entries TO momo_app;      -- no UPDATE / DELETE / TRUNCATE
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO momo_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON ledger_entries FROM momo_app;

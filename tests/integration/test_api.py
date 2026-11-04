@@ -89,6 +89,69 @@ def test_authorization_boundaries(client):
     assert client.post("/agents/cash-in", json={"from_wallet": alice, "to_wallet": bob, "amount": 5}, headers=H("bob", key="z-0000001")).status_code == 403
 
 
+def test_read_only_console_endpoints_enforce_ownership_and_admin_access(client):
+    agent_wallet = mk_wallet(client, "agent-console", "AGENT", ["agents"])
+    alice = mk_wallet(client, "alice-console")
+    bob = mk_wallet(client, "bob-console")
+    fund(client, "agent-console", agent_wallet, alice, 10_000)
+    payment = client.post(
+        "/transfers",
+        json={"from_wallet": alice, "to_wallet": bob, "amount": 2_500},
+        headers=H("alice-console", key="console-transfer-1"),
+    )
+    assert payment.status_code == 201
+    txn_id = payment.json["transaction_id"]
+
+    alice_wallets = client.get("/wallets?limit=10", headers=H("alice-console"))
+    assert alice_wallets.status_code == 200
+    assert {w["owner_id"] for w in alice_wallets.json["wallets"]} == {"alice-console"}
+    assert alice_wallets.json["total"] == 1
+    assert client.get("/wallets?search=alice-console", headers=H("alice-console")).json["total"] == 1
+    assert client.get("/wallets", headers=H("bob-console")).json["total"] == 1
+    assert client.get("/wallets?limit=201", headers=H("alice-console")).status_code == 400
+    assert client.get(f"/wallets?search={'x' * 101}", headers=H("alice-console")).status_code == 400
+    assert client.get("/wallets", headers=H("alice-console")).json["wallets"][0]["balance"] == 7_500
+
+    alice_txns = client.get("/transactions", headers=H("alice-console"))
+    assert alice_txns.status_code == 200
+    assert [t["transaction_id"] for t in alice_txns.json["transactions"]] == [txn_id]
+    assert client.get(
+        f"/transactions?search={txn_id[:8]}", headers=H("alice-console")
+    ).json["total"] == 1
+    assert client.get("/transactions", headers=H("bob-console")).json["total"] == 1
+    assert client.get("/transactions", headers=H("mallory")).json["total"] == 0
+
+    journal = client.get(f"/transactions/{txn_id}/ledger", headers=H("alice-console"))
+    assert journal.status_code == 200
+    assert len(journal.json["entries"]) == 4
+    assert client.get(f"/transactions/{txn_id}/ledger", headers=H("mallory")).status_code == 403
+
+    operation = client.get(
+        "/operations?type=TRANSFER&key=console-transfer-1", headers=H("alice-console")
+    )
+    assert operation.status_code == 200
+    assert operation.json["operation_status"] == "COMPLETED"
+    assert operation.json["transaction"]["transaction_id"] == txn_id
+    assert client.get(
+        "/operations?type=TRANSFER&key=console-transfer-1", headers=H("bob-console")
+    ).status_code == 404
+
+    dispute = client.post(
+        f"/transactions/{txn_id}/disputes",
+        json={"reason": "Console test dispute"},
+        headers=H("alice-console"),
+    )
+    assert dispute.status_code == 201
+    assert client.get("/disputes", headers=H("alice-console")).json["total"] == 1
+    assert client.get("/disputes", headers=H("bob-console")).json["total"] == 0
+
+    assert client.get("/admin/fraud-alerts", headers=H("alice-console")).status_code == 403
+    assert client.get("/admin/settlement-reports", headers=H("alice-console")).status_code == 403
+    admin = H("admin-console", ["admins"])
+    assert client.get("/admin/fraud-alerts", headers=admin).json["total"] >= 0
+    assert client.get("/admin/settlement-reports", headers=admin).status_code == 200
+
+
 def test_validation_errors(client):
     alice, bob = mk_wallet(client, "alice"), mk_wallet(client, "bob")
     h = H("alice", key="v-0000001")

@@ -8,6 +8,25 @@ The independently deployable units are the ECS Fargate `wallet-api` container an
 
 See [docs/DESIGN.md](docs/DESIGN.md) for the architecture diagram, service responsibilities, security model, and operational design. The assignment evidence map is in [docs/ASSIGNMENT-TRACEABILITY.md](docs/ASSIGNMENT-TRACEABILITY.md); operational playbooks are in [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
+## Operations console
+
+The browser UI is a responsive, static HTML operations console at `/demo` (also served at `/`).
+For a local static preview, start the existing server with `.\run_demo_ui.bat` and open
+`http://127.0.0.1:5050`; this preview server does not proxy API traffic. In the console choose
+**Connect**, enter the API base URL and a Cognito access token, and use only wallets permitted to
+that identity. Tokens stay in page memory and are cleared on reload or sign-out. For local
+cross-origin use, configure the API process with
+`CORS_ALLOWED_ORIGINS=http://127.0.0.1:5050`; origins must be explicitly listed, comma-separated.
+CORS is disabled when the setting is empty and never reflects unconfigured origins.
+
+The console reads balances, transactions, ledger entries, fraud alerts, disputes, and reports from
+the API; it does not seed demonstration data. Payment requests require confirmation and use a
+unique idempotency key. If the network outcome is uncertain, the UI blocks another payment and
+provides a status lookup for the original key. Unsupported functions (including account profiles,
+fraud review actions, and settlement payout lifecycle) are called out in the UI rather than
+simulated. The requirement/API mapping and demonstration steps are in
+[docs/FRONTEND-TRACEABILITY.md](docs/FRONTEND-TRACEABILITY.md).
+
 ## Local development and verification (Windows)
 
 Requirements: Python 3.12 and Docker Desktop. Start a throwaway local PostgreSQL database:
