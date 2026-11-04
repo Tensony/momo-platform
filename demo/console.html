@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101c2a">
+  <title>MoMo | Operations Console</title>
+  <link rel="stylesheet" href="/tokens.css">
+  <link rel="stylesheet" href="/console.css">
+</head>
+<body>
+<a class="skip-link" href="#mainContent">Skip to main content</a>
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Primary navigation">
+    <div class="brand"><div class="brand-mark">M</div><div><div class="brand-name">MoMo</div><div class="brand-sub">OPERATIONS CONSOLE</div></div></div>
+    <div class="nav-label">Operations</div>
+    <button class="nav-item active" data-view="overview" aria-current="page"><span class="nav-icon">◫</span>Overview</button>
+    <button class="nav-item" data-view="wallets"><span class="nav-icon">▣</span>Wallets</button>
+    <button class="nav-item" data-view="payments"><span class="nav-icon">⇄</span>Payments</button>
+    <button class="nav-item" data-view="transactions"><span class="nav-icon">≡</span>Transactions</button>
+    <div class="nav-label">Financial records</div>
+    <button class="nav-item" data-view="ledger"><span class="nav-icon">▤</span>Ledger</button>
+    <button class="nav-item" data-view="reconciliation"><span class="nav-icon">⌁</span>Reconciliation</button>
+    <div class="nav-label">Risk &amp; cases</div>
+    <button class="nav-item" data-view="risk"><span class="nav-icon">◇</span>Fraud alerts</button>
+    <button class="nav-item" data-view="disputes"><span class="nav-icon">⚑</span>Disputes</button>
+    <div class="sidebar-footer"><div>Backend-enforced access</div><button class="signout" id="signoutBtn">Sign out</button></div>
+  </aside>
+  <main class="app">
+    <header class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="mobile-menu" id="menuBtn" aria-label="Open navigation">☰</button><div class="page-title" id="topTitle">Operations overview</div></div><div class="top-meta"><span class="connection"><i class="dot" id="healthDot"></i><span id="healthText">Connecting…</span></span><button class="btn secondary small" id="connectBtn">Connect</button><button class="avatar" id="roleAvatar" aria-label="Session role">?</button></div></header>
+    <div class="content" id="mainContent" tabindex="-1">
+      <section class="view active" id="view-overview">
+        <div class="heading"><div><div class="eyebrow">Operational snapshot</div><h1>Operations overview</h1><p>Live figures are loaded from the connected platform. No demonstration balances are shown.</p></div><div class="actions"><button class="btn secondary" data-refresh>↻ Refresh data</button></div></div>
+        <div id="overviewAlert" class="notice info">Sign in through a role portal or connect with an access token to load operational data.</div>
+        <div class="grid stats">
+          <div class="card"><div class="stat-label">Wallets in view</div><div class="stat-value" id="statWallets">—</div><div class="stat-note">API result count</div></div>
+          <div class="card"><div class="stat-label">Transactions in view</div><div class="stat-value" id="statTransactions">—</div><div class="stat-note" id="statTxnNote">Latest returned page</div></div>
+          <div class="card"><div class="stat-label">Completed amount in view</div><div class="stat-value" id="statVolume">—</div><div class="stat-note">Sum of completed rows loaded</div></div>
+          <div class="card"><div class="stat-label">Open disputes in view</div><div class="stat-value" id="statDisputes">—</div><div class="stat-note">Your authorized dispute records</div></div>
+        </div>
+        <div class="grid two">
+          <div class="card"><div class="card-head"><div><div class="card-title">Recent activity</div><div class="card-sub">Transactions returned by the API</div></div><button class="link-btn" data-go="transactions">View all →</button></div><div id="overviewTransactions" class="loading">Connect to load activity.</div></div>
+          <div class="card"><div class="card-head"><div><div class="card-title">Transaction volume</div><div class="card-sub">Completed transactions by day · returned page only</div></div></div><div id="volumeChart" class="chart"></div><div class="legend"><span><i></i>Completed count</span><span id="chartCurrencyNote">Data from API</span></div></div>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <div class="card"><div class="card-head"><div><div class="card-title">Wallet balances</div><div class="card-sub">Authoritative balances returned by the API</div></div><button class="link-btn" data-go="wallets">Open wallets →</button></div><div id="overviewWallets" class="loading">Connect to load wallets.</div></div>
+          <div class="card"><div class="card-head"><div><div class="card-title">Service integrity</div><div class="card-sub">Administrative integrity check</div></div></div><div id="integrityPanel" class="empty">Available to an administrator after connecting.</div></div>
+        </div>
+        <div class="card" style="margin-top:16px"><div class="card-head"><div><div class="card-title">Service integrity</div><div class="card-sub">Live administrator check; available only to authorized administrators.</div></div></div><div id="overviewIntegrity" class="empty">Sign in as an administrator to view live integrity results.</div></div>
+      </section>
+      <section class="view" id="view-wallets">
+        <div class="heading"><div><div class="eyebrow">Accounts &amp; wallets</div><h1>Wallet directory</h1><p>Balances and status are sourced directly from the API.</p></div><div class="actions"><details><summary class="btn secondary">Advanced actions</summary><button class="btn" id="createWalletBtn">＋ Create customer wallet</button></details><button class="btn secondary" id="adminFloatBtn">＋ Issue agent float</button><button class="btn secondary" data-refresh>Refresh</button></div></div>
+        <div id="walletNote" class="notice info">Account profiles and account-level management are not available in this API. This directory shows wallets only.</div>
+        <div class="card"><div class="toolbar"><input id="walletSearch" placeholder="Search wallet or owner ID" aria-label="Search wallets"><select id="walletKind"><option value="">All wallet kinds</option><option>CUSTOMER</option><option>MERCHANT</option><option>AGENT</option></select><select id="walletStatus"><option value="">All statuses</option><option>ACTIVE</option><option>FROZEN</option><option>CLOSED</option></select><button class="btn secondary small" id="walletFilterBtn">Apply filters</button></div><div class="table-wrap" id="walletTable"></div><div class="pager" id="walletPager"></div></div>
+      </section>
+      <section class="view" id="view-payments">
+        <div class="heading"><div><div class="eyebrow">Money movement</div><h1>Payments &amp; Transfers</h1><p>Submission uses server-side controls and an idempotency key. A timeout is never retried automatically.</p></div></div>
+        <div class="notice warn">Balances are not changed in this interface. The transaction outcome and refreshed balances are shown only after authoritative API responses.</div>
+        <div class="grid two">
+          <div class="card"><div class="card-head"><div><div class="card-title">Initiate Payment</div><div class="card-sub">Choose a flow permitted to your authenticated role</div></div></div>
+            <form id="paymentForm">
+              <div class="field"><label for="paymentType">Payment type</label><select id="paymentType"><option value="TRANSFER">Wallet transfer (P2P)</option><option value="MERCHANT_PAYMENT">Merchant payment</option><option value="CASH_IN">Agent cash-in (Deposit)</option><option value="CASH_OUT">Agent cash-out (Withdrawal)</option><option value="FLOAT_TOPUP" id="optFloatTopup" class="hidden">Admin agent float top-up (MINT → Agent)</option></select></div>
+              <div class="field" id="sourceWalletSelectWrap"><label for="sourceWalletSelect">Quick select owned source wallet</label><select id="sourceWalletSelect"><option value="">-- Choose from your loaded wallets --</option></select></div>
+              <div class="form-grid"><div class="field"><label for="fromWallet">Source wallet ID</label><input id="fromWallet" required autocomplete="off" placeholder="Choose a loaded wallet or enter ID" list="walletOptions"></div><div class="field"><label for="toWallet">Destination wallet ID</label><input id="toWallet" required autocomplete="off" placeholder="Enter recipient wallet ID" list="walletOptions"></div><datalist id="walletOptions"></datalist></div>
+              <div class="field"><label for="paymentAmount">Amount (ZMW)</label><input id="paymentAmount" type="number" min="0.01" step="0.01" required inputmode="decimal" placeholder="0.00"></div>
+              <div class="notice info">Fee: K 0.00 — no fee schedule or transaction limits are exposed by this API.</div>
+              <div id="paymentConfirm" class="notice info hidden" role="status"></div>
+              <div id="paymentMessage" class="hidden" role="status"></div>
+              <button class="btn" type="submit" id="paymentSubmit">Review payment</button>
+            </form>
+          </div>
+          <div class="stack">
+            <div class="card"><div class="card-head"><div><div class="card-title">Your available flows</div><div class="card-sub">Backend authorization remains authoritative</div></div></div><p class="muted">Transfers, merchant payments, cash-in and cash-out use the existing transaction API. Agent cash-in requires the agent Cognito group; cash-out requires a customer-owned source wallet.</p><div id="roleInfo" class="notice info">Role permissions are checked by the API on submission.</div></div>
+            <div class="card"><div class="card-head"><div><div class="card-title">Live FX Rates &amp; Conversion</div><div class="card-sub">Supported cross-currency conversions against ZMW</div></div><button class="btn secondary small" id="loadFxBtn">Fetch FX</button></div><div id="fxBox" class="muted">Click "Fetch FX" to query live currency conversion rates.</div></div>
+            <div class="card"><div class="card-head"><div><div class="card-title">Unavailable operations</div><div class="card-sub">No fake success controls</div></div></div><div class="unsupported"><strong>Merchant and agent directory</strong>Standalone merchant/agent search, profile, float thresholds, and account-level detail are not exposed by the current API. Use a known authorized wallet ID.</div><div style="height:10px"></div><div class="unsupported"><strong>Fees and limits</strong>No transaction fee or limit contract is returned by the current API.</div></div>
+          </div>
+        </div>
+      </section>
+      <section class="view" id="view-transactions">
+        <div class="heading"><div><div class="eyebrow">Payments</div><h1>Transaction explorer</h1><p>Party-owned transactions or all transactions for administrators.</p></div><div class="actions"><button class="btn secondary" data-refresh>Refresh</button></div></div>
+        <div class="card"><div class="toolbar"><input id="txnSearch" placeholder="Transaction or wallet ID"><select id="txnTypeFilter"><option value="">All types</option><option>TRANSFER</option><option>MERCHANT_PAYMENT</option><option>CASH_IN</option><option>CASH_OUT</option><option>FLOAT_TOPUP</option><option>REVERSAL</option></select><select id="txnStatusFilter"><option value="">All statuses</option><option>PENDING</option><option>COMPLETED</option><option>REJECTED</option><option>FAILED</option><option>REVERSED</option></select><button class="btn secondary small" id="txnFilterBtn">Apply filters</button></div><div class="table-wrap" id="txnTable"></div><div class="pager" id="txnPager"></div></div>
+      </section>
+      <section class="view" id="view-ledger">
+        <div class="heading"><div><div class="eyebrow">Financial records</div><h1>Immutable ledger</h1><p>Original entries are read-only. Corrections are new compensating entries.</p></div></div>
+        <div class="notice">Ledger entries are never edited or deleted by the console. Search a wallet ID for its append-only history, or open a transaction's journal entries from Transaction Explorer.</div>
+        <div class="card"><div class="toolbar"><input id="ledgerWalletId" placeholder="Wallet ID"><button class="btn" id="loadLedgerBtn">Load wallet ledger</button></div><div class="table-wrap" id="ledgerTable"><div class="empty">Choose a wallet to view its read-only ledger.</div></div></div>
+      </section>
+      <section class="view" id="view-reconciliation">
+        <div class="heading"><div><div class="eyebrow">Financial operations</div><h1>Reconciliation &amp; settlement</h1><p>Read-only integrity check and persisted settlement reports.</p></div><div class="actions"><button class="btn secondary" id="runIntegrityBtn">Run integrity check</button><button class="btn secondary" data-refresh>Refresh reports</button></div></div>
+        <div id="reconNote" class="notice info">Only administrators may access integrity and settlement reports. This interface does not alter any balances or ledger entries.</div>
+        <div class="grid two"><div class="card"><div class="card-head"><div><div class="card-title">Platform Financial Invariants</div><div class="card-sub">Authoritative real-time balance &amp; hash chain checks</div></div></div><div id="reconIntegrity" class="empty">Run a check to load authoritative results.</div></div><div class="card"><div class="card-head"><div><div class="card-title">Persisted settlement reports</div><div class="card-sub">Reports created by scheduled reconciliation</div></div></div><div class="table-wrap" id="settlementTable"><div class="empty">No report data loaded.</div></div></div></div>
+        <div class="card" style="margin-top:16px"><div class="card-head"><div><div class="card-title">Settlement coverage</div><div class="card-sub">Calculated settlement engine and payout lifecycle are not exposed by the current API.</div></div></div><div class="unsupported"><strong>Reported data is not a payout confirmation</strong>Existing reconciliation summaries contain transaction type/status totals, merchant gross values, agent float summaries, and integrity issues. Fees, net settlement amounts, payout status, and exception-review actions are not supported.</div></div>
+      </section>
+      <section class="view" id="view-risk">
+        <div class="heading"><div><div class="eyebrow">Risk &amp; investigations</div><h1>Fraud alerts</h1><p>Persisted rule-triggered alerts and their actual explanations.</p></div><div class="actions"><button class="btn secondary" data-refresh>Refresh</button></div></div>
+        <div class="notice info">Only administrators can access fraud alerts. Fraud rule configuration and alert review/resolution actions are not exposed by the current API.</div>
+        <div class="card"><div class="table-wrap" id="fraudTable"><div class="empty">Connect as an administrator to load persisted fraud alerts.</div></div><div class="pager" id="fraudPager"></div></div>
+        <div class="grid three" style="margin-top:16px"><div class="unsupported"><strong>Velocity</strong>Displayed only when a persisted alert contains the corresponding rule.</div><div class="unsupported"><strong>Unusual amount</strong>Explanation comes from the actual backend rule result.</div><div class="unsupported"><strong>Geographic anomaly</strong>Shown only if the backend captured location and persisted a triggered rule.</div></div>
+      </section>
+      <section class="view" id="view-disputes">
+        <div class="heading"><div><div class="eyebrow">Risk &amp; investigations</div><h1>Disputes &amp; Resolutions</h1><p>Review your dispute records; resolution actions require administrator permissions.</p></div><div class="actions"><button class="btn secondary" data-refresh>Refresh</button></div></div>
+        <div class="grid two"><div class="card"><div class="card-head"><div><div class="card-title">Dispute directory</div><div class="card-sub">Your disputes, or all disputes for administrators</div></div></div><div class="table-wrap" id="disputeTable"><div class="empty">Connect to load disputes.</div></div></div>
+          <div class="card"><div class="card-head"><div><div class="card-title">Raise a dispute</div><div class="card-sub">A party to the transaction may submit a reason</div></div></div><form id="disputeForm"><div class="field"><label for="disputeTxn">Transaction ID</label><input id="disputeTxn" required placeholder="Transaction UUID to dispute"></div><div class="field"><label for="disputeReason">Reason (3–500 characters)</label><textarea id="disputeReason" minlength="3" maxlength="500" required placeholder="Describe the dispute or reason for contest..."></textarea></div><button class="btn" type="submit">Submit dispute</button><div id="disputeMessage" style="margin-top:12px"></div></form><div class="unsupported" style="margin-top:15px"><strong>Evidence attachments</strong>File uploads and dispute review notes are not supported by this API.</div></div></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Connect Modal -->
+<div class="modal-backdrop" id="connectModal" role="dialog" aria-modal="true" aria-labelledby="connectTitle"><div class="modal"><h2 id="connectTitle">Connect to MoMo API</h2><p>The API uses Cognito access tokens. Paste an access token from your existing sign-in flow. The token stays in memory and is cleared when you close or reload this page.</p><form id="connectForm"><div class="field"><label for="apiBase">API base URL</label><input id="apiBase" placeholder="https://your-api.example.com" autocomplete="url"></div><div class="field"><label for="accessToken">Cognito access token</label><textarea id="accessToken" required autocomplete="off" spellcheck="false" placeholder="Paste access token"></textarea></div><div class="actions" style="justify-content:flex-end"><button type="button" class="btn secondary" id="cancelConnect">Cancel</button><button type="submit" class="btn">Connect securely</button></div><div id="connectError" class="notice error hidden" style="margin-top:14px"></div></form></div></div>
+
+<!-- Detail Modal -->
+<div class="modal-backdrop" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle"><div class="modal"><div class="card-head"><h2 id="detailTitle">Details</h2><button class="btn secondary small" id="closeDetail">Close</button></div><div id="detailBody"></div></div></div>
+
+<!-- Dispute Resolution Modal (Admin only) -->
+<div class="modal-backdrop" id="resolveDisputeModal" role="dialog" aria-modal="true" aria-labelledby="resolveTitle">
+  <div class="modal">
+    <div class="card-head">
+      <h2 id="resolveTitle">Resolve Customer Dispute</h2>
+      <button class="btn secondary small" id="closeResolveDispute">Close</button>
+    </div>
+    <p class="muted">Administrative action. Reversing executes an authoritative compensating transaction (payee → payer) on the immutable ledger.</p>
+    <form id="resolveDisputeForm">
+      <input type="hidden" id="resolveDisputeId">
+      <div class="field">
+        <label>Transaction Reference</label>
+        <input id="resolveDisputeTxn" readonly class="mono" style="background:#f1f5f9">
+      </div>
+      <div class="field">
+        <label for="resolveAction">Resolution Action</label>
+        <select id="resolveAction" required>
+          <option value="REVERSE">Approve &amp; Reverse Transaction (Issue compensating refund)</option>
+          <option value="REJECT">Reject Dispute (Claim denied)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="resolveNote">Resolution Note / Audit Justification</label>
+        <textarea id="resolveNote" placeholder="Enter findings, customer confirmation, or policy justification..." required minlength="3" maxlength="500"></textarea>
+      </div>
+      <div class="actions" style="justify-content:flex-end;margin-top:16px">
+        <button type="button" class="btn secondary" id="cancelResolveDispute">Cancel</button>
+        <button type="submit" class="btn" id="submitResolveDispute">Execute Resolution</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Float Top-up Modal (Admin only) -->
+<div class="modal-backdrop" id="floatTopupModal" role="dialog" aria-modal="true" aria-labelledby="floatTitle">
+  <div class="modal">
+    <div class="card-head">
+      <h2 id="floatTitle">Issue Agent Float (MINT)</h2>
+      <button class="btn secondary small" id="closeFloatTopup">Close</button>
+    </div>
+    <p class="muted">Admin only. Issues e-money to an agent's float wallet funded by the system MINT account (00000000-0000-0000-0000-000000000001).</p>
+    <form id="floatTopupForm">
+      <div class="field">
+        <label for="floatAgentWallet">Agent Float Wallet ID</label>
+        <input id="floatAgentWallet" placeholder="Target agent wallet UUID" required autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="floatAmount">Amount to Issue (ZMW)</label>
+        <input id="floatAmount" type="number" min="1.00" step="0.01" required inputmode="decimal" placeholder="1000.00">
+      </div>
+      <div class="actions" style="justify-content:flex-end;margin-top:16px">
+        <button type="button" class="btn secondary" id="cancelFloatTopup">Cancel</button>
+        <button type="submit" class="btn" id="submitFloatTopup">Issue Float</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Official Transaction Receipt Modal -->
+<div class="modal-backdrop" id="receiptModal" role="dialog" aria-modal="true" aria-labelledby="receiptTitle">
+  <div class="modal" style="max-width:520px">
+    <div class="card-head">
+      <h2 id="receiptTitle">Official Transaction Receipt</h2>
+      <button class="btn secondary small" id="closeReceipt">Close</button>
+    </div>
+    <div id="receiptContent"></div>
+    <div class="actions" style="justify-content:space-between;margin-top:20px">
+      <button type="button" class="btn secondary" id="printReceiptBtn">🖨 Print / Save Receipt</button>
+      <button type="button" class="btn" id="dismissReceiptBtn">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settlement Report Detail Modal -->
+<div class="modal-backdrop" id="reportModal" role="dialog" aria-modal="true" aria-labelledby="reportTitle">
+  <div class="modal" style="max-width:600px">
+    <div class="card-head">
+      <h2 id="reportTitle">Settlement Report</h2>
+      <button class="btn secondary small" id="closeReportModal">Close</button>
+    </div>
+    <div id="reportModalBody"></div>
+    <div class="actions" style="justify-content:space-between;margin-top:18px">
+      <button type="button" class="btn secondary" id="downloadReportBtn">⬇ Export JSON</button>
+      <button type="button" class="btn" id="dismissReportBtn">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="/console.js"></script>
+<script src="/auth-session.js"></script>
+</body>
+</html>

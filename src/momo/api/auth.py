@@ -12,6 +12,7 @@ Features:
 from __future__ import annotations
 
 import os
+import secrets
 import time
 from dataclasses import dataclass, field
 
@@ -21,32 +22,40 @@ from jwt import PyJWKClient
 
 from ..common.errors import NotAuthenticated, NotAuthorized
 
-LOCAL_JWT_SECRET = os.environ.get(
-    "JWT_SECRET", "momo-platform-secure-jwt-signing-key-32-chars-minimum!"
-)
+LOCAL_JWT_SECRET = os.environ.get("JWT_SECRET") or secrets.token_urlsafe(48)
 LOCAL_ISSUER = "momo-platform"
 LOCAL_CLIENT_ID = "momo-platform"
+LOCAL_ACCESS_TOKEN_TTL_SECONDS = 60 * 60
 
 
 def hash_password(password: str) -> str:
     """Hash password securely using BCrypt with salt rounds=12."""
-    if not password or len(password) < 8:
+    if not isinstance(password, str) or len(password) < 8:
         raise ValueError("Password must be at least 8 characters long")
+    try:
+        encoded_password = password.encode("utf-8")
+    except UnicodeError as exc:
+        raise ValueError("Password must contain valid UTF-8 text") from exc
+    if len(encoded_password) > 72:
+        raise ValueError("Password must be at most 72 UTF-8 bytes")
     salt = bcrypt.gensalt(rounds=12)
-    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+    return bcrypt.hashpw(encoded_password, salt).decode("utf-8")
 
 
 def verify_password(password: str, hashed: str) -> bool:
     """Verify password against BCrypt hash."""
-    if not password or not hashed:
+    if not isinstance(password, str) or not password or not isinstance(hashed, str) or not hashed:
         return False
     try:
-        return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
-    except Exception:
+        encoded_password = password.encode("utf-8")
+        if len(encoded_password) > 72:
+            return False
+        return bcrypt.checkpw(encoded_password, hashed.encode("utf-8"))
+    except (ValueError, TypeError, UnicodeError):
         return False
 
 
-def issue_token(sub: str, username: str, role: str, exp_hours: int = 8) -> str:
+def issue_token(sub: str, username: str, role: str, exp_hours: int = 1) -> str:
     """Mint a local platform JWT access token with role-based groups."""
     now = int(time.time())
     # Standardize group name to match RBAC checks (customers, agents, admins, merchants)
@@ -59,6 +68,7 @@ def issue_token(sub: str, username: str, role: str, exp_hours: int = 8) -> str:
         "token_use": "access",
         "client_id": LOCAL_CLIENT_ID,
         "iss": LOCAL_ISSUER,
+        "jti": secrets.token_urlsafe(24),
         "iat": now,
         "exp": now + (exp_hours * 3600),
     }
@@ -70,6 +80,9 @@ class User:
     sub: str
     groups: frozenset[str] = field(default_factory=frozenset)
     username: str | None = None
+    token_id: str | None = None
+    token_expires_at: int | None = None
+    local_token: bool = False
 
     @property
     def is_admin(self) -> bool:
@@ -82,6 +95,18 @@ class User:
     @property
     def is_customer(self) -> bool:
         return "customers" in self.groups
+
+    @property
+    def role(self) -> str | None:
+        for group, role in (
+            ("admins", "admin"),
+            ("agents", "agent"),
+            ("merchants", "merchant"),
+            ("customers", "customer"),
+        ):
+            if group in self.groups:
+                return role
+        return None
 
     def require_group(self, group: str) -> None:
         if group not in self.groups and not self.is_admin:
@@ -141,6 +166,9 @@ class JwtVerifier:
                 sub=claims["sub"],
                 groups=frozenset(claims.get("cognito:groups", [])),
                 username=claims.get("username"),
+                token_id=claims.get("jti"),
+                token_expires_at=claims.get("exp"),
+                local_token=True,
             )
 
         # 2. External Cognito user pool tokens (RS256 via JWKS)
@@ -166,6 +194,8 @@ class JwtVerifier:
             sub=claims["sub"],
             groups=frozenset(claims.get("cognito:groups", [])),
             username=claims.get("username"),
+            token_id=claims.get("jti"),
+            token_expires_at=claims.get("exp"),
         )
 
 

@@ -9,6 +9,9 @@ import uuid
 import psycopg
 import pytest
 
+os.environ.setdefault("JWT_SECRET", "test-only-signing-key-that-must-never-be-deployed")
+os.environ["AUTH_DEMO_USERS"] = "true"
+
 SCHEMA = pathlib.Path(__file__).resolve().parent.parent / "db" / "schema.sql"
 
 
@@ -31,6 +34,7 @@ def pytest_collection_modifyitems(config, items):
 @pytest.fixture
 def db():
     """A pristine schema for every test (DROP/CREATE is ~50 ms)."""
+    previous_database_url = os.environ.get("DATABASE_URL")
     url = os.environ.get("TEST_DATABASE_URL", "postgresql://postgres:Tenson@127.0.0.1:5432/momo_test")
     if url.startswith("postgresql://postgres@localhost") or url.startswith("postgresql://postgres@127.0.0.1"):
         url = url.replace("postgres@localhost", "postgres:Tenson@127.0.0.1").replace("postgres@127.0.0.1", "postgres:Tenson@127.0.0.1")
@@ -52,6 +56,10 @@ def db():
         conn.execute(SCHEMA.read_text(encoding="utf-8"))
     yield url
     dbm.reset_pool()
+    if previous_database_url is None:
+        os.environ.pop("DATABASE_URL", None)
+    else:
+        os.environ["DATABASE_URL"] = previous_database_url
 
 
 @pytest.fixture

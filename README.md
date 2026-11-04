@@ -8,23 +8,26 @@ The independently deployable units are the ECS Fargate `wallet-api` container an
 
 See [docs/DESIGN.md](docs/DESIGN.md) for the architecture diagram, service responsibilities, security model, and operational design. The assignment evidence map is in [docs/ASSIGNMENT-TRACEABILITY.md](docs/ASSIGNMENT-TRACEABILITY.md); operational playbooks are in [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
-## Operations console
+## Web interface and operations console
 
-The browser UI is a responsive, static HTML operations console at `/demo` (also served at `/`).
+The public landing page is served at `/`, with separate sign-in (`/login`), customer registration
+(`/register`), and role-specific customer, agent, and administrator workspaces. Use the API-hosted
+pages so authentication and service requests go to the same origin. The previous integrated
+operations console remains available at `/demo` (also `/console`) for its additional wallet,
+ledger, dispute, fraud-alert, and reconciliation views.
+
 For a local static preview, start the existing server with `.\run_demo_ui.bat` and open
-`http://127.0.0.1:5050`; this preview server does not proxy API traffic. In the console choose
-**Connect**, enter the API base URL and a Cognito access token, and use only wallets permitted to
-that identity. Tokens stay in page memory and are cleared on reload or sign-out. For local
-cross-origin use, configure the API process with
+`http://127.0.0.1:5050`; this preview server does not proxy API traffic or provide authentication.
+For local cross-origin use, configure the API process with
 `CORS_ALLOWED_ORIGINS=http://127.0.0.1:5050`; origins must be explicitly listed, comma-separated.
 CORS is disabled when the setting is empty and never reflects unconfigured origins.
 
-The console reads balances, transactions, ledger entries, fraud alerts, disputes, and reports from
-the API; it does not seed demonstration data. Payment requests require confirmation and use a
-unique idempotency key. If the network outcome is uncertain, the UI blocks another payment and
-provides a status lookup for the original key. Unsupported functions (including account profiles,
-fraud review actions, and settlement payout lifecycle) are called out in the UI rather than
-simulated. The requirement/API mapping and demonstration steps are in
+The role-specific workspaces and console read balances and transaction results from the API; they
+do not seed demonstration data or calculate authoritative balances. Payment requests require
+confirmation and use idempotency keys. If a standalone workspace receives an uncertain outcome, it
+blocks repeat submission and offers a status lookup for the original key. Unsupported functions
+(including profile editing, administrator user management, and agent-initiated cash-out) are
+identified rather than simulated. The requirement/API mapping and demonstration steps are in
 [docs/FRONTEND-TRACEABILITY.md](docs/FRONTEND-TRACEABILITY.md).
 
 ## Local development and verification (Windows)
@@ -66,6 +69,32 @@ docker stop momo-postgres
 
 For Linux/macOS, install dependencies with `python3.12 -m pip install -r requirements-dev.txt`; use `make test`, `make lint`, and `make proofs`.
 
+### Run the API and role-based login locally (Windows)
+
+With the `momo-postgres` container from the setup above running, apply the schema and start the API:
+
+```powershell
+docker cp db\schema.sql momo-postgres:/tmp/momo-schema.sql
+docker exec momo-postgres psql -U postgres -d momo_test -f /tmp/momo-schema.sql
+
+$env:DATABASE_URL = "postgresql://postgres@localhost:5432/momo_test"
+$env:JWT_SECRET = (.\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_urlsafe(48))")
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -c "from momo.api.app import create_app; create_app().run(host='127.0.0.1', port=8080)"
+```
+
+Open `http://127.0.0.1:8080/` for the landing page, then use **Create account** or **Sign in**.
+Agent and administrator accounts are intentionally provisioned only by an operator; from a trusted
+environment connected to the database, run
+`.\.venv\Scripts\python.exe scripts\provision_user.py agent --identifier AGENT-007 --full-name "Local Agent"`
+or use `admin` as the role. The script prompts for the initial password and never accepts it as a
+command-line argument. Keep the same `JWT_SECRET` for the lifetime of the local database so existing
+sessions remain verifiable.
+
+The local role access tokens expire after one hour. Role workspaces verify identity with
+`/auth/me`, while the API continues to enforce endpoint authorization. The standalone static
+preview (`.\run_demo_ui.bat`) remains UI-only and cannot perform API authentication.
+
 ## Terraform and AWS deployment
 
 Terraform configuration is in [`infra/terraform/`](infra/terraform/). To validate configuration without creating AWS resources:
@@ -83,6 +112,8 @@ scripts/deploy.sh you@example.com <selected-region>
 ```
 
 This provisions billable AWS resources. Confirm the project's Region in **AWS Settings → View all projects → Overview → Additional Info → Region**, and review your plan and billing limits before deploying. The Terraform default is `af-south-1`; pass your selected Region explicitly when it differs. A deployment has **not** been verified merely by running Terraform validation; see the traceability document for the evidence boundary.
+
+Terraform provisions the platform JWT signing key in AWS Secrets Manager and injects it into the API task; protect Terraform state because it contains sensitive generated infrastructure values.
 
 GitHub Actions runs checks for pushes and pull requests. AWS deployment is opt-in: configure the `aws-deploy` environment with required reviewers, set repository variables `AWS_DEPLOY_ENABLED=true`, `AWS_REGION`, `AWS_PROJECT`, `AWS_ENVIRONMENT`, and `ALERT_EMAIL`, and add the `AWS_DEPLOY_ROLE_ARN` secret for an OIDC-trusted role. The deploy job runs only for pushes to `main` after all checks pass. It updates an already-provisioned ECS service with the pushed image digest (using ECS rolling deployment or CodeDeploy when configured); initial infrastructure provisioning remains a separate operation. TLS certificate validation remains enabled for smoke tests unless `ALLOW_SELF_SIGNED_SMOKE_TEST=true` is explicitly set for a demo stack using Terraform's self-signed certificate.
 

@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Customer overview | MoMo</title><link rel="stylesheet" href="/portal.css"></head>
+<body data-required-role="customer" data-page="dashboard" data-title="Customer overview">
+  <div class="portal-layout"><aside class="portal-sidebar"><a class="brand" href="/"><span class="brand-mark">M</span><span>MoMo Platform</span></a><nav id="portalNav" aria-label="Customer navigation"></nav><button class="button secondary signout" id="signout" type="button">Sign out</button></aside>
+    <div class="portal-main"><header class="app-header"><h1 id="pageTitle">Customer overview</h1><div><span id="portalName"></span> · <span id="portalRole"></span></div></header>
+      <main class="page-content"><h2>Your money, at a glance.</h2><p>Balances and transaction records are provided by the platform and are not recalculated in this interface.</p><div id="pageNotice" class="page-notice" role="status" hidden></div>
+        <div class="dashboard-grid"><section class="stat-card"><span class="stat-label">Wallet balances</span><strong class="stat-value" id="walletBalance">Loading…</strong></section><section class="panel"><h2>Quick actions</h2><p><a href="/customer/send-money">Send money</a> · <a href="/customer/merchant-payment">Pay a merchant</a> · <a href="/customer/cash-out">Cash out</a> · <a href="/customer/transactions">Transaction history</a> · <a href="/customer/profile">Profile</a></p></section></div>
+        <section class="panel dashboard-section"><h2>Your wallets</h2><div class="data-table-wrap" id="walletList">Loading wallets…</div></section>
+        <section class="panel dashboard-section"><h2>Recent activity</h2><div class="data-table-wrap" id="recentTransactions">Loading transactions…</div></section>
+      </main></div>
+  </div><script src="/portal.js"></script>
+</body></html>

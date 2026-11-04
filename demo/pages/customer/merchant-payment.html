@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Merchant payment | MoMo</title><link rel="stylesheet" href="/portal.css"></head>
+<body data-required-role="customer" data-page="merchant-payment" data-title="Merchant payment">
+  <div class="portal-layout"><aside class="portal-sidebar"><a class="brand" href="/"><span class="brand-mark">M</span><span>MoMo Platform</span></a><nav id="portalNav" aria-label="Customer navigation"></nav><button class="button secondary signout" id="signout" type="button">Sign out</button></aside>
+    <div class="portal-main"><header class="app-header"><h1 id="pageTitle">Merchant payment</h1><div><span id="portalName"></span> · <span id="portalRole"></span></div></header><main class="page-content"><h2>Pay a registered merchant</h2><p>Use a known merchant wallet ID. A merchant directory is not available from the current API.</p><div id="pageNotice" class="page-notice" role="status" aria-live="polite" hidden></div>
+      <section class="panel form-panel"><form data-transaction-type="MERCHANT_PAYMENT" data-endpoint="/merchant-payments" data-operation-label="Merchant payment">
+        <div class="field"><label for="fromWallet">Your customer wallet ID</label><input id="fromWallet" name="from_wallet" required autocomplete="off"></div>
+        <div class="field"><label for="toWallet">Merchant wallet ID</label><input id="toWallet" name="to_wallet" required autocomplete="off"></div>
+        <div class="field"><label for="amount">Amount</label><input id="amount" name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required></div><div class="field"><label for="currency">Currency</label><select id="currency" name="currency"><option value="ZMW">ZMW ? Zambian Kwacha</option><option value="USD">USD ? US Dollar</option></select></div>
+        <button class="button" type="submit">Review and pay</button>
+      </form></section>
+    </main></div></div><script src="/portal.js"></script>
+</body></html>

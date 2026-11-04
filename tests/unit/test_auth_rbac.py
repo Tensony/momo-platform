@@ -5,7 +5,7 @@ import pytest
 from momo.api.app import create_app
 from momo.api.auth import JwtVerifier, hash_password, issue_token, verify_password
 from momo.api.user_store import authenticate_user, register_customer
-from momo.common.errors import BusinessRejection, InvalidRequest, NotAuthenticated, NotAuthorized
+from momo.common.errors import BusinessRejection, NotAuthenticated
 from tests.jwt_helpers import CLIENT_ID, ISSUER, StubJwks
 
 
@@ -28,6 +28,8 @@ def test_bcrypt_hashing_and_verification():
 def test_password_strength_enforced():
     with pytest.raises(ValueError):
         hash_password("short")
+    with pytest.raises(ValueError):
+        hash_password("é" * 37)
 
 
 def test_customer_registration_and_login():
@@ -79,6 +81,17 @@ def test_role_cross_portal_isolation():
         authenticate_user("admin@momo.platform", "Admin123!", "customer")
 
 
+def test_demo_accounts_require_explicit_local_opt_in(monkeypatch):
+    import momo.api.user_store as user_store
+
+    monkeypatch.setattr(user_store, "_memory_users", {})
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.delenv("DB_HOST", raising=False)
+    monkeypatch.setenv("AUTH_DEMO_USERS", "false")
+    with pytest.raises(NotAuthenticated):
+        authenticate_user("admin@momo.platform", "Admin123!", "admin")
+
+
 def test_token_issued_and_verified_by_jwt_verifier():
     v = JwtVerifier(ISSUER, CLIENT_ID, StubJwks())
     token = issue_token("cust-123", "+260971234567", "customer")
@@ -94,7 +107,37 @@ def test_token_issued_and_verified_by_jwt_verifier():
     assert "admins" in admin_user.groups
 
 
+def test_logout_revokes_local_access_token(client):
+    token = authenticate_user("+260971000001", "Customer123!", "customer")["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    assert client.get("/auth/me", headers=headers).status_code == 200
+    assert client.post("/auth/logout", headers=headers).status_code == 200
+    assert client.get("/auth/me", headers=headers).status_code == 401
+
+
 def test_api_auth_endpoints_flow(client):
+    assert client.get("/auth-session.js").status_code == 200
+    for path in (
+        "/", "/login", "/login.html", "/login/customer", "/login/agent", "/login/admin",
+        "/register", "/register.html",
+        "/customer", "/customer/send-money", "/customer/merchant-payment", "/customer/cash-out",
+        "/customer/transactions", "/customer/profile", "/agent", "/agent/cash-in",
+        "/agent/cash-out", "/agent/transactions", "/agent/profile", "/admin",
+        "/admin/users", "/admin/transactions", "/admin/analytics", "/admin/profile", "/demo",
+        "/portal.css", "/auth-pages.css", "/portal.js", "/login.js", "/register.js", "/console.css", "/console.js",
+    ):
+        assert client.get(path).status_code == 200
+    assert b"Welcome to the Future of Mobile Payments." in client.get("/").data
+    assert b'href="/login"' in client.get("/").data
+    assert b'href="/register"' in client.get("/").data
+    assert b'data-required-role="customer"' in client.get("/customer").data
+    assert b'data-required-role="agent"' in client.get("/agent").data
+    assert b'data-required-role="admin"' in client.get("/admin").data
+    assert b'href="/customer/cash-out"' in client.get("/customer").data
+    assert b'href="/demo"' in client.get("/admin").data
+    assert b"Not available for agent-initiated requests" in client.get("/agent/cash-out").data
+
     # 1. Customer registration endpoint
     phone = "+260975554433"
     r = client.post(
@@ -106,6 +149,7 @@ def test_api_auth_endpoints_flow(client):
     token = data["token"]
     assert token
     assert data["user"]["role"] == "customer"
+    assert data["expires_in"] == 3600
 
     # 2. Authenticate customer
     r = client.post(
@@ -119,6 +163,7 @@ def test_api_auth_endpoints_flow(client):
     r = client.get("/auth/me", headers={"Authorization": f"Bearer {cust_token}"})
     assert r.status_code == 200
     assert r.get_json()["user"]["username"] == phone
+    assert r.get_json()["user"]["role"] == "customer"
 
     # 4. Agent login endpoint
     r = client.post(
@@ -145,3 +190,54 @@ def test_api_auth_endpoints_flow(client):
     # Admin CAN call admin endpoints
     # (Notice: admin/fraud-alerts requires DB, but authorization check passes)
 
+
+def test_customer_registration_cannot_assign_privileged_role(client):
+    response = client.post(
+        "/auth/register",
+        json={
+            "phone": "+260975550001",
+            "password": "RegisterPass1!",
+            "full_name": "Customer Role",
+            "role": "admin",
+        },
+    )
+    assert response.status_code == 201
+    assert response.get_json()["user"]["role"] == "customer"
+    assert response.get_json()["user"]["groups"] == ["customers"]
+
+
+def test_role_specific_api_actions_are_rejected_before_resource_access(client, monkeypatch):
+    import momo.service as service
+
+    monkeypatch.setattr(service, "create_wallet", lambda *_args: {"id": "agent-wallet"})
+    customer_token = issue_token("customer-1", "+260970000001", "customer")
+    agent_token = issue_token("agent-1", "AGENT-007", "agent")
+    headers = {"Authorization": f"Bearer {agent_token}"}
+    customer_headers = {"Authorization": f"Bearer {customer_token}"}
+
+    assert client.post("/wallets", json={"kind": "CUSTOMER"}, headers=headers).status_code == 403
+    assert client.post("/wallets", json={"kind": "AGENT"}, headers=customer_headers).status_code == 403
+    assert client.post("/wallets", json={"kind": "AGENT"}, headers=headers).status_code == 201
+    assert client.post("/merchant-payments", json={}, headers=headers).status_code == 403
+    assert client.post("/agents/cash-out", json={}, headers=headers).status_code == 403
+    assert client.post("/transfers", json={}, headers=headers).status_code == 403
+
+
+def test_authentication_database_errors_do_not_fall_back_to_demo_users(monkeypatch):
+    import momo.common.db as db
+
+    monkeypatch.setenv("DATABASE_URL", "postgresql://unavailable")
+
+    def unavailable():
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr(db, "transaction", unavailable)
+    with pytest.raises(RuntimeError, match="database unavailable"):
+        authenticate_user("AGENT-007", "Agent123!", "agent")
+
+
+def test_database_backed_api_requires_a_strong_jwt_secret(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql://configured")
+    monkeypatch.setenv("JWT_SECRET", "too-short")
+    with pytest.raises(RuntimeError, match="at least 32 bytes"):
+        create_app()

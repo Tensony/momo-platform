@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102538">
+  <title>MoMo | Create a customer wallet</title>
+  <link rel="stylesheet" href="/portal.css">
+  <link rel="stylesheet" href="/auth-pages.css">
+</head>
+<body class="auth-page" data-auth-role="customer" data-public-page="true">
+  <header class="public-header auth-header">
+    <a class="brand" href="/" aria-label="MoMo home"><span class="brand-mark">M</span><span>MoMo Platform</span></a>
+    <nav class="public-nav" aria-label="Account navigation"><a class="text-link" href="/">Home</a><a class="button secondary" href="/login/customer">Sign in</a></nav>
+  </header>
+  <main class="auth-main">
+    <section class="auth-form-panel">
+      <span class="auth-kicker">Create your account</span>
+      <h1>Make money moves simpler.</h1>
+      <p class="auth-copy">Set up your customer wallet to send money, pay merchants, and keep track of your transactions.</p>
+      <div id="registerMessage" class="auth-message" role="status" aria-live="polite" hidden></div>
+      <form id="registerForm" class="auth-form">
+        <div class="auth-fields-grid">
+          <div class="field span-all"><label for="fullName">Full name</label><input id="fullName" name="full_name" placeholder="Your name as it appears on your ID" autocomplete="name" required></div>
+          <div class="field"><label for="phone">Mobile phone number</label><input id="phone" name="phone" type="tel" placeholder="+260 97 123 4567" autocomplete="tel" required></div>
+          <div class="field"><label for="currency">Wallet currency</label><select id="currency" name="currency"><option value="ZMW">ZMW — Zambian Kwacha</option><option value="USD">USD — US Dollar</option></select></div>
+          <div class="field"><label for="password">Create password</label><input id="password" name="password" type="password" minlength="8" placeholder="At least 8 characters" autocomplete="new-password" aria-describedby="passwordHint" required><span class="auth-helper" id="passwordHint">Use at least 8 characters. Choose a password you do not use elsewhere.</span></div>
+          <div class="field"><label for="confirmPassword">Confirm password</label><input id="confirmPassword" type="password" minlength="8" placeholder="Enter your password again" autocomplete="new-password" required></div>
+        </div>
+        <button class="button" id="registerSubmit" type="submit">Create customer wallet</button>
+      </form>
+      <p class="auth-switch">Already have an account? <a href="/login/customer">Sign in</a></p>
+    </section>
+    <aside class="auth-aside">
+      <div class="auth-aside-mark" aria-hidden="true">↗</div>
+      <span class="auth-kicker">Your wallet, your way</span>
+      <h2>Everyday payments, all in one place.</h2>
+      <p>One secure account for the money services you use every day.</p>
+      <ul class="auth-benefits">
+        <li>Send money to eligible wallets with clear transaction references.</li>
+        <li>Pay registered merchants using the platform's existing payment service.</li>
+        <li>Review your wallet balances and recent transaction history.</li>
+      </ul>
+      <div class="auth-trust">Your account is protected by platform authentication.</div>
+    </aside>
+  </main>
+  <script src="/auth-session.js"></script>
+  <script src="/register.js"></script>
+</body>
+</html>

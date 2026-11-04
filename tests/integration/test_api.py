@@ -26,6 +26,8 @@ def H(sub, groups=(), key=None, **extra):
 
 
 def mk_wallet(client, sub, kind="CUSTOMER", groups=()):
+    if not groups:
+        groups = ["merchants"] if kind == "MERCHANT" else ["agents"] if kind == "AGENT" else ["customers"]
     r = client.post("/wallets", json={"kind": kind}, headers=H(sub, groups))
     assert r.status_code == 201, r.json
     return r.json["id"]

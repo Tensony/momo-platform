@@ -57,3 +57,19 @@ resource "aws_cognito_user_group" "groups" {
   user_pool_id = aws_cognito_user_pool.main.id
   description  = "${each.key} role"
 }
+
+resource "random_password" "jwt_signing_key" {
+  length  = 64
+  special = false
+}
+
+resource "aws_secretsmanager_secret" "jwt_signing_key" {
+  name                    = "${local.name}/jwt-signing-key"
+  description             = "Signing key for short-lived local platform access tokens"
+  recovery_window_in_days = 7
+}
+
+resource "aws_secretsmanager_secret_version" "jwt_signing_key" {
+  secret_id     = aws_secretsmanager_secret.jwt_signing_key.id
+  secret_string = random_password.jwt_signing_key.result
+}

@@ -1,0 +1,145 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink-900);
+  font-family: var(--font-sans);
+}
+
+.topbar {
+  min-height: 74px;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand-mark {
+  background: var(--brand-600);
+}
+
+.container {
+  width: min(100% - 32px, 1160px);
+}
+
+.auth-card,
+.portal-card {
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-2);
+}
+
+.portal-grid {
+  align-items: stretch;
+}
+
+.portal-card {
+  min-height: 390px;
+  border-top: 4px solid var(--brand-600);
+  padding: var(--s-6) var(--s-5);
+}
+
+.portal-card h2,
+.auth-header h1 {
+  color: var(--ink-900);
+}
+
+.badge-customer,
+.icon-customer {
+  background: var(--info-bg);
+  color: var(--info-fg);
+}
+
+.badge-agent,
+.icon-agent {
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+}
+
+.badge-admin,
+.icon-admin {
+  background: var(--ink-100);
+  color: var(--ink-900);
+}
+
+.btn {
+  min-height: 48px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-base);
+  font-weight: 700;
+}
+
+.btn-customer {
+  background: #0369a1;
+}
+
+.btn-agent {
+  background: #854d0e;
+}
+
+.btn-admin {
+  background: var(--ink-900);
+}
+
+.field input,
+.field select {
+  min-height: 48px;
+  border-radius: var(--r-sm);
+}
+
+.tab-btn {
+  min-height: 44px;
+}
+
+.alert,
+.notice-box {
+  line-height: 1.6;
+}
+
+body[data-auth-role="admin"] .auth-card {
+  border-top: 4px solid var(--ink-900);
+}
+
+body[data-auth-role="agent"] .auth-card {
+  border-top: 4px solid #854d0e;
+}
+
+body[data-auth-role="customer"] .auth-card {
+  border-top: 4px solid #0369a1;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #0f766e;
+  outline-offset: 2px;
+}
+
+@media (max-width: 700px) {
+  .topbar {
+    padding-inline: 16px;
+  }
+
+  .container {
+    margin-block: 24px 40px;
+    padding-inline: 0;
+  }
+
+  .auth-card {
+    padding: 24px 20px;
+  }
+
+  .portal-card {
+    min-height: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

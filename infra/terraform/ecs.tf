@@ -86,6 +86,11 @@ data "aws_iam_policy_document" "api_execution" {
     actions   = ["logs:CreateLogStream", "logs:PutLogEvents"]
     resources = ["${aws_cloudwatch_log_group.api.arn}:*"]
   }
+  statement {
+    sid       = "ReadJwtSigningKey"
+    actions   = ["secretsmanager:GetSecretValue"]
+    resources = [aws_secretsmanager_secret.jwt_signing_key.arn]
+  }
 }
 resource "aws_iam_role_policy" "api_execution" {
   role   = aws_iam_role.api_execution.id
@@ -156,6 +161,9 @@ resource "aws_ecs_task_definition" "api" {
         { name = "XRAY_ENABLED", value = "true" },
         { name = "ENABLE_FAULT_INJECTION", value = tostring(var.enable_fault_injection) },
         { name = "LOG_LEVEL", value = "INFO" },
+      ]
+      secrets = [
+        { name = "JWT_SECRET", valueFrom = aws_secretsmanager_secret.jwt_signing_key.arn },
       ]
       logConfiguration = {
         logDriver = "awslogs"

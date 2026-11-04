@@ -3,142 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101c2a">
-  <title>MoMo | Secure Access Gateway</title>
-  <style>
-    :root{color-scheme:light;--navy:#101c2a;--navy2:#18283a;--teal:#087f72;--teal-light:#e4f4f1;--ink:#172333;--muted:#4f5f73;--line:#e2e8f0;--surface:#fff;--canvas:#f8fafc;--shadow:0 16px 40px rgba(16,28,42,.08)}
-    *{box-sizing:border-box}body{margin:0;background:var(--canvas);color:var(--ink);font:14px/1.5 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;display:flex;flex-direction:column}
-    a{text-decoration:none;color:inherit}
-    .topbar{background:#fff;border-bottom:1px solid var(--line);height:74px;padding:0 34px;display:flex;align-items:center;justify-content:space-between}
-    .brand{display:flex;align-items:center;gap:12px}
-    .brand-mark{background:#087f72;color:#fff;border-radius:11px;width:38px;height:38px;display:grid;place-items:center;font-weight:800;font-size:18px}
-    .brand-name{font-weight:750;letter-spacing:.02em;font-size:16px}
-    .brand-sub{font-size:11px;color:var(--muted);letter-spacing:.06em}
-    .status-pill{display:inline-flex;align-items:center;gap:7px;background:var(--teal-light);color:var(--teal);padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700}
-    .dot{width:7px;height:7px;border-radius:50%;background:#087f72}
-    .container{max-width:1160px;margin:40px auto 60px;padding:0 24px;flex:1}
-    .hero{text-align:center;margin-bottom:44px}
-    .eyebrow{font-size:11px;color:var(--teal);font-weight:750;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
-    .hero h1{font-size:32px;letter-spacing:-.03em;margin:0 0 10px;line-height:1.2}
-    .hero p{color:var(--muted);font-size:15px;max-width:580px;margin:auto}
-    .portal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
-    .portal-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:30px 24px;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s;position:relative}
-    .portal-card:hover{transform:translateY(-4px);box-shadow:0 20px 50px rgba(16,28,42,.12);border-color:#cbd5e1}
-    .portal-badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:18px;width:fit-content}
-    .badge-customer{background:#e0f2fe;color:#0369a1}
-    .badge-agent{background:#fef3c7;color:#b45309}
-    .badge-admin{background:#fee2e2;color:#b91c1c}
-    .icon-box{width:52px;height:52px;border-radius:12px;display:grid;place-items:center;font-size:24px;margin-bottom:16px}
-    .icon-customer{background:#e0f2fe;color:#0284c7}
-    .icon-agent{background:#fef3c7;color:#d97706}
-    .icon-admin{background:#fee2e2;color:#dc2626}
-    .portal-card h2{font-size:18px;margin:0 0 8px;letter-spacing:-.02em}
-    .portal-desc{color:var(--muted);font-size:13px;line-height:1.55;margin-bottom:20px;flex:1}
-    .feature-list{list-style:none;padding:0;margin:0 0 24px;font-size:12px;color:var(--muted)}
-    .feature-list li{margin-bottom:7px;display:flex;align-items:center;gap:8px}
-    .feature-list li::before{content:"✓";color:var(--teal);font-weight:800}
-    .btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:8px;font-weight:650;font-size:13px;border:1px solid transparent;cursor:pointer;transition:background .15s}
-    .btn-customer{background:#0284c7;color:#fff}
-    .btn-customer:hover{background:#0369a1}
-    .btn-agent{background:#d97706;color:#fff}
-    .btn-agent:hover{background:#b45309}
-    .btn-admin{background:var(--navy);color:#fff}
-    .btn-admin:hover{background:#1e3247}
-    .card-footer{text-align:center;margin-top:14px;font-size:12px;color:var(--muted)}
-    .card-footer a{color:var(--teal);font-weight:600}
-    .card-footer a:hover{text-decoration:underline}
-    .trust-strip{border-top:1px solid var(--line);background:#fff;padding:24px 0;margin-top:auto}
-    .trust-inner{max-width:1160px;margin:auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-size:12px;color:var(--muted)}
-    .trust-item{display:flex;align-items:center;gap:8px;font-weight:550}
-    @media(max-width:920px){.portal-grid{grid-template-columns:1fr}}
-  </style>
+  <meta name="theme-color" content="#102538">
+  <title>Sign in | MoMo</title>
+  <link rel="stylesheet" href="/portal.css">
+  <link rel="stylesheet" href="/auth-pages.css">
 </head>
-<body>
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-mark">M</div>
-      <div>
-        <div class="brand-name">MoMo Platform</div>
-        <div class="brand-sub">TRANSACTION PROCESSING PLATFORM</div>
-      </div>
-    </div>
-    <div class="status-pill">
-      <span class="dot"></span> 256-bit Encrypted Banking Gateway
-    </div>
+<body class="auth-page" data-public-page="true">
+  <header class="public-header auth-header">
+    <a class="brand" href="/" aria-label="MoMo home"><span class="brand-mark">M</span><span>MoMo Platform</span></a>
+    <nav class="public-nav" aria-label="Main navigation"><a class="text-link" href="/">Home</a><a class="button secondary" href="/register">Create account</a></nav>
   </header>
-
-  <main class="container">
-    <div class="hero">
-      <div class="eyebrow">Enterprise Authentication Gateway</div>
-      <h1>Sign in to MoMo Platform</h1>
-      <p>Select your authorized operational portal below. System access is strictly segregated by cryptographic Role-Based Access Controls (RBAC).</p>
-    </div>
-
-    <div class="portal-grid">
-      <!-- Portal 1: Customer Portal -->
-      <div class="portal-card">
-        <span class="portal-badge badge-customer">Individual Banking</span>
-        <div class="icon-box icon-customer">👤</div>
-        <h2>Customer Portal</h2>
-        <p class="portal-desc">Manage personal wallets, send peer-to-peer transfers, pay merchants, request cash-out withdrawals, and inspect receipts.</p>
-        <ul class="feature-list">
-          <li>Phone number &amp; password sign-in</li>
-          <li>Instant new customer registration</li>
-          <li>Send money &amp; merchant payments</li>
-          <li>Immutable personal transaction history</li>
-        </ul>
-        <a href="login-customer.html" class="btn btn-customer">Access Customer Portal →</a>
-        <div class="card-footer">
-          New here? <a href="login-customer.html#register">Create a customer wallet</a>
-        </div>
-      </div>
-
-      <!-- Portal 2: Agent Portal -->
-      <div class="portal-card">
-        <span class="portal-badge badge-agent">Agent Operations</span>
-        <div class="icon-box icon-agent">🏪</div>
-        <h2>Agent Terminal</h2>
-        <p class="portal-desc">Authorized agent point-of-service terminal. Facilitate customer cash deposits (cash-in) and cash withdrawals (cash-out) using your float wallet.</p>
-        <ul class="feature-list">
-          <li>Agent ID / Phone credential sign-in</li>
-          <li>Process cash-in deposits (MINT backed)</li>
-          <li>Disburse cash-out withdrawals</li>
-          <li>Agent float balance &amp; commission trail</li>
-        </ul>
-        <a href="login-agent.html" class="btn btn-agent">Access Agent Terminal →</a>
-        <div class="card-footer">
-          Agent terminals require prior float verification
-        </div>
-      </div>
-
-      <!-- Portal 3: Administrator Console -->
-      <div class="portal-card">
-        <span class="portal-badge badge-admin">High Privilege</span>
-        <div class="icon-box icon-admin">🛡️</div>
-        <h2>Administrator Console</h2>
-        <p class="portal-desc">Compliance, treasury, and supervisory operations. Audit platform-wide invariants, issue agent float, resolve disputes, and review fraud detection alerts.</p>
-        <ul class="feature-list">
-          <li>Master admin email / username sign-in</li>
-          <li>Real-time double-entry invariant verification</li>
-          <li>Issue agent float from MINT account</li>
-          <li>Dispute resolution &amp; compensating reversals</li>
-        </ul>
-        <a href="login-admin.html" class="btn btn-admin">Access Admin Console →</a>
-        <div class="card-footer">
-          Restricted to authorized compliance officers
-        </div>
-      </div>
+  <main class="auth-main single">
+    <div class="portal-intro"><span class="auth-kicker">Welcome back</span><h1>Sign in to MoMo</h1><p>Choose the sign-in option for your account. Your role is verified by the platform after authentication.</p></div>
+    <div class="portal-choice-grid">
+      <section class="portal-choice" data-role="customer"><div class="portal-choice-icon" aria-hidden="true">↗</div><h2>Customer</h2><p>Access your wallet, send money, pay merchants, and review activity.</p><a class="button" href="/login/customer">Continue as customer</a><p class="portal-choice-footnote"><a class="auth-inline-link" href="/register">Create a customer wallet</a></p></section>
+      <section class="portal-choice" data-role="agent"><div class="portal-choice-icon" aria-hidden="true">⌂</div><h2>Agent</h2><p>Open your authorized agent workspace and continue cash-in operations.</p><a class="button" href="/login/agent">Continue as agent</a></section>
+      <section class="portal-choice" data-role="admin"><div class="portal-choice-icon" aria-hidden="true">▣</div><h2>Administrator</h2><p>Access administrative transaction and integrity monitoring.</p><a class="button" href="/login/admin">Continue as administrator</a></section>
     </div>
   </main>
-
-  <footer class="trust-strip">
-    <div class="trust-inner">
-      <div class="trust-item">🔒 BCrypt 12-Round Password Hashing</div>
-      <div class="trust-item">📜 Append-Only Double-Entry Ledger</div>
-      <div class="trust-item">⛓️ SHA-256 Tamper-Evident Chains</div>
-      <div class="trust-item">⚡ Idempotent Distributed Saga Engine</div>
-    </div>
-  </footer>
 </body>
 </html>
-

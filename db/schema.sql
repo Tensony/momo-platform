@@ -25,6 +25,12 @@ CREATE INDEX IF NOT EXISTS users_phone_idx ON users (phone);
 CREATE INDEX IF NOT EXISTS users_username_idx ON users (username);
 CREATE INDEX IF NOT EXISTS users_role_idx ON users (role);
 
+CREATE TABLE IF NOT EXISTS revoked_tokens (
+    token_id        text PRIMARY KEY,
+    expires_at      timestamptz NOT NULL
+);
+CREATE INDEX IF NOT EXISTS revoked_tokens_expiry_idx ON revoked_tokens (expires_at);
+
 -- ---------------------------------------------------------------- wallets
 CREATE TABLE IF NOT EXISTS wallets (
     id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -201,6 +207,7 @@ SELECT ensure_momo_app_role();
 DROP FUNCTION ensure_momo_app_role();
 GRANT SELECT, INSERT, UPDATE ON wallets, transactions, sagas, idempotency_keys,
       fraud_alerts, outbox_events, settlement_reports, disputes, users TO momo_app;
+GRANT SELECT, INSERT, DELETE ON revoked_tokens TO momo_app;
 GRANT SELECT, INSERT ON ledger_entries TO momo_app;      -- no UPDATE / DELETE / TRUNCATE
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO momo_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON ledger_entries FROM momo_app;

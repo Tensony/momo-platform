@@ -12,6 +12,8 @@ import os
 import uuid
 from dataclasses import dataclass
 
+import psycopg
+
 from . import idempotency
 from .common.db import transaction
 from .common.errors import (
@@ -80,7 +82,15 @@ def default_runner():
 
 
 # --------------------------------------------------------------------------- wallets
-def create_wallet(owner_id: str, kind: str, currency: str | None = None) -> dict:
+def create_wallet(
+    owner_id: str,
+    kind: str,
+    currency: str | None = None,
+    *,
+    conn: psycopg.Connection | None = None,
+) -> dict:
+    if conn is not None:
+        return ledger.create_wallet(conn, owner_id, kind, parse_currency(currency))
     with transaction() as conn:
         return ledger.create_wallet(conn, owner_id, kind, parse_currency(currency))
 

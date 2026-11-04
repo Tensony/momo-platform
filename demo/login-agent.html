@@ -3,132 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#d97706">
-  <title>MoMo | Agent Operational Terminal</title>
-  <style>
-    :root{color-scheme:light;--navy:#101c2a;--amber:#d97706;--amber-dark:#b45309;--ink:#172333;--muted:#4f5f73;--line:#e2e8f0;--surface:#fff;--canvas:#f8fafc;--red:#b54747;--red-bg:#fff0ef;--green:#147d54;--green-bg:#e8f6ef;--shadow:0 16px 40px rgba(217,119,6,.08)}
-    *{box-sizing:border-box}body{margin:0;background:var(--canvas);color:var(--ink);font:14px/1.5 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;display:flex;flex-direction:column}
-    a{text-decoration:none;color:inherit}
-    .topbar{background:#fff;border-bottom:1px solid var(--line);height:74px;padding:0 34px;display:flex;align-items:center;justify-content:space-between}
-    .brand{display:flex;align-items:center;gap:12px}
-    .brand-mark{background:#d97706;color:#fff;border-radius:11px;width:38px;height:38px;display:grid;place-items:center;font-weight:800;font-size:18px}
-    .brand-name{font-weight:750;letter-spacing:.02em;font-size:16px}
-    .back-link{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;font-weight:600}
-    .back-link:hover{color:var(--amber)}
-    .container{max-width:480px;margin:40px auto 60px;padding:0 20px;width:100%}
-    .auth-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:32px 28px}
-    .auth-header{text-align:center;margin-bottom:24px}
-    .icon-bubble{width:56px;height:56px;border-radius:14px;background:#fef3c7;color:#d97706;display:grid;place-items:center;font-size:26px;margin:0 auto 14px}
-    .auth-header h1{font-size:22px;margin:0 0 6px;letter-spacing:-.02em}
-    .auth-header p{color:var(--muted);font-size:13px;margin:0}
-    .portal-tag{display:inline-flex;align-items:center;gap:6px;background:#fef3c7;color:#b45309;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:8px}
-    .field{display:flex;flex-direction:column;gap:5px;margin-bottom:15px}
-    .field label{font-size:12px;font-weight:650;color:#334155}
-    .field input{border:1px solid #cbd5e1;border-radius:7px;padding:10px 12px;background:#fff;color:var(--ink);min-height:42px;outline:none;font-size:13px}
-    .field input:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(217,119,6,.15)}
-    .field-hint{font-size:11px;color:var(--muted);margin-top:2px}
-    .btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:8px;font-weight:650;font-size:13px;border:none;cursor:pointer;width:100%;background:var(--amber);color:#fff;transition:background .15s}
-    .btn:hover{background:var(--amber-dark)}
-    .btn:disabled{opacity:.6;cursor:not-allowed}
-    .alert{border-radius:8px;padding:12px 14px;font-size:13px;margin-bottom:16px;display:none}
-    .alert.show{display:block}
-    .alert.error{background:var(--red-bg);color:var(--red);border:1px solid #fecaca}
-    .alert.success{background:var(--green-bg);color:var(--green);border:1px solid #bbf7d0}
-    .notice-box{background:#fffbeb;border:1px solid #fef3c7;border-radius:8px;padding:12px;font-size:12px;color:#92400e;margin-bottom:20px}
-    .demo-hint{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:10px 12px;font-size:11px;color:var(--muted);margin-top:18px;text-align:center}
-    .demo-hint code{font-family:monospace;background:#e2e8f0;padding:2px 5px;border-radius:4px;color:#0f172a}
-  </style>
+  <meta name="theme-color" content="#854d0e">
+  <title>Agent sign in | MoMo</title>
+  <link rel="stylesheet" href="/portal.css">
+  <link rel="stylesheet" href="/auth-pages.css">
 </head>
-<body>
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-mark">M</div>
-      <div>
-        <div class="brand-name">MoMo Platform</div>
-      </div>
-    </div>
-    <a href="login.html" class="back-link">← Switch Portal</a>
-  </header>
-
-  <main class="container">
-    <div class="auth-card">
-      <div class="auth-header">
-        <span class="portal-tag">Operational Terminal</span>
-        <div class="icon-bubble">🏪</div>
-        <h1>Agent Terminal</h1>
-        <p>Deposit float and cash-out disbursement operations</p>
-      </div>
-
-      <div class="notice-box">
-        <strong>Institutional Security Notice:</strong> Agent terminals require pre-provisioned float permissions. Self-registration is strictly restricted to prevent unauthorized float minting.
-      </div>
-
-      <div id="authAlert" class="alert"></div>
-
-      <form id="agentLoginForm">
-        <div class="field">
-          <label for="agentIdentifier">Agent ID or Registered Mobile</label>
-          <input id="agentIdentifier" type="text" placeholder="e.g. AGENT-007 or +260971000007" required autocomplete="username">
-          <span class="field-hint">Enter your assigned Agent Terminal ID or verified phone</span>
-        </div>
-        <div class="field">
-          <label for="agentPassword">Operator Security Password</label>
-          <input id="agentPassword" type="password" placeholder="••••••••" required autocomplete="current-password">
-        </div>
-        <button class="btn" type="submit" id="agentSubmitBtn">Sign In to Agent Terminal</button>
+<body class="auth-page" data-auth-role="agent" data-public-page="true">
+  <header class="public-header auth-header"><a class="brand" href="/"><span class="brand-mark">M</span><span>MoMo Platform</span></a><nav class="public-nav"><a class="text-link" href="/">Home</a><a class="text-link" href="/login">All sign-in options</a></nav></header>
+  <main class="auth-main">
+    <section class="auth-form-panel">
+      <span class="auth-kicker">Agent access</span><h1>Welcome back.</h1><p class="auth-copy">Sign in to your authorized agent workspace.</p>
+      <div id="authAlert" class="auth-message" role="alert" aria-live="polite" hidden></div>
+      <form id="loginForm" class="auth-form">
+        <div class="field"><label for="loginIdentifier">Agent ID or registered phone</label><input id="loginIdentifier" name="identifier" placeholder="Enter your agent ID or phone" autocomplete="username" required></div>
+        <div class="field"><label for="loginPassword">Password</label><input id="loginPassword" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required></div>
+        <button class="button" type="submit">Sign in</button>
       </form>
-
-      <div class="demo-hint">
-        Demo Credentials: ID: <code>AGENT-007</code> | Pass: <code>Agent123!</code>
-      </div>
-    </div>
+      <p class="auth-switch">Agent accounts are provisioned by an operator.</p>
+    </section>
+    <aside class="auth-aside"><div class="auth-aside-mark" aria-hidden="true">⌂</div><span class="auth-kicker">Agent workspace</span><h2>Service for your community.</h2><p>Continue authorized customer cash-in operations with clear transaction tracking.</p><ul class="auth-benefits"><li>Review your agent wallet and available float.</li><li>Process cash-in requests to customer wallets.</li><li>Keep transaction references close at hand.</li></ul><div class="auth-trust">Agent permissions are verified by the platform.</div></aside>
   </main>
-
-  <script>
-    (() => {
-      const $ = id => document.getElementById(id);
-      const alertEl = $("authAlert");
-      const showAlert = (msg, isError = true) => {
-        alertEl.textContent = msg;
-        alertEl.className = `alert show ${isError ? 'error' : 'success'}`;
-      };
-
-      $("agentLoginForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        alertEl.className = 'alert';
-        const btn = $("agentSubmitBtn");
-        btn.disabled = true;
-        btn.textContent = "Authenticating terminal...";
-
-        try {
-          const agentId = $("agentIdentifier").value.trim();
-          const password = $("agentPassword").value;
-          const res = await fetch("/auth/login/agent", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ agent_id: agentId, password })
-          });
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok) {
-            throw new Error(data.error?.message || data.message || `Authentication failed (${res.status})`);
-          }
-
-          sessionStorage.setItem("momo_token", data.token);
-          sessionStorage.setItem("momo_user", JSON.stringify(data.user));
-          sessionStorage.setItem("momo_role", "agent");
-          showAlert("Terminal authenticated! Launching Agent Operations...", false);
-          setTimeout(() => {
-            window.location.href = "index.html#payments";
-          }, 800);
-        } catch (err) {
-          showAlert(err.message, true);
-        } finally {
-          btn.disabled = false;
-          btn.textContent = "Sign In to Agent Terminal";
-        }
-      });
-    })();
-  </script>
+  <script src="/auth-session.js"></script><script src="/login.js"></script>
 </body>
 </html>
-

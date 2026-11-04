@@ -13,23 +13,29 @@ import pathlib
 import re
 import time
 
-from flask import Flask, Response, g, jsonify, request
+from flask import Flask, Response, g, jsonify, request, send_from_directory
 
 from .. import service
 from ..common import metrics
 from ..common.db import transaction
-from ..common.errors import InvalidRequest, MomoError, NotAuthorized
+from ..common.errors import InvalidRequest, MomoError, NotAuthenticated, NotAuthorized
 from ..common.logging_setup import configure_logging, set_correlation_id, set_trace_id
 from ..common.tracing import get_recorder, tracing_enabled
 from ..ledger.core import MINT_WALLET_ID
 from ..saga import faults
-from .auth import JwtVerifier, User, user_from_header
 from . import user_store
+from .auth import JwtVerifier, User, user_from_header
 
 _CID_RE = re.compile(r"^[A-Za-z0-9\-_.:]{8,100}$")
 
 
 def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
+    if os.environ.get("DATABASE_URL") or os.environ.get("DB_HOST"):
+        jwt_secret = os.environ.get("JWT_SECRET", "")
+        if len(jwt_secret.encode("utf-8")) < 32:
+            raise RuntimeError(
+                "JWT_SECRET must contain at least 32 bytes when database-backed authentication is enabled"
+            )
     configure_logging("wallet-api")
     log = logging.getLogger("wallet-api")
     app = Flask(__name__)
@@ -114,6 +120,12 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
     # ------------------------------------------------------------------ helpers
     def current_user() -> User:
         g.user = user_from_header(get_verifier(), request.headers.get("Authorization"))
+        if (
+            g.user.local_token
+            and g.user.token_id
+            and user_store.is_token_revoked(g.user.token_id)
+        ):
+            raise NotAuthenticated("invalid or expired token")
         return g.user
 
     def body() -> dict:
@@ -157,13 +169,19 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
         return respond(result)
 
     # ------------------------------------------------------------------ routes
+    demo_dir = pathlib.Path(__file__).resolve().parents[3] / "demo"
+
     @app.get("/")
+    def landing_page():
+        return send_from_directory(demo_dir, "index.html")
+
     @app.get("/demo")
+    @app.get("/console")
     def demo_ui():
-        html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "index.html"
-        return Response(html_path.read_text(encoding="utf-8"), mimetype="text/html")
+        return send_from_directory(demo_dir, "console.html")
 
     @app.get("/login")
+    @app.get("/login.html")
     @app.get("/auth")
     def login_portal():
         html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "login.html"
@@ -184,12 +202,94 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
         html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "login-admin.html"
         return Response(html_path.read_text(encoding="utf-8"), mimetype="text/html")
 
+    @app.get("/register")
+    @app.get("/register.html")
+    def register_page():
+        return send_from_directory(demo_dir, "register.html")
+
+    @app.get("/auth-session.js")
+    def auth_session_script():
+        return send_from_directory(demo_dir, "auth-session.js")
+
+    @app.get("/tokens.css")
+    @app.get("/auth.css")
+    @app.get("/components.js")
+    @app.get("/portal.css")
+    @app.get("/auth-pages.css")
+    @app.get("/portal.js")
+    @app.get("/register.js")
+    @app.get("/login.js")
+    @app.get("/console.css")
+    @app.get("/console.js")
+    def demo_asset():
+        return send_from_directory(demo_dir, request.path.lstrip("/"))
+
     @app.get("/customer")
+    @app.get("/customer/dashboard")
+    def customer_dashboard():
+        return send_from_directory(demo_dir / "pages" / "customer", "dashboard.html")
+
+    @app.get("/customer/send-money")
+    def customer_send_money_page():
+        return send_from_directory(demo_dir / "pages" / "customer", "send-money.html")
+
+    @app.get("/customer/merchant-payment")
+    def customer_merchant_payment_page():
+        return send_from_directory(demo_dir / "pages" / "customer", "merchant-payment.html")
+
+    @app.get("/customer/cash-out")
+    def customer_cash_out_page():
+        return send_from_directory(demo_dir / "pages" / "customer", "cash-out.html")
+
+    @app.get("/customer/transactions")
+    def customer_transactions_page():
+        return send_from_directory(demo_dir / "pages" / "customer", "transactions.html")
+
+    @app.get("/customer/profile")
+    def customer_profile_page():
+        return send_from_directory(demo_dir / "pages" / "customer", "profile.html")
+
     @app.get("/agent")
+    @app.get("/agent/dashboard")
+    def agent_dashboard():
+        return send_from_directory(demo_dir / "pages" / "agent", "dashboard.html")
+
+    @app.get("/agent/cash-in")
+    def agent_cash_in_page():
+        return send_from_directory(demo_dir / "pages" / "agent", "cash-in.html")
+
+    @app.get("/agent/cash-out")
+    def agent_cash_out_page():
+        return send_from_directory(demo_dir / "pages" / "agent", "cash-out.html")
+
+    @app.get("/agent/transactions")
+    def agent_transactions_page():
+        return send_from_directory(demo_dir / "pages" / "agent", "transactions.html")
+
+    @app.get("/agent/profile")
+    def agent_profile_page():
+        return send_from_directory(demo_dir / "pages" / "agent", "profile.html")
+
     @app.get("/admin")
-    def role_dashboard():
-        html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "index.html"
-        return Response(html_path.read_text(encoding="utf-8"), mimetype="text/html")
+    @app.get("/admin/dashboard")
+    def admin_dashboard():
+        return send_from_directory(demo_dir / "pages" / "admin", "dashboard.html")
+
+    @app.get("/admin/users")
+    def admin_users_page():
+        return send_from_directory(demo_dir / "pages" / "admin", "users.html")
+
+    @app.get("/admin/transactions")
+    def admin_transactions_page():
+        return send_from_directory(demo_dir / "pages" / "admin", "transactions.html")
+
+    @app.get("/admin/analytics")
+    def admin_analytics_page():
+        return send_from_directory(demo_dir / "pages" / "admin", "analytics.html")
+
+    @app.get("/admin/profile")
+    def admin_profile_page():
+        return send_from_directory(demo_dir / "pages" / "admin", "profile.html")
 
     # ------------------------------------------------------------------ auth API endpoints
     @app.post("/auth/register")
@@ -238,12 +338,16 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
                 "id": user.sub,
                 "username": user.username or user.sub,
                 "groups": list(user.groups),
+                "role": user.role,
                 "is_admin": user.is_admin,
             }
         })
 
     @app.post("/auth/logout")
     def auth_logout():
+        user = current_user()
+        if user.local_token and user.token_id and user.token_expires_at:
+            user_store.revoke_token(user.token_id, user.token_expires_at)
         return jsonify({"status": "ok", "message": "Logged out successfully"})
 
     @app.get("/health")
@@ -289,6 +393,8 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
             user.require_group("merchants")
         elif kind == "AGENT":
             user.require_group("agents")
+        elif kind == "CUSTOMER":
+            user.require_group("customers")
         elif kind != "CUSTOMER":
             raise InvalidRequest("kind must be CUSTOMER, MERCHANT or AGENT")
         return jsonify(service.create_wallet(user.sub, kind, data.get("currency"))), 201
@@ -360,6 +466,8 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
     @app.post("/transfers")
     def transfer():
         user = current_user()
+        if not (user.is_customer or "merchants" in user.groups or user.is_admin):
+            raise NotAuthorized("transfers require a customer or merchant account")
         data = body()
         src = service.get_wallet(data.get("from_wallet", ""))
         dst = service.get_wallet(data.get("to_wallet", ""))
@@ -372,6 +480,8 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
     @app.post("/merchant-payments")
     def merchant_payment():
         user = current_user()
+        if not user.is_customer and not user.is_admin:
+            raise NotAuthorized("merchant payments require a customer account")
         data = body()
         src = service.get_wallet(data.get("from_wallet", ""))
         dst = service.get_wallet(data.get("to_wallet", ""))
@@ -399,6 +509,8 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
     def cash_out():
         """Customer withdraws cash from an agent; e-money moves from the customer to agent float."""
         user = current_user()
+        if not user.is_customer and not user.is_admin:
+            raise NotAuthorized("cash-out requires a customer account")
         data = body()
         src = service.get_wallet(data.get("from_wallet", ""))
         dst = service.get_wallet(data.get("to_wallet", ""))
@@ -516,6 +628,8 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
     def create_recurring_payment():
         """Create a scheduled recurring transfer or standing order."""
         user = current_user()
+        if not (user.is_customer or "merchants" in user.groups or user.is_admin):
+            raise NotAuthorized("recurring payments require a customer or merchant account")
         data = body()
         src = service.get_wallet(data.get("from_wallet", ""))
         if not owns(user, src):

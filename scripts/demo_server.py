@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Interactive Demo Interface server for the Mobile Money Platform presentation.
 
-Serves the full visual Demo UI (`demo/index.html`) at http://127.0.0.1:5050 and exposes
-live JSON endpoints (`/health` and `/api/status`).
+Serves the public landing page and role-specific static UI previews from `demo/` at
+http://127.0.0.1:5050, and exposes live JSON endpoints (`/health` and `/api/status`).
 """
 from __future__ import annotations
 
@@ -57,7 +57,41 @@ class DemoHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
-        if parsed.path in ("/", "/demo", "/index.html"):
+        page_routes = {
+            "/login": "/login.html",
+            "/register": "/register.html",
+            "/login/customer": "/login-customer.html",
+            "/login/agent": "/login-agent.html",
+            "/login/admin": "/login-admin.html",
+            "/customer": "/pages/customer/dashboard.html",
+            "/customer/dashboard": "/pages/customer/dashboard.html",
+            "/customer/send-money": "/pages/customer/send-money.html",
+            "/customer/merchant-payment": "/pages/customer/merchant-payment.html",
+            "/customer/cash-out": "/pages/customer/cash-out.html",
+            "/customer/transactions": "/pages/customer/transactions.html",
+            "/customer/profile": "/pages/customer/profile.html",
+            "/agent": "/pages/agent/dashboard.html",
+            "/agent/dashboard": "/pages/agent/dashboard.html",
+            "/agent/cash-in": "/pages/agent/cash-in.html",
+            "/agent/cash-out": "/pages/agent/cash-out.html",
+            "/agent/transactions": "/pages/agent/transactions.html",
+            "/agent/profile": "/pages/agent/profile.html",
+            "/admin": "/pages/admin/dashboard.html",
+            "/admin/dashboard": "/pages/admin/dashboard.html",
+            "/admin/users": "/pages/admin/users.html",
+            "/admin/transactions": "/pages/admin/transactions.html",
+            "/admin/analytics": "/pages/admin/analytics.html",
+            "/admin/profile": "/pages/admin/profile.html",
+        }
+        if parsed.path in page_routes:
+            self.path = page_routes[parsed.path]
+            super().do_GET()
+            return
+        if parsed.path in ("/demo", "/console"):
+            self.path = "/console.html"
+            super().do_GET()
+            return
+        if parsed.path in ("/", "/index.html"):
             self.path = "/index.html"
             super().do_GET()
             return

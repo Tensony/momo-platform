@@ -9,16 +9,15 @@ Enforces:
 
 from __future__ import annotations
 
-import logging
+import os
 import re
 import threading
 import uuid
 from datetime import datetime, timezone
 
 from ..common.errors import BusinessRejection, InvalidRequest, NotAuthenticated
-from .auth import hash_password, issue_token, verify_password
-
-log = logging.getLogger(__name__)
+from ..common.money import parse_currency
+from .auth import LOCAL_ACCESS_TOKEN_TTL_SECONDS, hash_password, issue_token, verify_password
 
 PHONE_RE = re.compile(r"^\+?[0-9]{9,15}$")
 
@@ -62,10 +61,15 @@ DEFAULT_SEED_USERS = [
 # Thread-safe in-memory cache / fallback store
 _store_lock = threading.Lock()
 _memory_users: dict[str, dict] = {}
+_revoked_tokens: dict[str, int] = {}
 
 
 def _init_memory_store():
     global _memory_users
+    if os.environ.get("DATABASE_URL") or os.environ.get("DB_HOST"):
+        return
+    if os.environ.get("AUTH_DEMO_USERS", "").lower() != "true":
+        return
     if not _memory_users:
         with _store_lock:
             if not _memory_users:
@@ -73,7 +77,11 @@ def _init_memory_store():
                 admin_pw = hash_password("Admin123!")
                 agent_pw = hash_password("Agent123!")
                 cust_pw = hash_password("Customer123!")
-                for seed, pw in zip(DEFAULT_SEED_USERS, [admin_pw, agent_pw, cust_pw]):
+                for seed, pw in (
+                    (DEFAULT_SEED_USERS[0], admin_pw),
+                    (DEFAULT_SEED_USERS[1], agent_pw),
+                    (DEFAULT_SEED_USERS[2], cust_pw),
+                ):
                     u = {**seed, "password_hash": pw, "created_at": datetime.now(timezone.utc).isoformat()}
                     _memory_users[u["id"]] = u
 
@@ -89,8 +97,13 @@ def normalize_phone(phone: str) -> str:
 
 
 def validate_password_strength(password: str) -> None:
-    if not password or len(password) < 8:
+    if not isinstance(password, str) or len(password) < 8:
         raise InvalidRequest("Password must be at least 8 characters long")
+    try:
+        if len(password.encode("utf-8")) > 72:
+            raise InvalidRequest("Password must be at most 72 UTF-8 bytes")
+    except UnicodeError as exc:
+        raise InvalidRequest("Password must contain valid text") from exc
     if not any(c.isdigit() for c in password):
         raise InvalidRequest("Password must include at least one digit")
     if not any(c.isalpha() for c in password):
@@ -101,8 +114,7 @@ def _get_user_by_identifier(identifier: str, role: str | None = None) -> dict | 
     ident = str(identifier or "").strip().lower()
     norm_phone = re.sub(r"[\s\-\(\)]", "", ident)
 
-    # Check database if available
-    try:
+    if os.environ.get("DATABASE_URL") or os.environ.get("DB_HOST"):
         from ..common.db import transaction
 
         with transaction() as conn:
@@ -115,10 +127,9 @@ def _get_user_by_identifier(identifier: str, role: str | None = None) -> dict | 
             ).fetchone()
             if row:
                 return dict(row)
-    except Exception:
-        pass
+        return None
 
-    # Fallback to memory store
+    _init_memory_store()
     with _store_lock:
         for u in _memory_users.values():
             if role and u.get("role") != role:
@@ -148,10 +159,10 @@ def register_customer(
     if existing:
         raise BusinessRejection("An account with this phone number already exists")
 
+    currency = parse_currency(currency or "ZMW")
     user_id = str(uuid.uuid4())
     pw_hash = hash_password(password)
     created_at = datetime.now(timezone.utc).isoformat()
-    currency = (currency or "ZMW").upper()
 
     user_record = {
         "id": user_id,
@@ -165,25 +176,30 @@ def register_customer(
         "created_at": created_at,
     }
 
-    # Persist to database if available
     wallet_info = None
-    try:
+    if os.environ.get("DATABASE_URL") or os.environ.get("DB_HOST"):
+        import psycopg
+
         from .. import service
         from ..common.db import transaction
 
-        with transaction() as conn:
-            conn.execute(
-                """INSERT INTO users (id, username, phone, email, role, password_hash, full_name, status)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
-                (user_id, phone, phone, None, "customer", pw_hash, full_name, "ACTIVE"),
-            )
         try:
-            wallet_info = service.create_wallet(user_id, "CUSTOMER", currency)
-        except Exception as e:
-            log.warning("Could not automatically seed wallet on register: %s", e)
-    except Exception:
-        # Save to memory store
+            with transaction() as conn:
+                conn.execute(
+                    """INSERT INTO users (id, username, phone, email, role, password_hash, full_name, status)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+                    (user_id, phone, phone, None, "customer", pw_hash, full_name, "ACTIVE"),
+                )
+                wallet_info = service.create_wallet(user_id, "CUSTOMER", currency, conn=conn)
+        except psycopg.errors.UniqueViolation as exc:
+            raise BusinessRejection("An account with this phone number already exists") from exc
+    else:
         with _store_lock:
+            if any(
+                item.get("phone") == phone or item.get("username", "").lower() == phone.lower()
+                for item in _memory_users.values()
+            ):
+                raise BusinessRejection("An account with this phone number already exists")
             _memory_users[user_id] = user_record
 
     token = issue_token(user_id, phone, "customer")
@@ -198,32 +214,49 @@ def register_customer(
             "groups": ["customers"],
         },
         "wallet": wallet_info,
+        "expires_in": LOCAL_ACCESS_TOKEN_TTL_SECONDS,
     }
 
 
 def authenticate_user(identifier: str, password: str, expected_role: str) -> dict:
     """Authenticate credentials for a specific role portal."""
-    if not identifier or not password:
+    if expected_role not in {"customer", "agent", "admin"}:
+        raise InvalidRequest("Unsupported login portal")
+    if (
+        not isinstance(identifier, str)
+        or not identifier.strip()
+        or not isinstance(password, str)
+        or not password
+        or len(identifier) > 254
+    ):
         raise InvalidRequest("Username / identifier and password are required")
+    try:
+        if len(password.encode("utf-8")) > 72:
+            raise InvalidRequest("Password must be at most 72 UTF-8 bytes")
+    except UnicodeError as exc:
+        raise InvalidRequest("Password must contain valid text") from exc
 
     user = _get_user_by_identifier(identifier, expected_role)
-    if not user:
-        # Fallback check for seed credentials in memory
-        _init_memory_store()
-        user = _get_user_by_identifier(identifier, expected_role)
-
-    if not user:
-        raise NotAuthenticated(f"Invalid credentials for {expected_role} portal")
-
-    if user.get("status") != "ACTIVE":
-        raise BusinessRejection(f"Account is {user.get('status', 'SUSPENDED')}. Contact support.")
-
-    if not verify_password(password, user["password_hash"]):
-        raise NotAuthenticated(f"Invalid credentials for {expected_role} portal")
+    if (
+        not user
+        or user.get("status") != "ACTIVE"
+        or not verify_password(password, user.get("password_hash", ""))
+    ):
+        raise NotAuthenticated("Invalid credentials.")
 
     user_id = str(user["id"])
     username = user.get("username") or user.get("phone") or identifier
-    role = user.get("role", expected_role)
+    role = user["role"]
+    if os.environ.get("DATABASE_URL") or os.environ.get("DB_HOST"):
+        from ..common.db import transaction
+
+        with transaction() as conn:
+            conn.execute("UPDATE users SET last_login = now() WHERE id = %s", (user_id,))
+    else:
+        with _store_lock:
+            stored_user = _memory_users.get(user_id)
+            if stored_user:
+                stored_user["last_login"] = datetime.now(timezone.utc).isoformat()
     token = issue_token(user_id, username, role)
 
     return {
@@ -237,5 +270,41 @@ def authenticate_user(identifier: str, password: str, expected_role: str) -> dic
             "full_name": user.get("full_name"),
             "groups": [f"{role}s"],
         },
+        "expires_in": LOCAL_ACCESS_TOKEN_TTL_SECONDS,
     }
 
+
+def is_token_revoked(token_id: str) -> bool:
+    if os.environ.get("DATABASE_URL") or os.environ.get("DB_HOST"):
+        from ..common.db import transaction
+
+        with transaction() as conn:
+            row = conn.execute(
+                "SELECT 1 FROM revoked_tokens WHERE token_id = %s AND expires_at > now()",
+                (token_id,),
+            ).fetchone()
+        return row is not None
+
+    now = int(datetime.now(timezone.utc).timestamp())
+    with _store_lock:
+        for expired_id in [key for key, expires_at in _revoked_tokens.items() if expires_at <= now]:
+            del _revoked_tokens[expired_id]
+        return token_id in _revoked_tokens
+
+
+def revoke_token(token_id: str, expires_at: int) -> None:
+    if os.environ.get("DATABASE_URL") or os.environ.get("DB_HOST"):
+        from ..common.db import transaction
+
+        with transaction() as conn:
+            conn.execute("DELETE FROM revoked_tokens WHERE expires_at <= now()")
+            conn.execute(
+                """INSERT INTO revoked_tokens (token_id, expires_at)
+                   VALUES (%s, to_timestamp(%s))
+                   ON CONFLICT (token_id) DO NOTHING""",
+                (token_id, expires_at),
+            )
+        return
+
+    with _store_lock:
+        _revoked_tokens[token_id] = expires_at
