@@ -17,7 +17,9 @@ def client(db):
     return app.test_client()
 
 
-def H(sub, groups=(), key=None, **extra):
+def H(sub, groups=None, key=None, **extra):
+    if groups is None:
+        groups = ["customers"]
     h = {"Authorization": f"Bearer {make_token(sub, groups)}"}
     if key:
         h["Idempotency-Key"] = key
@@ -40,6 +42,7 @@ def fund(client, agent_sub, agent_wallet, to_wallet, amount):
     r = client.post("/agents/cash-in", json={"from_wallet": agent_wallet, "to_wallet": to_wallet, "amount": amount},
                     headers=H(agent_sub, ["agents"], key=f"cashin-{uuid.uuid4()}"))
     assert r.status_code == 201, r.json
+    return r.json["transaction_id"]
 
 
 def test_health_needs_no_auth(client):
@@ -95,7 +98,7 @@ def test_read_only_console_endpoints_enforce_ownership_and_admin_access(client):
     agent_wallet = mk_wallet(client, "agent-console", "AGENT", ["agents"])
     alice = mk_wallet(client, "alice-console")
     bob = mk_wallet(client, "bob-console")
-    fund(client, "agent-console", agent_wallet, alice, 10_000)
+    cash_in_id = fund(client, "agent-console", agent_wallet, alice, 10_000)
     payment = client.post(
         "/transfers",
         json={"from_wallet": alice, "to_wallet": bob, "amount": 2_500},
@@ -116,7 +119,7 @@ def test_read_only_console_endpoints_enforce_ownership_and_admin_access(client):
 
     alice_txns = client.get("/transactions", headers=H("alice-console"))
     assert alice_txns.status_code == 200
-    assert [t["transaction_id"] for t in alice_txns.json["transactions"]] == [txn_id]
+    assert {t["transaction_id"] for t in alice_txns.json["transactions"]} == {cash_in_id, txn_id}
     assert client.get(
         f"/transactions?search={txn_id[:8]}", headers=H("alice-console")
     ).json["total"] == 1

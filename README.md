@@ -28,7 +28,8 @@ confirmation and use idempotency keys. If a standalone workspace receives an unc
 blocks repeat submission and offers a status lookup for the original key. Unsupported functions
 (including profile editing, administrator user management, and agent-initiated cash-out) are
 identified rather than simulated. The requirement/API mapping and demonstration steps are in
-[docs/FRONTEND-TRACEABILITY.md](docs/FRONTEND-TRACEABILITY.md).
+[docs/FRONTEND-TRACEABILITY.md](docs/FRONTEND-TRACEABILITY.md); the dated browser and role-check
+results are in [docs/UI_AUDIT_AND_COMPLIANCE_REPORT.md](docs/UI_AUDIT_AND_COMPLIANCE_REPORT.md).
 
 The optional in-memory interactive demo API (`/api/state`, `/api/reset`, and related simulation
 routes) is disabled by default in the Flask API. Enable it only for a trusted local demo by setting
@@ -120,7 +121,7 @@ This provisions billable AWS resources. Confirm the project's Region in **AWS Se
 
 Terraform provisions the platform JWT signing key in AWS Secrets Manager and injects it into the API task; protect Terraform state because it contains sensitive generated infrastructure values.
 
-GitHub Actions runs checks for pushes and pull requests. AWS deployment is opt-in: configure the `aws-deploy` environment with required reviewers, set repository variables `AWS_DEPLOY_ENABLED=true`, `AWS_REGION`, `AWS_PROJECT`, `AWS_ENVIRONMENT`, and `ALERT_EMAIL`, and add the `AWS_DEPLOY_ROLE_ARN` secret for an OIDC-trusted role. The deploy job runs only for pushes to `main` after all checks pass. It updates an already-provisioned ECS service with the pushed image digest (using ECS rolling deployment or CodeDeploy when configured); initial infrastructure provisioning remains a separate operation. TLS certificate validation remains enabled for smoke tests unless `ALLOW_SELF_SIGNED_SMOKE_TEST=true` is explicitly set for a demo stack using Terraform's self-signed certificate.
+GitHub Actions runs on pull requests targeting `main` and pushes to `main`. It runs the secret scan, Ruff, PostgreSQL tests with coverage output, local correctness proofs, Terraform format/validation, and `tfsec --soft-fail`. After successful checks on a push to `main`, the deploy job builds the image and uses the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` repository secrets when they are active to push to ECR and update the pre-provisioned ECS service. If those credentials are unavailable, it skips the live push. This workflow does not use OIDC or an opt-in deployment environment; initial infrastructure provisioning remains separate. A successful local validation is not evidence of a live deployment. Avoid pushing to `main` solely to rerun CI unless deployment is intended.
 
 For live proofs, set `AWS_REGION`, `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`, and `API_BASE_URL`, configure AWS CLI credentials, then run `python scripts/run_live_proofs.py`. This script temporarily changes fraud and fault-injection configuration and restores the original values afterward; run it only against a deployment you control. TLS certificate verification is enabled by default. `PROOF_INSECURE_TLS=true` opts into disabling verification for a trusted demo endpoint with a self-signed certificate only.
 
