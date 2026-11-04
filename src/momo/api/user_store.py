@@ -118,12 +118,14 @@ def _get_user_by_identifier(identifier: str, role: str | None = None) -> dict | 
         from ..common.db import transaction
 
         with transaction() as conn:
+            role_filter = "AND role = %s" if role is not None else ""
+            params = (ident, norm_phone, ident, role) if role is not None else (ident, norm_phone, ident)
             row = conn.execute(
-                """SELECT id, username, phone, email, role, password_hash, full_name, status, created_at
-                     FROM users
-                    WHERE (LOWER(username) = %s OR phone = %s OR LOWER(email) = %s)
-                      AND (%s IS NULL OR role = %s)""",
-                (ident, norm_phone, ident, role, role),
+                f"""SELECT id, username, phone, email, role, password_hash, full_name, status, created_at
+                      FROM users
+                     WHERE (LOWER(username) = %s OR phone = %s OR LOWER(email) = %s)
+                       {role_filter}""",
+                params,
             ).fetchone()
             if row:
                 return dict(row)

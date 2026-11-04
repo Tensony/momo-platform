@@ -49,6 +49,24 @@ def test_health_needs_no_auth(client):
     assert client.get("/health").json == {"status": "ok"}
 
 
+def test_postgres_customer_registration_and_login(client):
+    phone = f"+26097{uuid.uuid4().int % 10**8:08d}"
+    password = "CustomerPass123!"
+    registered = client.post(
+        "/auth/register",
+        json={"phone": phone, "password": password, "full_name": "Postgres Test User"},
+    )
+    assert registered.status_code == 201, registered.json
+    assert registered.json["user"]["role"] == "customer"
+
+    logged_in = client.post(
+        "/auth/login/customer",
+        json={"phone": phone, "password": password},
+    )
+    assert logged_in.status_code == 200, logged_in.json
+    assert logged_in.json["user"]["id"] == registered.json["user"]["id"]
+
+
 def test_unauthenticated_and_forged_requests_are_401(client):
     assert client.post("/wallets", json={}).status_code == 401
     assert client.get("/wallets/x", headers={"Authorization": "Bearer abc"}).status_code == 401
