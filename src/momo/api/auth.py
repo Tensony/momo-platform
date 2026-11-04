@@ -1,24 +1,68 @@
-"""Authentication: verification of Amazon Cognito access tokens (JWT, RS256).
+"""Authentication: verification of Amazon Cognito access tokens and local platform JWTs.
 
-Correct-use checklist (each item is unit-tested in tests/unit/test_auth.py):
-  * signature verified against the user pool's JWKS (keys fetched over TLS, cached)
-  * algorithm pinned to RS256 - 'none' / HS256 downgrade attacks are rejected
-  * `iss` must be exactly this user pool
-  * `token_use` must be "access" (ID tokens are for the client app, not for calling APIs)
-  * `client_id` must be OUR app client (tokens minted for other clients are rejected)
-  * `exp` enforced; `sub` required
-Authorization uses Cognito groups from the `cognito:groups` claim: customers, merchants, agents, admins.
+Features:
+  * BCrypt password protection for user credentials.
+  * Role-Based Access Control (RBAC) via User groups: customers, agents, admins, merchants.
+  * Dual-mode JWT verification:
+      1. Local platform access tokens signed with HMAC-SHA256 (HS256).
+      2. Cognito user pool access tokens verified against JWKS (RS256).
+  * Enforces algorithms, expiration, issuer, subject, and token_use='access'.
 """
 
 from __future__ import annotations
 
 import os
+import time
 from dataclasses import dataclass, field
 
+import bcrypt
 import jwt
 from jwt import PyJWKClient
 
 from ..common.errors import NotAuthenticated, NotAuthorized
+
+LOCAL_JWT_SECRET = os.environ.get(
+    "JWT_SECRET", "momo-platform-secure-jwt-signing-key-32-chars-minimum!"
+)
+LOCAL_ISSUER = "momo-platform"
+LOCAL_CLIENT_ID = "momo-platform"
+
+
+def hash_password(password: str) -> str:
+    """Hash password securely using BCrypt with salt rounds=12."""
+    if not password or len(password) < 8:
+        raise ValueError("Password must be at least 8 characters long")
+    salt = bcrypt.gensalt(rounds=12)
+    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+
+
+def verify_password(password: str, hashed: str) -> bool:
+    """Verify password against BCrypt hash."""
+    if not password or not hashed:
+        return False
+    try:
+        return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
+    except Exception:
+        return False
+
+
+def issue_token(sub: str, username: str, role: str, exp_hours: int = 8) -> str:
+    """Mint a local platform JWT access token with role-based groups."""
+    now = int(time.time())
+    # Standardize group name to match RBAC checks (customers, agents, admins, merchants)
+    group = f"{role}s" if not role.endswith("s") else role
+    claims = {
+        "sub": str(sub),
+        "username": username,
+        "role": role,
+        "cognito:groups": [group],
+        "token_use": "access",
+        "client_id": LOCAL_CLIENT_ID,
+        "iss": LOCAL_ISSUER,
+        "iat": now,
+        "exp": now + (exp_hours * 3600),
+    }
+    return jwt.encode(claims, LOCAL_JWT_SECRET, algorithm="HS256")
 
 
 @dataclass(frozen=True)
@@ -30,6 +74,14 @@ class User:
     @property
     def is_admin(self) -> bool:
         return "admins" in self.groups
+
+    @property
+    def is_agent(self) -> bool:
+        return "agents" in self.groups or self.is_admin
+
+    @property
+    def is_customer(self) -> bool:
+        return "customers" in self.groups
 
     def require_group(self, group: str) -> None:
         if group not in self.groups and not self.is_admin:
@@ -51,12 +103,47 @@ class JwtVerifier:
     @classmethod
     def from_env(cls) -> "JwtVerifier":
         return cls.for_cognito(
-            os.environ.get("AWS_REGION") or os.environ["AWS_DEFAULT_REGION"],
-            os.environ["COGNITO_USER_POOL_ID"],
-            os.environ["COGNITO_CLIENT_ID"],
+            os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION", "af-south-1"),
+            os.environ.get("COGNITO_USER_POOL_ID", "local-pool"),
+            os.environ.get("COGNITO_CLIENT_ID", "local-client"),
         )
 
     def verify(self, token: str) -> User:
+        if not isinstance(token, str) or not token.strip():
+            raise NotAuthenticated("invalid or expired token")
+
+        # Inspect unverified claims to determine token issuer
+        try:
+            unverified = jwt.decode(token, options={"verify_signature": False})
+        except Exception as exc:
+            raise NotAuthenticated("invalid or expired token") from exc
+
+        # 1. Local platform tokens
+        if unverified.get("iss") == LOCAL_ISSUER:
+            try:
+                claims = jwt.decode(
+                    token,
+                    LOCAL_JWT_SECRET,
+                    algorithms=["HS256"],
+                    issuer=LOCAL_ISSUER,
+                    options={"require": ["exp", "iss", "sub"], "verify_aud": False},
+                    leeway=5,
+                )
+            except Exception as exc:
+                raise NotAuthenticated("invalid or expired token") from exc
+
+            if claims.get("token_use") != "access":
+                raise NotAuthenticated("an access token is required")
+            if claims.get("client_id") != LOCAL_CLIENT_ID:
+                raise NotAuthenticated("token was not issued for this application")
+
+            return User(
+                sub=claims["sub"],
+                groups=frozenset(claims.get("cognito:groups", [])),
+                username=claims.get("username"),
+            )
+
+        # 2. External Cognito user pool tokens (RS256 via JWKS)
         try:
             key = self.jwks_client.get_signing_key_from_jwt(token).key
             claims = jwt.decode(
@@ -69,10 +156,12 @@ class JwtVerifier:
             )
         except Exception as exc:  # PyJWTError, JWKS fetch errors, malformed tokens ...
             raise NotAuthenticated("invalid or expired token") from exc
+
         if claims.get("token_use") != "access":
             raise NotAuthenticated("an access token is required")
         if claims.get("client_id") != self.client_id:
             raise NotAuthenticated("token was not issued for this application")
+
         return User(
             sub=claims["sub"],
             groups=frozenset(claims.get("cognito:groups", [])),

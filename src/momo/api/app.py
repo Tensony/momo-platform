@@ -24,6 +24,7 @@ from ..common.tracing import get_recorder, tracing_enabled
 from ..ledger.core import MINT_WALLET_ID
 from ..saga import faults
 from .auth import JwtVerifier, User, user_from_header
+from . import user_store
 
 _CID_RE = re.compile(r"^[A-Za-z0-9\-_.:]{8,100}$")
 
@@ -161,6 +162,89 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
     def demo_ui():
         html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "index.html"
         return Response(html_path.read_text(encoding="utf-8"), mimetype="text/html")
+
+    @app.get("/login")
+    @app.get("/auth")
+    def login_portal():
+        html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "login.html"
+        return Response(html_path.read_text(encoding="utf-8"), mimetype="text/html")
+
+    @app.get("/login/customer")
+    def login_customer_page():
+        html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "login-customer.html"
+        return Response(html_path.read_text(encoding="utf-8"), mimetype="text/html")
+
+    @app.get("/login/agent")
+    def login_agent_page():
+        html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "login-agent.html"
+        return Response(html_path.read_text(encoding="utf-8"), mimetype="text/html")
+
+    @app.get("/login/admin")
+    def login_admin_page():
+        html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "login-admin.html"
+        return Response(html_path.read_text(encoding="utf-8"), mimetype="text/html")
+
+    @app.get("/customer")
+    @app.get("/agent")
+    @app.get("/admin")
+    def role_dashboard():
+        html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "index.html"
+        return Response(html_path.read_text(encoding="utf-8"), mimetype="text/html")
+
+    # ------------------------------------------------------------------ auth API endpoints
+    @app.post("/auth/register")
+    def auth_register():
+        data = body()
+        res = user_store.register_customer(
+            phone=data.get("phone", ""),
+            password=data.get("password", ""),
+            full_name=data.get("full_name", ""),
+            currency=data.get("currency", "ZMW"),
+        )
+        return jsonify(res), 201
+
+    @app.post("/auth/login/customer")
+    def auth_login_customer():
+        data = body()
+        return jsonify(user_store.authenticate_user(
+            identifier=data.get("phone") or data.get("username", ""),
+            password=data.get("password", ""),
+            expected_role="customer",
+        ))
+
+    @app.post("/auth/login/agent")
+    def auth_login_agent():
+        data = body()
+        return jsonify(user_store.authenticate_user(
+            identifier=data.get("agent_id") or data.get("phone") or data.get("username", ""),
+            password=data.get("password", ""),
+            expected_role="agent",
+        ))
+
+    @app.post("/auth/login/admin")
+    def auth_login_admin():
+        data = body()
+        return jsonify(user_store.authenticate_user(
+            identifier=data.get("username") or data.get("email", ""),
+            password=data.get("password", ""),
+            expected_role="admin",
+        ))
+
+    @app.get("/auth/me")
+    def auth_me():
+        user = current_user()
+        return jsonify({
+            "user": {
+                "id": user.sub,
+                "username": user.username or user.sub,
+                "groups": list(user.groups),
+                "is_admin": user.is_admin,
+            }
+        })
+
+    @app.post("/auth/logout")
+    def auth_logout():
+        return jsonify({"status": "ok", "message": "Logged out successfully"})
 
     @app.get("/health")
     def health():

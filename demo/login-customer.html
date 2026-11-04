@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0284c7">
+  <title>MoMo | Customer Banking Portal</title>
+  <style>
+    :root{color-scheme:light;--navy:#101c2a;--sky:#0284c7;--sky-dark:#0369a1;--ink:#172333;--muted:#4f5f73;--line:#e2e8f0;--surface:#fff;--canvas:#f8fafc;--red:#b54747;--red-bg:#fff0ef;--green:#147d54;--green-bg:#e8f6ef;--shadow:0 16px 40px rgba(2,132,199,.08)}
+    *{box-sizing:border-box}body{margin:0;background:var(--canvas);color:var(--ink);font:14px/1.5 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;display:flex;flex-direction:column}
+    a{text-decoration:none;color:inherit}
+    .topbar{background:#fff;border-bottom:1px solid var(--line);height:74px;padding:0 34px;display:flex;align-items:center;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand-mark{background:#0284c7;color:#fff;border-radius:11px;width:38px;height:38px;display:grid;place-items:center;font-weight:800;font-size:18px}
+    .brand-name{font-weight:750;letter-spacing:.02em;font-size:16px}
+    .back-link{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;font-weight:600}
+    .back-link:hover{color:var(--sky)}
+    .container{max-width:480px;margin:40px auto 60px;padding:0 20px;width:100%}
+    .auth-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:32px 28px}
+    .auth-header{text-align:center;margin-bottom:24px}
+    .icon-bubble{width:56px;height:56px;border-radius:14px;background:#e0f2fe;color:#0284c7;display:grid;place-items:center;font-size:26px;margin:0 auto 14px}
+    .auth-header h1{font-size:22px;margin:0 0 6px;letter-spacing:-.02em}
+    .auth-header p{color:var(--muted);font-size:13px;margin:0}
+    .tab-bar{display:grid;grid-template-columns:1fr 1fr;background:#f1f5f9;padding:4px;border-radius:8px;margin-bottom:22px}
+    .tab-btn{border:0;background:transparent;padding:9px;border-radius:6px;font-weight:650;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s}
+    .tab-btn.active{background:#fff;color:var(--sky);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+    .field{display:flex;flex-direction:column;gap:5px;margin-bottom:15px}
+    .field label{font-size:12px;font-weight:650;color:#334155}
+    .field input,.field select{border:1px solid #cbd5e1;border-radius:7px;padding:10px 12px;background:#fff;color:var(--ink);min-height:42px;outline:none;font-size:13px}
+    .field input:focus,.field select:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(2,132,199,.15)}
+    .field-hint{font-size:11px;color:var(--muted);margin-top:2px}
+    .btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:8px;font-weight:650;font-size:13px;border:none;cursor:pointer;width:100%;background:var(--sky);color:#fff;transition:background .15s}
+    .btn:hover{background:var(--sky-dark)}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .alert{border-radius:8px;padding:12px 14px;font-size:13px;margin-bottom:16px;display:none}
+    .alert.show{display:block}
+    .alert.error{background:var(--red-bg);color:var(--red);border:1px solid #fecaca}
+    .alert.success{background:var(--green-bg);color:var(--green);border:1px solid #bbf7d0}
+    .tab-pane{display:none}
+    .tab-pane.active{display:block}
+    .portal-tag{display:inline-flex;align-items:center;gap:6px;background:#e0f2fe;color:#0284c7;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:8px}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">M</div>
+      <div>
+        <div class="brand-name">MoMo Platform</div>
+      </div>
+    </div>
+    <a href="login.html" class="back-link">← Switch Portal</a>
+  </header>
+
+  <main class="container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <span class="portal-tag">Customer Access</span>
+        <div class="icon-bubble">👤</div>
+        <h1>Customer Banking</h1>
+        <p>Access your personal mobile wallet and transfers</p>
+      </div>
+
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tabLoginBtn" type="button">Sign In</button>
+        <button class="tab-btn" id="tabRegisterBtn" type="button">Register Wallet</button>
+      </div>
+
+      <div id="authAlert" class="alert"></div>
+
+      <!-- Tab 1: Customer Login -->
+      <form id="customerLoginForm" class="tab-pane active">
+        <div class="field">
+          <label for="loginPhone">Mobile Phone Number</label>
+          <input id="loginPhone" type="tel" placeholder="+260 97 1234567" required autocomplete="tel">
+          <span class="field-hint">e.g. +260971000001 (or local 097...)</span>
+        </div>
+        <div class="field">
+          <label for="loginPassword">Account Password</label>
+          <input id="loginPassword" type="password" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <button class="btn" type="submit" id="loginSubmitBtn">Sign In to Customer Wallet</button>
+      </form>
+
+      <!-- Tab 2: Customer Registration -->
+      <form id="customerRegisterForm" class="tab-pane">
+        <div class="field">
+          <label for="regFullName">Full Legal Name</label>
+          <input id="regFullName" type="text" placeholder="e.g. Alice Mwanza" required autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="regPhone">Mobile Phone Number</label>
+          <input id="regPhone" type="tel" placeholder="+260 97 9998877" required autocomplete="tel">
+          <span class="field-hint">Used as your unique wallet identifier</span>
+        </div>
+        <div class="field">
+          <label for="regCurrency">Primary Currency</label>
+          <select id="regCurrency">
+            <option value="ZMW" selected>ZMW — Zambian Kwacha</option>
+            <option value="USD">USD — US Dollar</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="regPassword">Create Password</label>
+          <input id="regPassword" type="password" placeholder="At least 8 chars with letter &amp; digit" required minlength="8" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label for="regPasswordConfirm">Confirm Password</label>
+          <input id="regPasswordConfirm" type="password" placeholder="Repeat password" required minlength="8" autocomplete="new-password">
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin:12px 0 16px">
+          Notice: Registration is strictly for personal customer wallets. Agent and merchant accounts require institutional validation.
+        </p>
+        <button class="btn" type="submit" id="regSubmitBtn">Create Customer Wallet</button>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      const $ = id => document.getElementById(id);
+      const alertEl = $("authAlert");
+      const showAlert = (msg, isError = true) => {
+        alertEl.textContent = msg;
+        alertEl.className = `alert show ${isError ? 'error' : 'success'}`;
+      };
+      const clearAlert = () => { alertEl.className = 'alert'; alertEl.textContent = ''; };
+
+      // Tab Switcher
+      const showTab = (tab) => {
+        clearAlert();
+        $("tabLoginBtn").classList.toggle("active", tab === "login");
+        $("tabRegisterBtn").classList.toggle("active", tab === "register");
+        $("customerLoginForm").classList.toggle("active", tab === "login");
+        $("customerRegisterForm").classList.toggle("active", tab === "register");
+      };
+      $("tabLoginBtn").addEventListener("click", () => showTab("login"));
+      $("tabRegisterBtn").addEventListener("click", () => showTab("register"));
+      if (location.hash === "#register") showTab("register");
+
+      // API Caller
+      const callAuth = async (endpoint, payload) => {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const msg = data.error?.message || data.message || `Request failed (${res.status})`;
+          throw new Error(msg);
+        }
+        return data;
+      };
+
+      const handleSuccess = (token, user) => {
+        sessionStorage.setItem("momo_token", token);
+        sessionStorage.setItem("momo_user", JSON.stringify(user));
+        sessionStorage.setItem("momo_role", "customer");
+        showAlert("Authentication successful! Redirecting to customer dashboard...", false);
+        setTimeout(() => {
+          window.location.href = "index.html#wallets";
+        }, 800);
+      };
+
+      // Handle Customer Login
+      $("customerLoginForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearAlert();
+        const btn = $("loginSubmitBtn");
+        btn.disabled = true;
+        btn.textContent = "Verifying credentials...";
+        try {
+          const phone = $("loginPhone").value.trim();
+          const password = $("loginPassword").value;
+          const data = await callAuth("/auth/login/customer", { phone, password });
+          handleSuccess(data.token, data.user);
+        } catch (err) {
+          showAlert(err.message, true);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Sign In to Customer Wallet";
+        }
+      });
+
+      // Handle Customer Registration
+      $("customerRegisterForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearAlert();
+        const btn = $("regSubmitBtn");
+        const password = $("regPassword").value;
+        const confirm = $("regPasswordConfirm").value;
+        if (password !== confirm) {
+          showAlert("Passwords do not match", true);
+          return;
+        }
+        btn.disabled = true;
+        btn.textContent = "Registering & creating wallet...";
+        try {
+          const payload = {
+            full_name: $("regFullName").value.trim(),
+            phone: $("regPhone").value.trim(),
+            currency: $("regCurrency").value,
+            password
+          };
+          const data = await callAuth("/auth/register", payload);
+          handleSuccess(data.token, data.user);
+        } catch (err) {
+          showAlert(err.message, true);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Create Customer Wallet";
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
+

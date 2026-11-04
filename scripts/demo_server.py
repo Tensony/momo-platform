@@ -44,7 +44,7 @@ def _check_aws_health() -> str:
                 return "ok"
     except Exception:
         pass
-    return "ok"
+    return "offline"
 
 
 class ReusableHTTPServer(HTTPServer):
