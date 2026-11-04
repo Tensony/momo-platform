@@ -27,6 +27,18 @@ from . import user_store
 from .auth import JwtVerifier, User, user_from_header
 
 _CID_RE = re.compile(r"^[A-Za-z0-9\-_.:]{8,100}$")
+_DEMO_API_ENDPOINTS = {
+    "api_state",
+    "api_reset",
+    "api_create_wallet",
+    "api_toggle_wallet_status",
+    "api_submit_transaction",
+    "api_reverse_transaction",
+    "api_raise_dispute",
+    "api_resolve_dispute",
+    "api_tamper",
+    "api_proofs",
+}
 
 
 def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
@@ -40,6 +52,7 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
     log = logging.getLogger("wallet-api")
     app = Flask(__name__)
     app.config["MAX_CONTENT_LENGTH"] = 16 * 1024
+    app.config["ENABLE_DEMO_API"] = os.environ.get("MOMO_DEMO_API_ENABLED", "false").lower() == "true"
     app.json.sort_keys = False
     state = {"verifier": verifier}
     cors_origins = {
@@ -66,6 +79,10 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
         set_trace_id(request.headers.get("X-Amzn-Trace-Id", "").replace("Root=", "").split(";")[0] or None)
         g.t0 = time.perf_counter()
         g.user = None
+        if request.endpoint in _DEMO_API_ENDPOINTS and not app.config["ENABLE_DEMO_API"]:
+            return jsonify(
+                {"error": {"code": "NOT_FOUND", "message": "no such route", "correlation_id": g.cid}}
+            ), 404
 
     @app.after_request
     def _end(resp):
@@ -179,6 +196,102 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
     @app.get("/console")
     def demo_ui():
         return send_from_directory(demo_dir, "console.html")
+
+    # ------------------------------------------------------------------ demo / management api
+    @app.get("/api/state")
+    def api_state():
+        from ..demo_state import get_demo_engine
+        return jsonify(get_demo_engine().get_state())
+
+    @app.post("/api/reset")
+    def api_reset():
+        from ..demo_state import get_demo_engine
+        return jsonify(get_demo_engine().reset())
+
+    @app.post("/api/wallets/create")
+    def api_create_wallet():
+        from ..demo_state import get_demo_engine
+        data = request.get_json(silent=True) or {}
+        code, res = get_demo_engine().create_wallet(
+            actor_role=data.get("role", "customer"),
+            label=data.get("label", ""),
+            kind=data.get("kind", "CUSTOMER"),
+            currency=data.get("currency", "ZMW"),
+        )
+        return jsonify(res), code
+
+    @app.post("/api/wallets/<wallet_id>/toggle-status")
+    def api_toggle_wallet_status(wallet_id):
+        from ..demo_state import get_demo_engine
+        data = request.get_json(silent=True) or {}
+        code, res = get_demo_engine().toggle_wallet_status(
+            actor_role=data.get("role", "admin"),
+            wallet_id=wallet_id,
+        )
+        return jsonify(res), code
+
+    @app.post("/api/transactions/submit")
+    def api_submit_transaction():
+        from ..demo_state import get_demo_engine
+        data = request.get_json(silent=True) or {}
+        code, res = get_demo_engine().submit_transaction(
+            actor_role=data.get("role", "customer"),
+            txn_type=data.get("type", "TRANSFER"),
+            from_wallet=data.get("from_wallet", ""),
+            to_wallet=data.get("to_wallet", ""),
+            amount_ngwee=int(data.get("amount_ngwee", 0)),
+            idempotency_key=data.get("idempotency_key", ""),
+            reason=data.get("reason"),
+            fault=data.get("fault"),
+            simulate_geo_jump=bool(data.get("simulate_geo_jump")),
+            simulate_velocity_spike=bool(data.get("simulate_velocity_spike")),
+        )
+        return jsonify(res), code
+
+    @app.post("/api/transactions/<txn_id>/reverse")
+    def api_reverse_transaction(txn_id):
+        from ..demo_state import get_demo_engine
+        data = request.get_json(silent=True) or {}
+        code, res = get_demo_engine().reverse_transaction(
+            actor_role=data.get("role", "admin"),
+            txn_id=txn_id,
+            reason=data.get("reason"),
+        )
+        return jsonify(res), code
+
+    @app.post("/api/disputes/raise")
+    def api_raise_dispute():
+        from ..demo_state import get_demo_engine
+        data = request.get_json(silent=True) or {}
+        code, res = get_demo_engine().raise_dispute(
+            actor_role=data.get("role", "customer"),
+            txn_id=data.get("txn_id", ""),
+            reason=data.get("reason", ""),
+        )
+        return jsonify(res), code
+
+    @app.post("/api/disputes/<dispute_id>/resolve")
+    def api_resolve_dispute(dispute_id):
+        from ..demo_state import get_demo_engine
+        data = request.get_json(silent=True) or {}
+        code, res = get_demo_engine().resolve_dispute(
+            actor_role=data.get("role", "admin"),
+            dispute_id=dispute_id,
+            action=data.get("action", "REVERSE"),
+            note=data.get("note"),
+        )
+        return jsonify(res), code
+
+    @app.post("/api/tamper")
+    def api_tamper():
+        from ..demo_state import get_demo_engine
+        data = request.get_json(silent=True) or {}
+        return jsonify(get_demo_engine().set_tamper(tamper=bool(data.get("tamper"))))
+
+    @app.post("/api/proofs/<proof_name>")
+    def api_proofs(proof_name):
+        from ..demo_state import get_demo_engine
+        return jsonify(get_demo_engine().run_proof_simulation(proof_name=proof_name))
 
     @app.get("/login")
     @app.get("/login.html")

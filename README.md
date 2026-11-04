@@ -30,6 +30,11 @@ blocks repeat submission and offers a status lookup for the original key. Unsupp
 identified rather than simulated. The requirement/API mapping and demonstration steps are in
 [docs/FRONTEND-TRACEABILITY.md](docs/FRONTEND-TRACEABILITY.md).
 
+The optional in-memory interactive demo API (`/api/state`, `/api/reset`, and related simulation
+routes) is disabled by default in the Flask API. Enable it only for a trusted local demo by setting
+`MOMO_DEMO_API_ENABLED=true`; do not enable it on a publicly reachable deployment. It uses seeded,
+in-memory demo wallets and is not the production transaction API.
+
 ## Local development and verification (Windows)
 
 Requirements: Python 3.12 and Docker Desktop. Start a throwaway local PostgreSQL database:
