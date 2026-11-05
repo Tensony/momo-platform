@@ -116,9 +116,25 @@ def test_proxy_returns_explicit_error_when_backend_is_unavailable(monkeypatch):
         frontend.server_close()
 
 
+def test_merchant_pages_are_served_by_frontend_proxy():
+    frontend, frontend_url = start_server(DemoHandler)
+    try:
+        with urlopen(f"{frontend_url}/login/merchant", timeout=3) as response:
+            login_page = response.read()
+        with urlopen(f"{frontend_url}/merchant", timeout=3) as response:
+            merchant_page = response.read()
+        assert b'data-auth-role="merchant"' in login_page
+        assert b'id="connectForm"' in merchant_page
+    finally:
+        frontend.shutdown()
+        frontend.server_close()
+
+
 def test_frontend_and_simulation_routes_are_not_proxied():
     assert not DemoHandler._is_api_request("GET", "/login/admin")
+    assert not DemoHandler._is_api_request("GET", "/login/merchant")
     assert not DemoHandler._is_api_request("GET", "/admin/users")
     assert not DemoHandler._is_api_request("POST", "/api/transactions/submit")
     assert DemoHandler._is_api_request("GET", "/admin/integrity")
+    assert DemoHandler._is_api_request("POST", "/auth/login/merchant")
     assert DemoHandler._is_api_request("POST", "/transactions/txn-id/reverse")

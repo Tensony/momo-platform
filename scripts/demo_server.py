@@ -67,6 +67,7 @@ class DemoHandler(SimpleHTTPRequestHandler):
             "/login/customer": "/login-customer.html",
             "/login/agent": "/login-agent.html",
             "/login/admin": "/login-admin.html",
+            "/login/merchant": "/login-merchant.html",
             "/customer": "/pages/customer/dashboard.html",
             "/customer/dashboard": "/pages/customer/dashboard.html",
             "/customer/send-money": "/pages/customer/send-money.html",
@@ -86,6 +87,8 @@ class DemoHandler(SimpleHTTPRequestHandler):
             "/admin/transactions": "/pages/admin/transactions.html",
             "/admin/analytics": "/pages/admin/analytics.html",
             "/admin/profile": "/pages/admin/profile.html",
+            "/merchant": "/console.html",
+            "/merchant/dashboard": "/console.html",
         }
         if parsed.path in page_routes:
             self.path = page_routes[parsed.path]
@@ -234,6 +237,7 @@ class DemoHandler(SimpleHTTPRequestHandler):
         return (
             path in {
                 "/auth/register", "/auth/login/customer", "/auth/login/agent", "/auth/login/admin",
+                "/auth/login/merchant",
                 "/auth/logout", "/wallets", "/transfers", "/merchant-payments", "/agents/cash-in",
                 "/agents/cash-out", "/admin/float-topups", "/admin/recurring-payments/run-due",
                 "/fx/quotes", "/recurring-payments",

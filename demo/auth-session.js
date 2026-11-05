@@ -6,11 +6,13 @@
     customer: "/login/customer",
     agent: "/login/agent",
     admin: "/login/admin",
+    merchant: "/login/merchant",
   };
   const dashboardPaths = {
     customer: "/customer",
     agent: "/agent",
     admin: "/admin",
+    merchant: "/merchant",
   };
   let allowedViews = null;
 
@@ -73,7 +75,13 @@
   }
 
   function dashboardSession() {
-    const pathRole = ({ "/customer": "customer", "/agent": "agent", "/admin": "admin" })[
+    const pathRole = ({
+      "/customer": "customer",
+      "/agent": "agent",
+      "/admin": "admin",
+      "/merchant": "merchant",
+      "/merchant/dashboard": "merchant",
+    })[
       window.location.pathname.replace(/\/+$/, "") || "/"
     ];
     const token = sessionStorage.getItem("momo_token");
@@ -138,6 +146,36 @@
       agent: new Set(["overview", "wallets", "transactions", "ledger", "disputes"]),
       admin: new Set(["overview", "wallets", "payments", "transactions", "ledger", "reconciliation", "risk", "disputes"]),
     }[role] || new Set(["overview"]);
+    const permittedPayments = {
+      customer: new Set(["TRANSFER", "MERCHANT_PAYMENT", "CASH_OUT"]),
+      merchant: new Set(["TRANSFER"]),
+      agent: new Set(["CASH_IN"]),
+      admin: new Set(["TRANSFER", "MERCHANT_PAYMENT", "CASH_IN", "CASH_OUT", "FLOAT_TOPUP"]),
+    }[role] || new Set();
+    const walletKind = {
+      customer: "CUSTOMER",
+      agent: "AGENT",
+      admin: "CUSTOMER",
+      merchant: "MERCHANT",
+    }[role];
+    const createWalletButton = document.getElementById("createWalletBtn");
+    if (createWalletButton) {
+      createWalletButton.hidden = !walletKind;
+      if (walletKind) {
+        createWalletButton.dataset.walletKind = walletKind;
+        createWalletButton.textContent = `＋ Create ${walletKind.toLowerCase()} wallet`;
+      }
+    }
+    const paymentType = document.getElementById("paymentType");
+    if (paymentType) {
+      for (const option of paymentType.options) {
+        option.hidden = !permittedPayments.has(option.value);
+        option.disabled = !permittedPayments.has(option.value);
+      }
+      if (!permittedPayments.has(paymentType.value)) {
+        paymentType.value = [...permittedPayments][0] || "";
+      }
+    }
     document.querySelectorAll(".nav-item[data-view]").forEach((item) => {
       item.hidden = !allowedViews.has(item.dataset.view);
     });

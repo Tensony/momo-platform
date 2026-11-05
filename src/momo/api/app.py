@@ -315,6 +315,11 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
         html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "login-admin.html"
         return Response(html_path.read_text(encoding="utf-8"), mimetype="text/html")
 
+    @app.get("/login/merchant")
+    def login_merchant_page():
+        html_path = pathlib.Path(__file__).resolve().parents[3] / "demo" / "login-merchant.html"
+        return Response(html_path.read_text(encoding="utf-8"), mimetype="text/html")
+
     @app.get("/register")
     @app.get("/register.html")
     def register_page():
@@ -388,6 +393,11 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
     def admin_dashboard():
         return send_from_directory(demo_dir / "pages" / "admin", "dashboard.html")
 
+    @app.get("/merchant")
+    @app.get("/merchant/dashboard")
+    def merchant_dashboard():
+        return send_from_directory(demo_dir, "console.html")
+
     @app.get("/admin/users")
     def admin_users_page():
         return send_from_directory(demo_dir / "pages" / "admin", "users.html")
@@ -441,6 +451,15 @@ def create_app(verifier: JwtVerifier | None = None, runner=None) -> Flask:
             identifier=data.get("username") or data.get("email", ""),
             password=data.get("password", ""),
             expected_role="admin",
+        ))
+
+    @app.post("/auth/login/merchant")
+    def auth_login_merchant():
+        data = body()
+        return jsonify(user_store.authenticate_user(
+            identifier=data.get("merchant_id") or data.get("phone") or data.get("username", ""),
+            password=data.get("password", ""),
+            expected_role="merchant",
         ))
 
     @app.get("/auth/me")

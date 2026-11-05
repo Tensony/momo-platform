@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Provision an agent or administrator through a trusted operator environment."""
+"""Provision an agent, merchant, or administrator in a trusted operator environment."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from momo.common.errors import InvalidRequest
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("role", choices=("agent", "admin"))
+    parser.add_argument("role", choices=("agent", "admin", "merchant"))
     parser.add_argument("--identifier", required=True, help="Agent ID or administrator username/email")
     parser.add_argument("--full-name", required=True)
     parser.add_argument("--phone", help="Optional registered phone number")
@@ -52,6 +52,8 @@ def main() -> int:
     username = identifier.lower() if args.role == "admin" else identifier
     user_id = str(uuid.uuid4())
     try:
+        from momo import service
+
         with transaction() as conn:
             conn.execute(
                 """INSERT INTO users (id, username, phone, email, role, password_hash, full_name, status)
@@ -66,11 +68,17 @@ def main() -> int:
                     args.full_name.strip(),
                 ),
             )
+            wallet = None
+            wallet_kind = {"agent": "AGENT", "merchant": "MERCHANT"}.get(args.role)
+            if wallet_kind:
+                wallet = service.create_wallet(user_id, wallet_kind, conn=conn)
     except psycopg.errors.UniqueViolation:
         print("An account already uses this identifier, phone, or email.", file=sys.stderr)
         return 1
 
     print(f"Provisioned {args.role} user {username} ({user_id}).")
+    if wallet:
+        print(f"Created {wallet['kind']} wallet {wallet['id']}.")
     return 0
 
 

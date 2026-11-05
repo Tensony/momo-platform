@@ -3,7 +3,8 @@ import uuid
 import pytest
 
 from momo.api.app import create_app
-from momo.api.auth import JwtVerifier
+from momo.api.auth import JwtVerifier, hash_password
+from momo.common.db import transaction
 from tests.integration.helpers import assert_money_conserved, balance
 from tests.jwt_helpers import CLIENT_ID, ISSUER, StubJwks, make_token
 
@@ -67,6 +68,31 @@ def test_postgres_customer_registration_and_login(client):
     assert logged_in.json["user"]["id"] == registered.json["user"]["id"]
 
 
+def test_postgres_merchant_login_and_wallet_access(client):
+    merchant_id = f"MERCHANT-{uuid.uuid4().hex[:8].upper()}"
+    merchant_uuid = str(uuid.uuid4())
+    password = "MerchantPass123!"
+    with transaction() as conn:
+        conn.execute(
+            """INSERT INTO users (id, username, role, password_hash, full_name, status)
+               VALUES (%s, %s, 'merchant', %s, 'Postgres Test Merchant', 'ACTIVE')""",
+            (merchant_uuid, merchant_id, hash_password(password)),
+        )
+
+    logged_in = client.post(
+        "/auth/login/merchant",
+        json={"merchant_id": merchant_id, "password": password},
+    )
+    assert logged_in.status_code == 200, logged_in.json
+    assert logged_in.json["user"]["role"] == "merchant"
+
+    headers = {"Authorization": f"Bearer {logged_in.json['token']}"}
+    wallet = client.post("/wallets", json={"kind": "MERCHANT"}, headers=headers)
+    assert wallet.status_code == 201, wallet.json
+    assert wallet.json["kind"] == "MERCHANT"
+    assert client.post("/merchant-payments", json={}, headers=headers).status_code == 403
+
+
 def test_unauthenticated_and_forged_requests_are_401(client):
     assert client.post("/wallets", json={}).status_code == 401
     assert client.get("/wallets/x", headers={"Authorization": "Bearer abc"}).status_code == 401
@@ -85,10 +111,16 @@ def test_end_to_end_money_flow_and_correlation_id(client):
     r = client.post("/merchant-payments", json={"from_wallet": alice, "to_wallet": shop, "amount": 10_000},
                     headers=H("alice", key="m-0000001"))
     assert r.status_code == 201
+    r = client.post(
+        "/transfers",
+        json={"from_wallet": shop, "to_wallet": bob, "amount": 2_500},
+        headers=H("shop", ["merchants"], key="merchant-transfer-0001"),
+    )
+    assert r.status_code == 201
     r = client.post("/agents/cash-out", json={"from_wallet": alice, "to_wallet": agent_w, "amount": 5_000},
                     headers=H("alice", key="c-0000001"))
     assert r.status_code == 201
-    assert (balance(alice), balance(bob), balance(shop)) == (60_000, 25_000, 10_000)
+    assert (balance(alice), balance(bob), balance(shop)) == (60_000, 27_500, 7_500)
 
     led = client.get(f"/wallets/{alice}/ledger", headers=H("alice")).json["entries"]
     assert led and all(e["hash"] for e in led)

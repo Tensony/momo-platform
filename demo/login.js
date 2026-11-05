@@ -5,6 +5,7 @@
     customer: { endpoint: "/auth/login/customer", field: "phone" },
     agent: { endpoint: "/auth/login/agent", field: "agent_id" },
     admin: { endpoint: "/auth/login/admin", field: "username" },
+    merchant: { endpoint: "/auth/login/merchant", field: "merchant_id" },
   }[role];
   const form = document.getElementById("loginForm");
   if (!settings || !form) return;

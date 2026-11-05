@@ -11,7 +11,7 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the architecture diagram, service respo
 ## Web interface and operations console
 
 The public landing page is served at `/`, with separate sign-in (`/login`), customer registration
-(`/register`), and role-specific customer, agent, and administrator workspaces. Use the API-hosted
+(`/register`), and role-specific customer, agent, merchant, and administrator workspaces. Use the API-hosted
 pages so authentication and service requests go to the same origin. The previous integrated
 operations console remains available at `/demo` (also `/console`) for its additional wallet,
 ledger, dispute, fraud-alert, and reconciliation views.
@@ -92,19 +92,31 @@ With the `momo-postgres` container from the setup above running, apply the schem
 docker cp db\schema.sql momo-postgres:/tmp/momo-schema.sql
 docker exec momo-postgres psql -U postgres -d momo_test -f /tmp/momo-schema.sql
 
-$env:DATABASE_URL = "postgresql://postgres@localhost:5432/momo_test"
+# Replace the placeholder for a password-authenticated server; URL-encode reserved password characters.
+# The passwordless URL is only for the Docker database above, which is configured with trust auth.
+$env:DATABASE_URL = "postgresql://postgres:<your-postgres-password>@127.0.0.1:5432/momo_test"
 $env:JWT_SECRET = (.\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_urlsafe(48))")
 $env:PYTHONPATH = "src"
 .\.venv\Scripts\python.exe -c "from momo.api.app import create_app; create_app().run(host='127.0.0.1', port=8080)"
 ```
 
 Open `http://127.0.0.1:8080/` for the landing page, then use **Create account** or **Sign in**.
-Agent and administrator accounts are intentionally provisioned only by an operator; from a trusted
-environment connected to the database, run
-`.\.venv\Scripts\python.exe scripts\provision_user.py agent --identifier AGENT-007 --full-name "Local Agent"`
-or use `admin` as the role. The script prompts for the initial password and never accepts it as a
-command-line argument. Keep the same `JWT_SECRET` for the lifetime of the local database so existing
-sessions remain verifiable.
+Customer registration creates a customer wallet. Agent, merchant, and administrator accounts are
+provisioned only by an operator from a trusted environment connected to the database:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\provision_user.py agent --identifier AGENT-007 --full-name "Local Agent"
+.\.venv\Scripts\python.exe scripts\provision_user.py merchant --identifier MERCHANT-001 --full-name "Local Merchant"
+.\.venv\Scripts\python.exe scripts\provision_user.py admin --identifier admin@momo.platform --full-name "Local Admin"
+```
+
+The script prompts for the initial password and never accepts it as a command-line argument.
+Agent and merchant provisioning also creates the role's wallet and prints its ID; administrators
+can fund agent float with **Issue agent float**. Use `/login/agent`, `/login/merchant`, and
+`/login/admin` to demonstrate those roles. A customer can be funded through an agent cash-in after
+the administrator tops up the agent float. Merchants can review their wallet, incoming payments,
+transactions, ledger, disputes, and permitted transfers at `/merchant`. Keep the same `JWT_SECRET`
+for the lifetime of the local database so existing sessions remain verifiable.
 
 The local role access tokens expire after one hour. Role workspaces verify identity with
 `/auth/me`, while the API continues to enforce endpoint authorization. The standalone static

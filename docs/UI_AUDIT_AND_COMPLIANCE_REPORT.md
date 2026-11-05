@@ -3,6 +3,14 @@
 **Verified:** 2026-11-04
 **Environment:** disposable local PostgreSQL database and Flask API at `127.0.0.1:8080`; browser requests used test-only JWTs signed with a throwaway local secret.
 
+## Implementation update (2026-11-05)
+
+The browser evidence below predates the merchant sign-in and workspace. The current implementation
+adds `/login/merchant`, `/auth/login/merchant`, and a role-filtered `/merchant` operations view.
+Operator provisioning now creates an agent or merchant wallet with the account. Auth/RBAC and
+frontend-proxy tests cover the added paths, but a full local PostgreSQL/browser run has not yet been
+repeated for this update.
+
 ## Evidence boundary
 
 This report records local behavior only. No production/customer data, live Cognito session, AWS credentials, or deployed AWS resources were used. A successful local request does not establish live AWS availability or deployment state.
@@ -18,7 +26,7 @@ This report records local behavior only. No production/customer data, live Cogni
 | Administrator | `/admin/users` | The page explicitly reports that user management is unavailable because the API has no administrative user-directory or user-management endpoint. |
 | Administrator | `/demo#risk` fraud alerts | The API-backed page rendered correctly and reported no persisted fraud alerts in this disposable database. |
 | Administrator | `/demo#reconciliation` | Integrity checks rendered `OK`; no settlement reports were persisted in the local database. |
-| Merchant | Dedicated workspace | Not available. Merchant operations are represented by merchant wallets and customer-initiated merchant payments; there is no dedicated merchant sign-in/workspace flow. |
+| Merchant | `/login/merchant` and `/merchant` | Added after this browser run; see the implementation update above. Browser verification remains pending. |
 
 Agent-initiated cash-out, profile editing, administrator user management, fraud-rule configuration/review actions, and settlement payout lifecycle are not implemented. The UI identifies unsupported functions rather than simulating them.
 

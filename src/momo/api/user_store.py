@@ -3,8 +3,8 @@
 Supports both PostgreSQL-backed persistence and a memory-backed fallback for standalone/demo usage.
 Enforces:
   * BCrypt password protection.
-  * Role separation: customer, agent, admin.
-  * Prevention of self-registration for agent and admin roles.
+  * Role separation: customer, agent, merchant, admin.
+  * Prevention of self-registration for provisioned roles.
 """
 
 from __future__ import annotations
@@ -56,6 +56,17 @@ DEFAULT_SEED_USERS = [
         "full_name": "Alice Mwanza",
         "status": "ACTIVE",
     },
+    {
+        "id": "10000000-0000-0000-0000-000000000004",
+        "username": "MERCHANT-001",
+        "phone": "+260971000008",
+        "email": "merchant001@momo.platform",
+        "role": "merchant",
+        # Default pass: Merchant123!
+        "password_hash": "$2b$12$4v0Pj933P7fUqLwUeG5e5O2XzYwZ5sJpT5XkPz8mX7zM4zV8jT9yK",
+        "full_name": "Local Demo Merchant",
+        "status": "ACTIVE",
+    },
 ]
 
 # Thread-safe in-memory cache / fallback store
@@ -76,11 +87,13 @@ def _init_memory_store():
                 # Pre-hash real passwords for the seeds
                 admin_pw = hash_password("Admin123!")
                 agent_pw = hash_password("Agent123!")
+                merchant_pw = hash_password("Merchant123!")
                 cust_pw = hash_password("Customer123!")
                 for seed, pw in (
                     (DEFAULT_SEED_USERS[0], admin_pw),
                     (DEFAULT_SEED_USERS[1], agent_pw),
                     (DEFAULT_SEED_USERS[2], cust_pw),
+                    (DEFAULT_SEED_USERS[3], merchant_pw),
                 ):
                     u = {**seed, "password_hash": pw, "created_at": datetime.now(timezone.utc).isoformat()}
                     _memory_users[u["id"]] = u
@@ -222,7 +235,7 @@ def register_customer(
 
 def authenticate_user(identifier: str, password: str, expected_role: str) -> dict:
     """Authenticate credentials for a specific role portal."""
-    if expected_role not in {"customer", "agent", "admin"}:
+    if expected_role not in {"customer", "agent", "admin", "merchant"}:
         raise InvalidRequest("Unsupported login portal")
     if (
         not isinstance(identifier, str)
