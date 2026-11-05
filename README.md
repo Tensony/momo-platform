@@ -11,16 +11,25 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the architecture diagram, service respo
 ## Web interface and operations console
 
 The public landing page is served at `/`, with separate sign-in (`/login`), customer registration
-(`/register`), and role-specific customer, agent, and administrator workspaces. Use the API-hosted
+(`/register`), and role-specific customer, agent, merchant, and administrator workspaces. Use the API-hosted
 pages so authentication and service requests go to the same origin. The previous integrated
 operations console remains available at `/demo` (also `/console`) for its additional wallet,
 ledger, dispute, fraud-alert, and reconciliation views.
 
-For a local static preview, start the existing server with `.\run_demo_ui.bat` and open
-`http://127.0.0.1:5050`; this preview server does not proxy API traffic or provide authentication.
-For local cross-origin use, configure the API process with
-`CORS_ALLOWED_ORIGINS=http://127.0.0.1:5050`; origins must be explicitly listed, comma-separated.
-CORS is disabled when the setting is empty and never reflects unconfigured origins.
+For local development, start the API with the database setup above in one terminal. In another,
+start the frontend proxy:
+
+```powershell
+$env:MOMO_API_BASE_URL = "http://127.0.0.1:8080"
+.\run_demo_ui.bat
+```
+
+Open the URL printed by the server (normally `http://127.0.0.1:5050`). The frontend server proxies
+the role login, session, wallet, transaction, and administrative API routes to the Flask API, so
+browser requests remain same-origin and do not require CORS configuration. Set
+`MOMO_API_BASE_URL` to another HTTP(S) API origin, such as `http://127.0.0.1:5080`, when needed.
+The backend must be running; an unavailable backend returns an explicit `502` instead of demo data.
+The separate in-memory simulation routes under `/api/*` are not the authenticated transaction API.
 
 The role-specific workspaces and console read balances and transaction results from the API; they
 do not seed demonstration data or calculate authoritative balances. Payment requests require
@@ -28,7 +37,8 @@ confirmation and use idempotency keys. If a standalone workspace receives an unc
 blocks repeat submission and offers a status lookup for the original key. Unsupported functions
 (including profile editing, administrator user management, and agent-initiated cash-out) are
 identified rather than simulated. The requirement/API mapping and demonstration steps are in
-[docs/FRONTEND-TRACEABILITY.md](docs/FRONTEND-TRACEABILITY.md).
+[docs/FRONTEND-TRACEABILITY.md](docs/FRONTEND-TRACEABILITY.md); the dated browser and role-check
+results are in [docs/UI_AUDIT_AND_COMPLIANCE_REPORT.md](docs/UI_AUDIT_AND_COMPLIANCE_REPORT.md).
 
 The optional in-memory interactive demo API (`/api/state`, `/api/reset`, and related simulation
 routes) is disabled by default in the Flask API. Enable it only for a trusted local demo by setting
@@ -72,7 +82,7 @@ Stop the local database when finished:
 docker stop momo-postgres
 ```
 
-For Linux/macOS, install dependencies with `python3.12 -m pip install -r requirements-dev.txt`; use `make test`, `make lint`, and `make proofs`.
+For Linux/macOS, install dependencies with `python3.12 -m pip install -r requirements-dev.txt`; use `make test`, `make lint`, and `make proofs`. Start the API and frontend proxy in separate terminals, setting `MOMO_API_BASE_URL` before starting `scripts/demo_server.py` if the API is not at `http://127.0.0.1:8080`.
 
 ### Run the API and role-based login locally (Windows)
 
@@ -82,19 +92,31 @@ With the `momo-postgres` container from the setup above running, apply the schem
 docker cp db\schema.sql momo-postgres:/tmp/momo-schema.sql
 docker exec momo-postgres psql -U postgres -d momo_test -f /tmp/momo-schema.sql
 
-$env:DATABASE_URL = "postgresql://postgres@localhost:5432/momo_test"
+# Replace the placeholder for a password-authenticated server; URL-encode reserved password characters.
+# The passwordless URL is only for the Docker database above, which is configured with trust auth.
+$env:DATABASE_URL = "postgresql://postgres:<your-postgres-password>@127.0.0.1:5432/momo_test"
 $env:JWT_SECRET = (.\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_urlsafe(48))")
 $env:PYTHONPATH = "src"
 .\.venv\Scripts\python.exe -c "from momo.api.app import create_app; create_app().run(host='127.0.0.1', port=8080)"
 ```
 
 Open `http://127.0.0.1:8080/` for the landing page, then use **Create account** or **Sign in**.
-Agent and administrator accounts are intentionally provisioned only by an operator; from a trusted
-environment connected to the database, run
-`.\.venv\Scripts\python.exe scripts\provision_user.py agent --identifier AGENT-007 --full-name "Local Agent"`
-or use `admin` as the role. The script prompts for the initial password and never accepts it as a
-command-line argument. Keep the same `JWT_SECRET` for the lifetime of the local database so existing
-sessions remain verifiable.
+Customer registration creates a customer wallet. Agent, merchant, and administrator accounts are
+provisioned only by an operator from a trusted environment connected to the database:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\provision_user.py agent --identifier AGENT-007 --full-name "Local Agent"
+.\.venv\Scripts\python.exe scripts\provision_user.py merchant --identifier MERCHANT-001 --full-name "Local Merchant"
+.\.venv\Scripts\python.exe scripts\provision_user.py admin --identifier admin@momo.platform --full-name "Local Admin"
+```
+
+The script prompts for the initial password and never accepts it as a command-line argument.
+Agent and merchant provisioning also creates the role's wallet and prints its ID; administrators
+can fund agent float with **Issue agent float**. Use `/login/agent`, `/login/merchant`, and
+`/login/admin` to demonstrate those roles. A customer can be funded through an agent cash-in after
+the administrator tops up the agent float. Merchants can review their wallet, incoming payments,
+transactions, ledger, disputes, and permitted transfers at `/merchant`. Keep the same `JWT_SECRET`
+for the lifetime of the local database so existing sessions remain verifiable.
 
 The local role access tokens expire after one hour. Role workspaces verify identity with
 `/auth/me`, while the API continues to enforce endpoint authorization. The standalone static
@@ -120,7 +142,7 @@ This provisions billable AWS resources. Confirm the project's Region in **AWS Se
 
 Terraform provisions the platform JWT signing key in AWS Secrets Manager and injects it into the API task; protect Terraform state because it contains sensitive generated infrastructure values.
 
-GitHub Actions runs checks for pushes and pull requests. AWS deployment is opt-in: configure the `aws-deploy` environment with required reviewers, set repository variables `AWS_DEPLOY_ENABLED=true`, `AWS_REGION`, `AWS_PROJECT`, `AWS_ENVIRONMENT`, and `ALERT_EMAIL`, and add the `AWS_DEPLOY_ROLE_ARN` secret for an OIDC-trusted role. The deploy job runs only for pushes to `main` after all checks pass. It updates an already-provisioned ECS service with the pushed image digest (using ECS rolling deployment or CodeDeploy when configured); initial infrastructure provisioning remains a separate operation. TLS certificate validation remains enabled for smoke tests unless `ALLOW_SELF_SIGNED_SMOKE_TEST=true` is explicitly set for a demo stack using Terraform's self-signed certificate.
+GitHub Actions runs on pull requests targeting `main` and pushes to `main`. It runs the secret scan, Ruff, PostgreSQL tests with coverage output, local correctness proofs, Terraform format/validation, and `tfsec --soft-fail`. After successful checks on a push to `main`, the deploy job builds the image and uses the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` repository secrets when they are active to push to ECR and update the pre-provisioned ECS service. If those credentials are unavailable, it skips the live push. This workflow does not use OIDC or an opt-in deployment environment; initial infrastructure provisioning remains separate. A successful local validation is not evidence of a live deployment. Avoid pushing to `main` solely to rerun CI unless deployment is intended.
 
 For live proofs, set `AWS_REGION`, `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`, and `API_BASE_URL`, configure AWS CLI credentials, then run `python scripts/run_live_proofs.py`. This script temporarily changes fraud and fault-injection configuration and restores the original values afterward; run it only against a deployment you control. TLS certificate verification is enabled by default. `PROOF_INSECURE_TLS=true` opts into disabling verification for a trusted demo endpoint with a self-signed certificate only.
 

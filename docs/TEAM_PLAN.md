@@ -20,13 +20,13 @@ Suggested first step: one of you creates the GitHub repo and pushes the baseline
 - [ ] **B:** AWS account ready (use a fresh/sandbox account; set a budget alert). Install Terraform, Docker, AWS CLI. Run `terraform -chdir=infra/terraform init && validate` and **fix any provider-version errors** (the template was checked offline only — see DESIGN §12.4).
 - [ ] **A:** read `ledger/core.py`, `idempotency.py`, `saga/steps.py`; write 1–2 extra tests of your own.
 - [ ] **C:** read `api/app.py`, `api/auth.py`, `fraud/rules.py`; add one fraud rule with tests.
-- [ ] Push to GitHub; enable Actions; confirm CI is green (add repo variables `AWS_DEPLOY_ROLE_ARN`, `ALERT_EMAIL`, `AWS_REGION`; OIDC role per DESIGN §6).
+- [ ] Open a pull request targeting `main` and confirm the validation jobs pass. The current workflow uses AWS access-key/session-token secrets for deployment on a successful push to `main`; it does not use OIDC. Do not push to `main` unless the AWS deployment is intended.
 
 ### Wednesday — deploy and capture evidence (this is the long pole: allow for failed first applies)
 
 - [ ] **B:** `scripts/deploy.sh <email>` (≈ 20–30 min: Aurora is slow). Confirm the SNS e-mail. Fix issues, re-apply.
 - [ ] **A (after deploy):** `scripts/get_tokens.sh`, then enable fault injection (`-var enable_fault_injection=true`) and relax fraud (`velocity_max_txns` = 100000), run `scripts/proofs/run_proofs.py --base-url <api_url> …` → saves `evidence-out/proof-results.md`. **Turn fault injection back off afterwards.**
-- [ ] **B:** `scripts/rollback_demo.sh` → `evidence-out/rollback-deployment.json`; screenshot the CodeDeploy rollback.
+- [ ] **B (optional):** only after setting `enable_codedeploy=true`, applying the reviewed Terraform plan, and confirming a live service is available, run `scripts/rollback_demo.sh` → `evidence-out/rollback-deployment.json`. This deliberately deploys an unhealthy task and changes AWS resources; do not run without deployment approval.
 - [ ] **B + C:** run `k6` (`load/k6-autoscale.js`) and `scripts/autoscale_evidence.sh`; screenshot ECS task count and the dashboard during the ramp.
 - [ ] **C:** screenshot the dashboard (all four golden-signal rows), the alarm list, a Logs Insights query by correlation id, and an X-Ray trace map. Trigger one alarm deliberately (e.g. stop the DLQ consumer) and show the e-mail.
 - [ ] **C:** CI evidence: screenshot a green pipeline, and a *red* one (push a throwaway commit containing a fake AWS key `AKIA…` on a branch → gitleaks fails → revert) to show the scan gates.
@@ -46,6 +46,6 @@ Suggested first step: one of you creates the GitHub repo and pushes the baseline
 3. **Saga** — run with `credit.after` fault: money returns, ESCROW empty, reconciliation clean.
 4. **Concurrency** — 50 parallel, 33 succeed, balance 10.
 5. **Tamper test** — run locally: `pytest -k tampering` edits a ledger row with triggers disabled (as a DB superuser could) and the hash-chain verifier flags it. (Aurora is private, so this is shown locally, not against AWS.)
-6. **Rollback** — the recorded deployment, or live `rollback_demo.sh`.
+6. **Rollback** — only demonstrate after the optional CodeDeploy configuration has been enabled and deployed; otherwise state that rollback is configured but unverified.
 7. **Observability** — dashboard, one trace by correlation id, alarm e-mail, SLOs.
 8. **Cost** — table, the 4 optimisations, the 10× projection.

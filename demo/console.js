@@ -21,7 +21,7 @@
     return {data,response};
   }
   function setHealth(ok,label){$("healthDot").className=`dot ${ok?"ok":"bad"}`;$("healthText").textContent=label}
-  function openConnect(){ $("connectModal").classList.add("open");$("connectError").classList.add("hidden");if(state.base)$("apiBase").value=state.base;$("accessToken").focus() }
+  function openConnect(){ $("connectModal").classList.add("open");$("connectError").classList.add("hidden");state.base=state.base||window.location.origin;$("apiBase").value=state.base;$("accessToken").focus() }
   function navigate(name){if(!titles[name])return;state.selectedView=name;document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===`view-${name}`));document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===name));$("topTitle").textContent=titles[name];$("sidebar").classList.remove("open");history.replaceState(null,"",`#${name}`);if(state.token)loadView(name)}
   function query(params){const q=new URLSearchParams(Object.entries(params).filter(([,v])=>v!==""&&v!==null&&v!==undefined));return q.toString()?`?${q}`:""}
   function tableEmpty(message,columns=1){return `<div class="empty" style="grid-column:1/-1">${esc(message)}</div>`}
@@ -59,7 +59,7 @@
   let walletSearchTimer; $("walletSearch").addEventListener("input",()=>{clearTimeout(walletSearchTimer);state.walletOffset=0;walletSearchTimer=setTimeout(()=>loadWallets().catch(e=>toast(e.message)),300)});
   $("sourceWalletSelect")?.addEventListener("change",e=>{if(e.target.value)$("fromWallet").value=e.target.value});
   $("paymentType").addEventListener("change",e=>{const val=e.target.value;if(val==="FLOAT_TOPUP"){$("fromWallet").value="00000000-0000-0000-0000-000000000001";$("fromWallet").readOnly=true}else{$("fromWallet").readOnly=false;if($("fromWallet").value==="00000000-0000-0000-0000-000000000001")$("fromWallet").value=""}});
-  $("createWalletBtn").addEventListener("click",async()=>{if(!state.token){openConnect();return}if(!confirm("Create a new ZMW customer wallet for the authenticated user?"))return;try{const {data}=await api("/wallets",{method:"POST",body:{kind:"CUSTOMER",currency:"ZMW"}});toast(`Wallet created: ${data.id}`);await loadWallets()}catch(error){toast(error.message)}});
+  $("createWalletBtn").addEventListener("click",async()=>{if(!state.token){openConnect();return}const kind=$("createWalletBtn").dataset.walletKind||"CUSTOMER";if(!confirm(`Create a new ZMW ${kind.toLowerCase()} wallet for the authenticated user?`))return;try{const {data}=await api("/wallets",{method:"POST",body:{kind,currency:"ZMW"}});toast(`Wallet created: ${data.id}`);await loadWallets()}catch(error){toast(error.message)}});
   $("signoutBtn").addEventListener("click",()=>{state.token="";state.user=null;state.uncertainPayment=null;state.wallets=[];state.transactions=[];setHealth(false,"Disconnected");$("roleAvatar").textContent="?";$("overviewAlert").className="notice info";$("overviewAlert").textContent="Token cleared. Connect with a valid Cognito access token to load operational data.";toast("Session token cleared from memory.")});
   $("connectBtn").addEventListener("click",openConnect);
   document.addEventListener("keydown",e=>{if(e.key==="Escape"){document.querySelectorAll(".modal-backdrop.open").forEach(m=>m.classList.remove("open"))}});

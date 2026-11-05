@@ -55,7 +55,7 @@ flowchart LR
 
 | # | Service | Runtime | Deploy unit | Trigger |
 | --- | --- | --- | --- | --- |
-| 1 | **wallet-api** — wallets, transfers, merchant payments, agent cash-in/out, reversals, disputes | ECS Fargate container | ECR image, blue/green via CodeDeploy | ALB (HTTPS) |
+| 1 | **wallet-api** — wallets, transfers, merchant payments, agent cash-in/out, reversals, disputes | ECS Fargate container | ECR image; ECS rolling deployment, with optional CodeDeploy blue/green when enabled | ALB (HTTPS) |
 | 2 | **saga-steps** — one saga step per call (reserve, credit, finalize, compensations) | Lambda | `saga-steps.zip` | Step Functions |
 | 3 | **fraud-engine** — sync decision inside the saga + async post-completion review | Lambda | `fraud-engine.zip` | Step Functions + SQS |
 | 4 | **reconciliation** — integrity checks, settlement reports, outbox sweep | Lambda | `reconciliation.zip` | EventBridge schedules |
@@ -234,11 +234,10 @@ Database-level least privilege: the app role `momo_app` has `SELECT/INSERT/UPDAT
 
 ## 6. Engineering practice
 
-* **100 % infrastructure as code** (`infra/terraform`, 127 resources): VPC, subnets, security groups, KMS, Aurora, **schema** (applied by the db-init Lambda from Terraform), Cognito, ECS/ALB/CodeDeploy, Lambdas, Step Functions, SNS/SQS, schedules, CloudTrail, dashboard, alarms, budget.
-  A marker deploys with `scripts/deploy.sh <email>` (build artifacts → create ECR → push image → apply). No console steps. The only manual action is clicking the SNS confirmation e-mail.
-* **CI/CD** (`.github/workflows/ci-cd.yml`): gitleaks (full history) → lint → unit + integration tests against a PostgreSQL service container with a **coverage gate** → correctness proofs → `terraform fmt/validate` + blocking tfsec scan. AWS deployment is opt-in, protected by a GitHub environment, restricted to `main`, and uses GitHub OIDC (no long-lived AWS keys).
-* **Automated rollback, demonstrated**: ECS blue/green via CodeDeploy with `auto_rollback_configuration` on `DEPLOYMENT_FAILURE` and `DEPLOYMENT_STOP_ON_ALARM` (5xx-rate and unhealthy-host alarms watch the traffic shift). `scripts/rollback_demo.sh` deploys a deliberately unhealthy release and records that CodeDeploy restores the previous task definition with no human action → `evidence-out/rollback-deployment.json`.
-* **Tests**: 113 tests, **92 % coverage** (gate: 60 %) — unit (rules, auth, hashing, orchestrator, ASL structure) and integration (real PostgreSQL: ledger, saga faults, idempotency, API, reconciliation, outbox).
+* **Infrastructure as code** (`infra/terraform`): defines the VPC, subnets, security groups, KMS, Aurora, schema initialization, Cognito, ECS/ALB, Lambdas, Step Functions, SNS/SQS, schedules, CloudTrail, dashboards, alarms, and budget. Configuration is not proof those resources were deployed.
+* **CI/CD** (`.github/workflows/ci-cd.yml`): gitleaks, Ruff, PostgreSQL tests with coverage output, correctness proofs, Terraform format/validation, and `tfsec --soft-fail`. A successful push to `main` triggers deployment. The job uses AWS access-key/session-token repository secrets when available to push an image and update an existing ECS service; if credentials are unavailable, it skips the live push. This workflow does not use OIDC or an opt-in deployment environment.
+* **Rollback**: Terraform defines optional CodeDeploy blue/green resources and alarm-triggered rollback, but `enable_codedeploy` defaults to `false`. The current CI job uses `aws ecs update-service --force-new-deployment`; no live rollback demonstration is recorded.
+* **Tests**: unit and PostgreSQL integration tests cover rules, authorization, hashing, saga orchestration, ledger, idempotency, API, reconciliation, and outbox behavior. The latest local workflow-equivalent run on Windows passed **147 tests** with **84.22 % total coverage** (the configured threshold is 60 %); this is local evidence, not a remote Actions result. The dated local transaction proof is in `docs/evidence/proof-results.md`.
 * **Git**: see `docs/TEAM_PLAN.md` — each member commits their own area.
 
 Assessment requirement-to-evidence mapping and the distinction between configuration checks and live deployment evidence are maintained in `docs/ASSIGNMENT-TRACEABILITY.md`.
@@ -268,7 +267,7 @@ A *compensated* failure (500 + funds returned) counts against availability, beca
 
 ## 8. Deployment checklist for a marker
 
-`scripts/deploy.sh you@example.com` → confirm e-mail → `scripts/get_tokens.sh` → `scripts/proofs/run_proofs.py --base-url …` → `scripts/rollback_demo.sh` → `k6` + `scripts/autoscale_evidence.sh`. Exact commands in `README.md`.
+`scripts/deploy.sh you@example.com` → confirm e-mail → `scripts/get_tokens.sh` → `scripts/proofs/run_proofs.py --base-url …` → (optional) enable CodeDeploy in Terraform and deploy that configuration before `scripts/rollback_demo.sh` → `k6` + `scripts/autoscale_evidence.sh`. Exact commands in `README.md`. These AWS steps change billable resources and require a reviewed plan; the rollback and scaling evidence scripts have not been run for the evidence recorded here.
 
 ## 9. Auto-scaling
 
@@ -322,16 +321,16 @@ Honest note: an early draft of this design proposed VPC endpoints as a *saving*.
 | Async path | §2.2 — outbox → SNS → SQS → fraud Lambda (+ DLQ) |
 | Stateless tier, externalised state | §2.3 |
 | Managed data store, justified | §3 |
-| Auto-scaling configured + demonstrated | `ecs.tf` policies; §9 + `load/k6-autoscale.js` + `scripts/autoscale_evidence.sh` |
+| Auto-scaling configured; live demonstration not recorded | `ecs.tf` policies; §9 + `load/k6-autoscale.js` + `scripts/autoscale_evidence.sh` |
 | Security gates | §5 |
 | IaC 100 % + clean-account deploy | `infra/terraform`, `scripts/deploy.sh` |
 | CI/CD with tests gating deploy | `.github/workflows/ci-cd.yml` (`deploy` `needs:` all gates) |
-| Automated rollback, demonstrated | `codedeploy.tf`, `scripts/rollback_demo.sh` |
-| ≥ 60 % unit coverage | `pyproject.toml` `fail_under = 60`; measured 92 % |
+| Optional automated rollback configured; live demonstration not recorded | `codedeploy.tf`; `enable_codedeploy` defaults to `false` |
+| Coverage threshold configured | `pyproject.toml` `fail_under = 60`; see current test output for measured coverage |
 | Git history from all members | `docs/TEAM_PLAN.md` |
 | Observability | §7 |
 | Cost | §10 |
-| Idempotency / saga / concurrency proofs | §4 + `evidence-out/proof-results.md` |
+| Idempotency / saga / concurrency proofs | §4 + `docs/evidence/proof-results.md` (local PostgreSQL run) |
 | Stretch goals | Not implemented (multi-currency/FX, recurring payments, ML fraud). Schema carries `currency` per wallet and the fraud rules are pluggable, so each is a contained extension. |
 
 ## 12. Known limitations (stated, not hidden)

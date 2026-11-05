@@ -31,6 +31,7 @@ import argparse
 import json
 import os
 import pathlib
+import secrets
 import sys
 import threading
 import time
@@ -199,7 +200,8 @@ def start_local():
     sys.path.insert(0, str(ROOT))
     url = os.environ["TEST_DATABASE_URL"]
     os.environ.update(DATABASE_URL=url, ENABLE_FAULT_INJECTION="true", DB_POOL_MAX="40",
-                      FRAUD_CONFIG_JSON='{"velocity_max_txns": 100000}')
+                      FRAUD_CONFIG_JSON='{"velocity_max_txns": 100000}',
+                      JWT_SECRET=secrets.token_urlsafe(48))
     import psycopg
     with psycopg.connect(url, autocommit=True) as c:
         c.execute("DROP SCHEMA public CASCADE")
@@ -214,7 +216,13 @@ def start_local():
     server = make_server("127.0.0.1", 0, app, threaded=True)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{server.server_port}"
-    return base, make_token("admin-1", ["admins"]), make_token("agent-1", ["agents"]), make_token("alice"), make_token("bob")
+    return (
+        base,
+        make_token("admin-1", ["admins"]),
+        make_token("agent-1", ["agents"]),
+        make_token("alice", ["customers"]),
+        make_token("bob", ["customers"]),
+    )
 
 
 def main():

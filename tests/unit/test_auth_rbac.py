@@ -80,6 +80,13 @@ def test_role_cross_portal_isolation():
     with pytest.raises(NotAuthenticated):
         authenticate_user("admin@momo.platform", "Admin123!", "customer")
 
+    merchant_auth = authenticate_user("MERCHANT-001", "Merchant123!", "merchant")
+    assert merchant_auth["user"]["role"] == "merchant"
+    assert merchant_auth["user"]["groups"] == ["merchants"]
+
+    with pytest.raises(NotAuthenticated):
+        authenticate_user("MERCHANT-001", "Merchant123!", "customer")
+
 
 def test_demo_accounts_require_explicit_local_opt_in(monkeypatch):
     import momo.api.user_store as user_store
@@ -119,12 +126,13 @@ def test_logout_revokes_local_access_token(client):
 def test_api_auth_endpoints_flow(client):
     assert client.get("/auth-session.js").status_code == 200
     for path in (
-        "/", "/login", "/login.html", "/login/customer", "/login/agent", "/login/admin",
+        "/", "/login", "/login.html", "/login/customer", "/login/agent", "/login/admin", "/login/merchant",
         "/register", "/register.html",
         "/customer", "/customer/send-money", "/customer/merchant-payment", "/customer/cash-out",
         "/customer/transactions", "/customer/profile", "/agent", "/agent/cash-in",
         "/agent/cash-out", "/agent/transactions", "/agent/profile", "/admin",
-        "/admin/users", "/admin/transactions", "/admin/analytics", "/admin/profile", "/demo",
+        "/admin/users", "/admin/transactions", "/admin/analytics", "/admin/profile", "/demo", "/merchant",
+        "/merchant/dashboard",
         "/portal.css", "/auth-pages.css", "/portal.js", "/login.js", "/register.js", "/console.css", "/console.js",
     ):
         assert client.get(path).status_code == 200
@@ -134,6 +142,9 @@ def test_api_auth_endpoints_flow(client):
     assert b'data-required-role="customer"' in client.get("/customer").data
     assert b'data-required-role="agent"' in client.get("/agent").data
     assert b'data-required-role="admin"' in client.get("/admin").data
+    assert b"Merchant" in client.get("/login").data
+    assert b"data-auth-role=\"merchant\"" in client.get("/login/merchant").data
+    assert b"Backend-enforced access" in client.get("/merchant").data
     assert b'href="/customer/cash-out"' in client.get("/customer").data
     assert b'href="/demo"' in client.get("/admin").data
     assert b"Not available for agent-initiated requests" in client.get("/agent/cash-out").data
@@ -183,7 +194,16 @@ def test_api_auth_endpoints_flow(client):
     admin_token = r.get_json()["token"]
     assert admin_token
 
-    # 6. Role-Based Access Control check: Customer cannot call admin endpoints
+    # 6. Merchant login endpoint
+    r = client.post(
+        "/auth/login/merchant",
+        json={"merchant_id": "MERCHANT-001", "password": "Merchant123!"},
+    )
+    assert r.status_code == 200
+    assert r.get_json()["token"]
+    assert r.get_json()["user"]["groups"] == ["merchants"]
+
+    # 7. Role-Based Access Control check: Customer cannot call admin endpoints
     r = client.get("/admin/fraud-alerts", headers={"Authorization": f"Bearer {cust_token}"})
     assert r.status_code == 403
 
@@ -212,12 +232,20 @@ def test_role_specific_api_actions_are_rejected_before_resource_access(client, m
     monkeypatch.setattr(service, "create_wallet", lambda *_args: {"id": "agent-wallet"})
     customer_token = issue_token("customer-1", "+260970000001", "customer")
     agent_token = issue_token("agent-1", "AGENT-007", "agent")
+    merchant_token = issue_token("merchant-1", "MERCHANT-001", "merchant")
     headers = {"Authorization": f"Bearer {agent_token}"}
     customer_headers = {"Authorization": f"Bearer {customer_token}"}
+    merchant_headers = {"Authorization": f"Bearer {merchant_token}"}
+    monkeypatch.setattr(service, "create_wallet", lambda *_args, **_kwargs: {"id": "merchant-wallet"})
 
     assert client.post("/wallets", json={"kind": "CUSTOMER"}, headers=headers).status_code == 403
     assert client.post("/wallets", json={"kind": "AGENT"}, headers=customer_headers).status_code == 403
     assert client.post("/wallets", json={"kind": "AGENT"}, headers=headers).status_code == 201
+    assert client.post("/wallets", json={"kind": "MERCHANT"}, headers=merchant_headers).status_code == 201
+    assert client.post("/wallets", json={"kind": "CUSTOMER"}, headers=merchant_headers).status_code == 403
+    assert client.post("/merchant-payments", json={}, headers=merchant_headers).status_code == 403
+    assert client.post("/agents/cash-in", json={}, headers=merchant_headers).status_code == 403
+    assert client.get("/admin/integrity", headers=merchant_headers).status_code == 403
     assert client.post("/merchant-payments", json={}, headers=headers).status_code == 403
     assert client.post("/agents/cash-out", json={}, headers=headers).status_code == 403
     assert client.post("/transfers", json={}, headers=headers).status_code == 403

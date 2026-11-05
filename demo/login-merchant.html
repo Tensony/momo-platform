@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#047857">
+  <title>Merchant sign in | MoMo</title>
+  <link rel="stylesheet" href="/portal.css">
+  <link rel="stylesheet" href="/auth-pages.css">
+</head>
+<body class="auth-page" data-auth-role="merchant" data-public-page="true">
+  <header class="public-header auth-header"><a class="brand" href="/"><span class="brand-mark">M</span><span>MoMo Platform</span></a><nav class="public-nav"><a class="text-link" href="/">Home</a><a class="text-link" href="/login">All sign-in options</a></nav></header>
+  <main class="auth-main">
+    <section class="auth-form-panel">
+      <span class="auth-kicker">Merchant access</span><h1>Welcome back.</h1><p class="auth-copy">Sign in to review your merchant wallet and payment activity.</p>
+      <div id="authAlert" class="auth-message" role="alert" aria-live="polite" hidden></div>
+      <form id="loginForm" class="auth-form">
+        <div class="field"><label for="loginIdentifier">Merchant ID or registered phone</label><input id="loginIdentifier" name="identifier" placeholder="Enter your merchant ID or phone" autocomplete="username" required></div>
+        <div class="field"><label for="loginPassword">Password</label><input id="loginPassword" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required></div>
+        <button class="button" type="submit">Sign in</button>
+      </form>
+      <p class="auth-switch">Merchant accounts are provisioned by an operator.</p>
+    </section>
+    <aside class="auth-aside"><div class="auth-aside-mark" aria-hidden="true">◇</div><span class="auth-kicker">Merchant workspace</span><h2>Payments with a clear record.</h2><p>Review your wallet activity and use the operations available to your merchant account.</p><ul class="auth-benefits"><li>Review your merchant wallet, transactions, and ledger.</li><li>View payments received from customers.</li><li>Make permitted wallet transfers and raise transaction disputes.</li></ul><div class="auth-trust">Merchant permissions are verified by the platform.</div></aside>
+  </main>
+  <script src="/auth-session.js"></script><script src="/login.js"></script>
+</body>
+</html>

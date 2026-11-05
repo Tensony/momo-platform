@@ -3,7 +3,8 @@ import uuid
 import pytest
 
 from momo.api.app import create_app
-from momo.api.auth import JwtVerifier
+from momo.api.auth import JwtVerifier, hash_password
+from momo.common.db import transaction
 from tests.integration.helpers import assert_money_conserved, balance
 from tests.jwt_helpers import CLIENT_ID, ISSUER, StubJwks, make_token
 
@@ -17,7 +18,9 @@ def client(db):
     return app.test_client()
 
 
-def H(sub, groups=(), key=None, **extra):
+def H(sub, groups=None, key=None, **extra):
+    if groups is None:
+        groups = ["customers"]
     h = {"Authorization": f"Bearer {make_token(sub, groups)}"}
     if key:
         h["Idempotency-Key"] = key
@@ -40,10 +43,54 @@ def fund(client, agent_sub, agent_wallet, to_wallet, amount):
     r = client.post("/agents/cash-in", json={"from_wallet": agent_wallet, "to_wallet": to_wallet, "amount": amount},
                     headers=H(agent_sub, ["agents"], key=f"cashin-{uuid.uuid4()}"))
     assert r.status_code == 201, r.json
+    return r.json["transaction_id"]
 
 
 def test_health_needs_no_auth(client):
     assert client.get("/health").json == {"status": "ok"}
+
+
+def test_postgres_customer_registration_and_login(client):
+    phone = f"+26097{uuid.uuid4().int % 10**8:08d}"
+    password = "CustomerPass123!"
+    registered = client.post(
+        "/auth/register",
+        json={"phone": phone, "password": password, "full_name": "Postgres Test User"},
+    )
+    assert registered.status_code == 201, registered.json
+    assert registered.json["user"]["role"] == "customer"
+
+    logged_in = client.post(
+        "/auth/login/customer",
+        json={"phone": phone, "password": password},
+    )
+    assert logged_in.status_code == 200, logged_in.json
+    assert logged_in.json["user"]["id"] == registered.json["user"]["id"]
+
+
+def test_postgres_merchant_login_and_wallet_access(client):
+    merchant_id = f"MERCHANT-{uuid.uuid4().hex[:8].upper()}"
+    merchant_uuid = str(uuid.uuid4())
+    password = "MerchantPass123!"
+    with transaction() as conn:
+        conn.execute(
+            """INSERT INTO users (id, username, role, password_hash, full_name, status)
+               VALUES (%s, %s, 'merchant', %s, 'Postgres Test Merchant', 'ACTIVE')""",
+            (merchant_uuid, merchant_id, hash_password(password)),
+        )
+
+    logged_in = client.post(
+        "/auth/login/merchant",
+        json={"merchant_id": merchant_id, "password": password},
+    )
+    assert logged_in.status_code == 200, logged_in.json
+    assert logged_in.json["user"]["role"] == "merchant"
+
+    headers = {"Authorization": f"Bearer {logged_in.json['token']}"}
+    wallet = client.post("/wallets", json={"kind": "MERCHANT"}, headers=headers)
+    assert wallet.status_code == 201, wallet.json
+    assert wallet.json["kind"] == "MERCHANT"
+    assert client.post("/merchant-payments", json={}, headers=headers).status_code == 403
 
 
 def test_unauthenticated_and_forged_requests_are_401(client):
@@ -64,10 +111,16 @@ def test_end_to_end_money_flow_and_correlation_id(client):
     r = client.post("/merchant-payments", json={"from_wallet": alice, "to_wallet": shop, "amount": 10_000},
                     headers=H("alice", key="m-0000001"))
     assert r.status_code == 201
+    r = client.post(
+        "/transfers",
+        json={"from_wallet": shop, "to_wallet": bob, "amount": 2_500},
+        headers=H("shop", ["merchants"], key="merchant-transfer-0001"),
+    )
+    assert r.status_code == 201
     r = client.post("/agents/cash-out", json={"from_wallet": alice, "to_wallet": agent_w, "amount": 5_000},
                     headers=H("alice", key="c-0000001"))
     assert r.status_code == 201
-    assert (balance(alice), balance(bob), balance(shop)) == (60_000, 25_000, 10_000)
+    assert (balance(alice), balance(bob), balance(shop)) == (60_000, 27_500, 7_500)
 
     led = client.get(f"/wallets/{alice}/ledger", headers=H("alice")).json["entries"]
     assert led and all(e["hash"] for e in led)
@@ -95,7 +148,7 @@ def test_read_only_console_endpoints_enforce_ownership_and_admin_access(client):
     agent_wallet = mk_wallet(client, "agent-console", "AGENT", ["agents"])
     alice = mk_wallet(client, "alice-console")
     bob = mk_wallet(client, "bob-console")
-    fund(client, "agent-console", agent_wallet, alice, 10_000)
+    cash_in_id = fund(client, "agent-console", agent_wallet, alice, 10_000)
     payment = client.post(
         "/transfers",
         json={"from_wallet": alice, "to_wallet": bob, "amount": 2_500},
@@ -116,7 +169,7 @@ def test_read_only_console_endpoints_enforce_ownership_and_admin_access(client):
 
     alice_txns = client.get("/transactions", headers=H("alice-console"))
     assert alice_txns.status_code == 200
-    assert [t["transaction_id"] for t in alice_txns.json["transactions"]] == [txn_id]
+    assert {t["transaction_id"] for t in alice_txns.json["transactions"]} == {cash_in_id, txn_id}
     assert client.get(
         f"/transactions?search={txn_id[:8]}", headers=H("alice-console")
     ).json["total"] == 1

@@ -2,25 +2,27 @@
 """Interactive Demo Interface server for the Mobile Money Platform presentation.
 
 Serves the public landing page, role-specific UI previews, and operations console from
-`demo/` at http://127.0.0.1:5050. It also exposes live JSON demo endpoints backed by
-the authoritative double-entry platform engine.
+`demo/` at http://127.0.0.1:5050. Role-based pages and the operations console proxy
+their API requests to the Flask backend configured by MOMO_API_BASE_URL. The separate
+`/api/*` routes remain an in-memory demo simulation.
 """
 from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import pathlib
 import socket
-import ssl
 import sys
+import urllib.error
 import urllib.request
 import webbrowser
 from http.server import HTTPServer, SimpleHTTPRequestHandler
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlsplit
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 DEMO_DIR = ROOT / "demo"
-AWS_ALB_HEALTH = "https://momo-dev-alb-5850337.us-east-1.elb.amazonaws.com/health"
+DEFAULT_API_BASE_URL = "http://127.0.0.1:8080"
 
 # Ensure `src` is in sys.path
 SRC_DIR = ROOT / "src"
@@ -45,20 +47,6 @@ def _load_cost_data() -> dict:
     return {k: mod.model(**v) for k, v in mod.SCENARIOS.items()}
 
 
-def _check_aws_health() -> str:
-    try:
-        ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
-        req = urllib.request.Request(AWS_ALB_HEALTH, method="GET")
-        with urllib.request.urlopen(req, timeout=3, context=ctx) as resp:
-            if resp.status == 200:
-                return "ok"
-    except Exception:
-        pass
-    return "offline"
-
-
 class ReusableHTTPServer(HTTPServer):
     allow_reuse_address = True
 
@@ -70,12 +58,16 @@ class DemoHandler(SimpleHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         path = parsed.path.rstrip("/") or "/"
+        if self._is_api_request("GET", path):
+            self._proxy_api_request()
+            return
         page_routes = {
             "/login": "/login.html",
             "/register": "/register.html",
             "/login/customer": "/login-customer.html",
             "/login/agent": "/login-agent.html",
             "/login/admin": "/login-admin.html",
+            "/login/merchant": "/login-merchant.html",
             "/customer": "/pages/customer/dashboard.html",
             "/customer/dashboard": "/pages/customer/dashboard.html",
             "/customer/send-money": "/pages/customer/send-money.html",
@@ -95,6 +87,8 @@ class DemoHandler(SimpleHTTPRequestHandler):
             "/admin/transactions": "/pages/admin/transactions.html",
             "/admin/analytics": "/pages/admin/analytics.html",
             "/admin/profile": "/pages/admin/profile.html",
+            "/merchant": "/console.html",
+            "/merchant/dashboard": "/console.html",
         }
         if parsed.path in page_routes:
             self.path = page_routes[parsed.path]
@@ -107,9 +101,6 @@ class DemoHandler(SimpleHTTPRequestHandler):
         if path in ("/", "/index.html"):
             self.path = "/index.html"
             super().do_GET()
-            return
-        if path == "/health":
-            self._json({"status": _check_aws_health()})
             return
         if path == "/api/status":
             proof_file = ROOT / "evidence-out" / "proof-results.json"
@@ -129,6 +120,9 @@ class DemoHandler(SimpleHTTPRequestHandler):
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
         path = parsed.path.rstrip("/")
+        if self._is_api_request("POST", path):
+            self._proxy_api_request()
+            return
         length = int(self.headers.get("Content-Length", 0))
         body = {}
         if length > 0:
@@ -227,6 +221,83 @@ class DemoHandler(SimpleHTTPRequestHandler):
 
         self._json({"error": {"code": "NOT_FOUND", "message": "Unknown endpoint"}}, 404)
 
+    @staticmethod
+    def _is_api_request(method: str, path: str) -> bool:
+        if method == "GET":
+            return (
+                path in {
+                    "/health", "/auth/me", "/wallets", "/transactions", "/operations",
+                    "/disputes", "/admin/integrity", "/admin/fraud-alerts",
+                    "/admin/settlement-reports", "/fx/rates", "/recurring-payments",
+                }
+                or path.startswith(("/wallets/", "/transactions/", "/disputes/"))
+            )
+        if method != "POST":
+            return False
+        return (
+            path in {
+                "/auth/register", "/auth/login/customer", "/auth/login/agent", "/auth/login/admin",
+                "/auth/login/merchant",
+                "/auth/logout", "/wallets", "/transfers", "/merchant-payments", "/agents/cash-in",
+                "/agents/cash-out", "/admin/float-topups", "/admin/recurring-payments/run-due",
+                "/fx/quotes", "/recurring-payments",
+            }
+            or path.startswith(("/transactions/", "/disputes/", "/recurring-payments/"))
+        )
+
+    def _proxy_api_request(self) -> None:
+        api_base = os.environ.get("MOMO_API_BASE_URL", DEFAULT_API_BASE_URL).rstrip("/")
+        parsed_base = urlsplit(api_base)
+        if (
+            parsed_base.scheme not in {"http", "https"}
+            or not parsed_base.netloc
+            or parsed_base.username
+            or parsed_base.password
+            or parsed_base.path not in {"", "/"}
+            or parsed_base.query
+            or parsed_base.fragment
+        ):
+            self._json({"error": {"message": "MOMO_API_BASE_URL must be an HTTP(S) origin without credentials or a path."}}, 500)
+            return
+
+        request_headers = {
+            key: value
+            for key, value in self.headers.items()
+            if key.lower() not in {"host", "connection", "content-length", "transfer-encoding", "accept-encoding"}
+        }
+        request_body = None
+        if self.command != "GET":
+            length = int(self.headers.get("Content-Length", 0))
+            request_body = self.rfile.read(length) if length else b""
+        request = urllib.request.Request(
+            f"{api_base}{self.path}",
+            data=request_body,
+            headers=request_headers,
+            method=self.command,
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=15) as response:
+                status = response.status
+                response_headers = response.headers
+                response_body = response.read()
+        except urllib.error.HTTPError as response:
+            status = response.code
+            response_headers = response.headers
+            response_body = response.read()
+        except (urllib.error.URLError, TimeoutError, OSError) as error:
+            print(f"API proxy request failed: {error}", file=sys.stderr)
+            self._json({"error": {"message": "Backend API is unavailable. Start the API or check MOMO_API_BASE_URL."}}, 502)
+            return
+
+        self.send_response(status)
+        for key in ("Content-Type", "Cache-Control", "X-Correlation-ID", "WWW-Authenticate"):
+            value = response_headers.get(key)
+            if value:
+                self.send_header(key, value)
+        self.send_header("Content-Length", str(len(response_body)))
+        self.end_headers()
+        self.wfile.write(response_body)
+
     def _json(self, data: dict, code: int = 200) -> None:
         raw = json.dumps(data).encode("utf-8")
         self.send_response(code)
@@ -255,6 +326,7 @@ def main() -> None:
     print("\n============================================================")
     print("  MoMo Platform — Interactive Demo Interface is LIVE!")
     print(f"  Open in browser: {url}")
+    print(f"  Flask API:       {os.environ.get('MOMO_API_BASE_URL', DEFAULT_API_BASE_URL)}")
     print(f"  Direct file:     {DEMO_DIR / 'index.html'}")
     print("  Press Ctrl+C to stop.")
     print("============================================================\n")
